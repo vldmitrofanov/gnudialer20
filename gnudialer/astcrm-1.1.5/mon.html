@@ -1,0 +1,38 @@
+<HTML><HEAD><TITLE>Generic CRM - Copyright &copy; 2005. GnuDialer Project. All Rights Reserved.</TITLE></HEAD>
+
+<BODY BACKGROUND="checkered.gif">
+
+<APPLET CODE=AstMonitor.class HEIGHT=1 WIDTH=1>
+
+<SCRIPT LANGUAGE="JavaScript">
+<!-- begin
+host = location.href;
+host = host.substring(7,host.length);
+host = host.substring(0,host.indexOf('/'));
+station = location.href;
+station = station.substring(station.indexOf('=')+1,station.length);
+document.writeln("<PARAM NAME=\"thehost\" VALUE=\"" + host + "\">");
+document.writeln("<PARAM NAME=\"baseurl\" VALUE=\"http://" + host + "/cgi-bin/crm.cgi\">");
+document.writeln("<PARAM NAME=\"station\" VALUE=\"" + station + "\">");
+document.writeln("<PARAM NAME=\"monitor\" VALUE=\"1\">");
+document.writeln("<PARAM NAME=\"manageruser\" VALUE=\"crm\">");
+document.writeln("<PARAM NAME=\"managerpass\" VALUE=\"1234\">");
+// end -->
+</SCRIPT>
+
+</APPLET>
+<BR>
+
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>
+<TR>
+  <TD BGCOLOR="#000000">
+    <IFRAME NAME="actualcrm" ID="actualcrm" SRC="/cgi-bin/crm.cgi?campaign=0&leadid=0&agent=0&station=1" HEIGHT=550 WIDTH=750 FRAMEBORDER=0></IFRAME>
+  </TD>
+</TR>
+</TABLE>
+</CENTER>
+
+<IFRAME NAME="processinfo" ID="processinfo" HEIGHT=1 WIDTH=1 FRAMEBORDER=0></IFRAME>
+
+</BODY></HTML>

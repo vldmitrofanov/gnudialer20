@@ -1,0 +1,205 @@
+CREATE TABLE stats (
+	campaign VARCHAR( 30 ) NOT NULL ,
+	leadid INT( 8 ) NOT NULL ,
+	epoch INT( 15 ) NOT NULL ,
+	calltime INT( 8 ) NOT NULL ,
+	datestamp TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL ,
+	disposition INT( 8 ) NOT NULL ,
+	closerdispo INT( 8 ) NOT NULL ,
+	subdispo VARCHAR( 20 ) NOT NULL
+) TYPE = MYISAM ;
+
+
+
+DNC NOTES
+-----------------
+
+query = "SELECT id, phone FROM " + queue + " WHERE phone NOT IN (SELECT
+phone FROM DNC) AND ";
+
+
+                                if (action == "reloadagents") {
+                                        std::cout << "Attempting to reload agents..." << std::endl;
+                                        std::system("/usr/sbin/asterisk -rx \"reload chan_agent.so\"");
+                                        }
+                                if (action == "reloadqueues") {
+                                        std::cout << "Attempting to reload queues..." << std::endl;
+                                        std::system("/usr/sbin/asterisk -rx \"reload app_queue.so\"");
+                                        }
+
+
+select
+phone,title,name,address,city,state,zip,oc,paidamt,paiddate,comments,countynum
+from SCFF_COLD_01 where ((disposition > -7 AND disposition < 7) OR
+disposition = 9 OR disposition = 10 OR disposition = 11) INTO OUTFILE
+'/tmp/reload-SCFF_COLD_01.txt' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED
+BY '"' LINES TERMINATED BY '\r\n';
+
+tar cvzf /home/pchammer/asterisk/20060120_0619.tgz
+/home/pchammer/newcurrent/
+
+
+
+-----------------------
+// Base class Exception
+class Exception
+{
+public:
+	string error;
+	Exception();
+	Exception(string s);
+};
+
+Exception::Exception()
+{
+	error = "Unknown";
+}
+
+Exception::Exception(string s)
+{
+	error = s;
+}
+
+// Class Divide by Zero Exception
+class DivideZeroException : public Exception
+{
+public:
+	DivideZeroException(string s);
+};
+
+DivideZeroException::DivideZeroException(string s) :
+	Exception(s)
+{
+}
+
+// Class File Exception
+class FileException : public Exception
+{
+public:
+	FileException(string s);
+};
+
+FileException::FileException(string s) :
+	Exception(s)
+{
+}
+
+void openFile(ifstream &f) throw(FileException)
+{		
+	f.open("foo.txt");    
+	if (f.fail()) {
+		throw(FileException("File open failed"));
+	}
+}
+
+// Main
+void main()
+{
+  ifstream f;
+  int num1, num2, val;
+  int x=1;
+
+  try {
+	  openFile(f);
+	  cout << "The numbers are:" << endl;
+	  while (!f.eof()) {
+		f >> num1;
+		f >> num2;
+		try {
+			if (num2==0) {
+			 throw(
+			  DivideZeroException("Divide by zero"));
+			}
+			val = num1/num2;
+			cout << val << endl;
+		}
+	    catch (DivideZeroException e) {
+			cout << "There was a division error: " 
+                             << e.error << endl;
+		} 
+	  }
+	  f.close();	  
+  }
+  catch (FileException e) {
+	  cout << "There was a file error: " << e.error << endl;
+  } 
+}
+
+
+
+chown root.root /tmp
+chmod 777 /tmp
+chmod +t /tmp
+
+
+if ((f->frametype == AST_FRAME_CONTROL) && !(config->flags & AST_BRIDGE_IGNORE_SIGS)) {
+                        if ((f->subclass == AST_CONTROL_HOLD) || (f->subclass == AST_CONTROL_UNHOLD) ||
+                            (f->subclass == AST_CONTROL_VIDUPDATE)) {
+                                ast_indicate(who == c0 ? c1 : c0, f->subclass);
+                        } else {
+                                if (f->subclass == AST_CONTROL_BUSY) {
+                                        ast_frame_dump(who->name, f, "<<");
+                                        ast_log(LOG_NOTICE, "I SHOULD HAVE HUNG UP %s JUST NOW!!!\n", who->name);
+                                        ast_log(LOG_DEBUG, "Got a FRAME_CONTROL (%d) frame on channel %s\n", f->subclass, who->name);
+                                        res = AST_BRIDGE_RETRY;
+                                } else {
+
+                                        *fo = f;
+                                        *rc = who;
+                                        res =  AST_BRIDGE_COMPLETE;
+                                        ast_log(LOG_DEBUG, "Got a FRAME_CONTROL (%d) frame on channel %s\n", f->subclass, who->name);
+                                }
+                                        break;
+                        }
+                }
+
+
+
+
+
+------------------------------------
+g++ -Wall -Wshadow gnudialer.cpp -g -o gnudialer ysql_config --include
+ysql_config --libsg++ -Wall -Wshadow dialeradmin.cpp -o dialeradmin.cgi
+ysql_config --include ysql_config --libsdialeradmin.cpp: In function oid
+doPrintNow(Post)
+dialeradmin.cpp:460: warning: suggest parentheses around assignment used as truth value
+dialeradmin.cpp: In function oid doAreacodePrefixFilter(std::string, std::string, std::string)
+dialeradmin.cpp:780: warning: suggest parentheses around assignment used as truth value
+dialeradmin.cpp: In function oid doAreacodeFilter(std::string, std::string, std::string)
+dialeradmin.cpp:823: warning: suggest parentheses around assignment used as truth value
+dialeradmin.cpp: In function oid doZipcodeFilter(std::string, std::string, std::string)
+dialeradmin.cpp:867: warning: suggest parentheses around assignment used as truth value
+dialeradmin.cpp: In function oid doExportRecords(Post)
+dialeradmin.cpp:2434: warning: suggest parentheses around assignment used as truth value
+dialeradmin.cpp: In function oid doBuildCallists(Post)
+dialeradmin.cpp:2558: warning: suggest parentheses around assignment used as truth value
+g++ -Wall -Wshadow agenthours.cpp -o agenthours.cgi
+g++ -Wall -Wshadow stats.cpp -o stats.cgi
+g++ -Wall -Wshadow up.cpp -o up.cgi
+
+
+
+g++ -Wall -Wshadow gnudialer.cpp -g -o gnudialer ysql_config --include
+ysql_config --libsg++ -Wall -Wshadow dialeradmin.cpp -o dialeradmin.cgi
+ysql_config --include ysql_config --libsdialeradmin.cpp: In function oid doPrintNow(Post)
+dialeradmin.cpp:460: warning: suggest parentheses around assignment used as truth value
+dialeradmin.cpp: In function oid doAreacodePrefixFilter(std::string, std::string, std::string)
+dialeradmin.cpp:780: warning: suggest parentheses around assignment used as truth value
+dialeradmin.cpp: In function oid doAreacodeFilter(std::string, std::string, std::string)
+dialeradmin.cpp:823: warning: suggest parentheses around assignment used as truth value
+dialeradmin.cpp: In function oid doZipcodeFilter(std::string, std::string, std::string)
+dialeradmin.cpp:867: warning: suggest parentheses around assignment used as truth value
+dialeradmin.cpp: In function oid doExportRecords(Post)
+dialeradmin.cpp:2434: warning: suggest parentheses around assignment used as truth value
+dialeradmin.cpp: In function oid doBuildCallists(Post)
+dialeradmin.cpp:2558: warning: suggest parentheses around assignment used as truth value
+g++ -Wall -Wshadow agenthours.cpp -o agenthours.cgi
+g++ -Wall -Wshadow stats.cpp -o stats.cgi
+g++ -Wall -Wshadow up.cpp -o up.cgi
+
+ select count(*) from 348NP02 where (left(lastupdated,10) =
+STR_TO_DATE("2006-05-22", '%Y-%m-%d')) AND disposition = -3 ;
+
+
+http://stanton-finley.net/fedora_core_3_installation_notes_nocss.html
+

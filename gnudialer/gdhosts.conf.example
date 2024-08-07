@@ -1,0 +1,15 @@
+# This is where you tell the dialer
+# about asterisk servers that it can
+# use to originate calls.
+
+# host,port,managerusername,managerpassword,weight
+
+# In the following example we give "otherserver"
+# a weight of 4 because it is a much better server
+# and can handle 4x as many calls.
+
+# otherserver is commented out so that it works
+# by default. :)
+
+localhost,5038,dialer,1234,1
+#otherserver,5038,dialer,1234,4

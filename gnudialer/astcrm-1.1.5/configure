@@ -1,0 +1,68 @@
+#!/bin/bash
+
+LIC="#
+# astcrm - General purpose CRM
+#
+# General purpose CRM software for asterisk
+#
+# Copyright (C) 2005, GnuDialer Project
+#
+# Heath Schultz <heath1444@yahoo.com>
+#
+# This program is free software, distributed under the terms of
+#
+# the GNU General Public License.
+#
+"
+
+if [ $# -ne "2" ]
+then
+echo
+echo
+echo "Usage: ./configure <path to www> <path to cgi-bin>"
+echo
+echo
+fi
+
+if [ $# -eq "2" ]
+then
+echo "${LIC}" > Makefile
+echo "all:" >> Makefile
+echo "	g++ crm.cpp -o crm.cgi" >> Makefile
+echo "	g++ submitinfo.cpp -o submitinfo.cgi" >> Makefile
+echo "	echo" >> Makefile
+echo "	echo" >> Makefile
+echo "	echo \"If you get a compile error on AstMonitor.java, ignore it.\"" >> Makefile
+echo "	echo" >> Makefile
+echo "	echo" >> Makefile
+echo "	javac AstMonitor.java" >> Makefile
+echo "" >> Makefile
+echo "clean:" >> Makefile
+echo "	rm *.cgi" >> Makefile
+echo "" >> Makefile
+echo "install:" >> Makefile
+echo "	chmod a+w ${2}cgi-bin/" >> Makefile
+echo "	cp crm.cgi ${2}cgi-bin/" >> Makefile
+echo "	cp submitinfo.cgi ${2}cgi-bin/" >> Makefile
+echo "	cp astcrm.conf ${2}cgi-bin/" >> Makefile
+echo "	chmod a+r ${2}cgi-bin/astcrm.conf" >> Makefile
+echo "	mkdir -p ${1}crm" >> Makefile
+echo "	cp *.html ${1}crm/" >> Makefile
+echo "	cp *.class ${1}crm/" >> Makefile
+echo "	cp *.gif ${1}crm/" >> Makefile
+echo "" >> Makefile
+echo "uninstall:" >> Makefile
+echo "	rm -rf ${1}crm/" >> Makefile
+echo "	rm ${2}cgi-bin/crm.cgi" >> Makefile
+echo "	rm ${2}cgi-bin/submitinfo.cgi" >> Makefile
+echo "" >> Makefile
+echo "distclean:" >> Makefile
+echo "	make clean" >> Makefile
+echo "	rm Makefile" >> Makefile
+
+echo
+echo
+echo "Now type \"make && make install\"."
+echo
+echo
+fi

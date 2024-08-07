@@ -1,0 +1,50 @@
+<html>
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<head>
+</head>
+
+<input type=hidden name=disposition_use>
+
+<table CELLSPACING=1 CELLPADDING=1 COLS=2 WIDTH="100%" >
+<tr><td WIDTH="200"><b><font face="ARIAL"><div align=right><font size=-1>Contact Information</font></font></b></td>
+<td><i><font face="ARIAL"><font size=-1>Some short comment here.</font></font></i></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td><div align=right>Phone Number:</div></td>
+<td>${phone} Agent: ${agent} </td></tr>
+<tr><td><div align=right>Salutation - Name:</div></td>
+<td><input type=text name='title_use' value='${title}' size=5 maxlength=5>
+<input type=text name='name_use' value='${name}' size=40 maxlength=40></td>
+<tr><td><div align=right>Street Address:</div></td>
+<td><input type=text name='address_use' value='${address}' size=40 maxlength=40></td></tr>
+<tr><td><div align=right>City:</div></td>
+<td><input type=text name='city_use' value='${city}' size=20 maxlength=20></td></tr>
+<tr><td><div align=right>State:</div></td>
+<td><input type=text name='state_use' value='${state}' size=5 maxlength=5></td></tr>
+<tr><td><div align=right>Zipcode:</div></td>
+<td><input type=text name='zip_use' value='${zip}' size=5 maxlength=5></td></tr>
+<tr><td><div align=right>OC:</div></td>
+<td><input type=text name='oc_use' value='${oc}' size=30 maxlength=60></td></tr>
+<tr><td><div align=right>Comments:</div></td>
+<td><input type=text name='comments_use' value='${comments}' size=30 maxlength=60></td></tr>
+<tr><td><div align=right>Paid Date:</div></td>
+<td>${paiddate} PaidAmt: ${paidamt} </td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td><div align=right>SubDispo:</div></td>
+<td>
+
+<select name="subdispo_use" value='${subdispo}' size=1 maxlength=10>
+<option value=1 SELECTED >1  -Ticket
+<option value=2  >2  -Tickets
+<option value=3  >3  -Tickets
+<option value=4  >4  -Tickets
+<option value=5  >5  -Change
+<option value=8  >8  -KO
+<option value=9  >9  -Print
+
+</select>
+</td></tr>
+</td></tr>
+</table>
+<br><br>
+</body></html>

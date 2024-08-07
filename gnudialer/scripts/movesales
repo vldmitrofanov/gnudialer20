@@ -1,0 +1,2 @@
+#!/bin/bash
+mv -f /tmp/exports/* /var/www/html/gnudialer/sales/

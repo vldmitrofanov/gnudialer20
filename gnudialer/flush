@@ -1,0 +1,35 @@
+#!/bin/sh
+rm -rf *~
+make clean
+rm -rf /home/heath/gnudialer
+mkdir -p /home/heath/gnudialer
+cp -R * /home/heath/gnudialer
+rm -rf /home/heath/gnudialer/test*
+rm -rf /home/heath/gnudialer/java*
+rm -rf /home/asterisk/gnudialer/display*
+rm -rf /home/heath/gnudialer/gnudialer.conf
+rm -rf /home/heath/gnudialer/manager.conf
+rm -rf /home/heath/gnudialer/astcrm-1.1.5/astcrm.conf
+chown -R heath:users /home/heath
+
+rm -rf /home/james/gnudialer
+mkdir -p /home/james/gnudialer
+cp -R * /home/james/gnudialer
+rm -rf /home/james/gnudialer/test*
+rm -rf /home/james/gnudialer/java*
+rm -rf /home/asterisk/gnudialer/display*
+rm -rf /home/james/gnudialer/gnudialer.conf
+rm -rf /home/james/gnudialer/gnudialer.conf
+rm -rf /home/james/gnudialer/astcrm-1.1.5/astcrm.conf
+chown -R james:users /home/james
+
+rm -rf /home/asterisk/gnudialer
+mkdir -p /home/asterisk/gnudialer
+cp -R * /home/asterisk/gnudialer
+rm -rf /home/asterisk/gnudialer/test*
+rm -rf /home/asterisk/gnudialer/java*
+rm -rf /home/asterisk/gnudialer/display*
+rm -rf /home/asterisk/gnudialer/gnudialer.conf
+rm -rf /home/asterisk/gnudialer/gnudialer.conf
+rm -rf /home/asterisk/gnudialer/astcrm-1.1.5/astcrm.conf
+chown -R asterisk:asterisk /home/asterisk

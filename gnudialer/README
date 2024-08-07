@@ -1,0 +1,231 @@
+0. LICENSE
+----------
+
+	GnuDialer is a general purpose inbound/outbound dialer
+	for Asterisk. It is provided with NO WARRANTY. Please
+	see LICENSE for details.
+
+1. INSTALLATION
+---------------
+
+	Please see the INSTALL file for instructions.
+
+2. RUNNING GNUDIALER
+--------------------
+
+	a. To start gnudialer, simply type "gnudialer" at a
+	   console.  It is strongly recommended that you run
+	   gnudialer as root.  It is possible to run it as a
+	   user, but for first-timers, it's best to just use
+	   root to avoid any unexpected circumstances.  
+
+	b. To stop gnudialer, simply type "gnudialer --stop"
+	   at a console.  This will stop any running campaigns.
+
+	c. GnuDialer has a safe mode that will cause it to
+	   restart itself in the unlikely event of a crash.
+
+	d. The web admin pages allow you to setup and control
+	   all of your agents and queues.  Please see the
+	   appropriate sections regarding agents and queues.
+
+
+3. DISPOSITIONS
+---------------
+
+	One would think that call dispositions would be an easy
+	part of developing or managing a dialer.  As you'll soon
+	find out, this is simply not the case.  You should study
+	this section very carefully as it is very important for
+	planning campaigns and analyzing reports.
+
+	The system of dispositions is meant to be comprehensive
+	enough to handle most any situation, yet as easy to
+	understand as possible.
+
+	We felt that by limiting the dispositions to a smaller
+	set that we could actually provide a more user-friendly
+	and customizable setup for most call-centers.
+
+	Basically it works like this... All negative (-) dispo-
+	sitions are "system" dispositions, meaning that they
+	are the dispositions that are handled automatically by
+	the dialplan.  All positive dispositions are "agent"
+	dispositions.  The system dispositions correspond directly
+	with the agent dispositions.  This means that if you take
+	the absolute value of a system disposition, you get the
+	corresponding agent disposition.  Please take note of the
+	two exceptions to the rule, which are (-1,1) and (-8,8).
+
+	Here's the complete list...
+
+	System dispositions
+
+		-8 == Burned (We give up)      ---o
+		-7 == Disconnected Number         | -- Don't get called back
+		-6 == Fax Machine              ---o
+		-5 == Network Congestion ---o
+		-4 == Busy                  |
+		-3 == Voicemail             | -- Get called back ---o
+		-2 == No Answer             |                       |
+		-1 == Undefined*         ---o                       |
+		                                                    |
+		1 == Not Yet Called** -- Get called back -----------|
+		                                                    |
+		0 == Callback  ---o                                 |
+		2 == No Answer    |                                 |
+		3 == Voicemail    | -- Get called back -------------o
+		4 == Busy         |
+		5 == Fast Busy ---o
+		6 == Fax Machine           ---o
+		7 == Disconnected Number      |
+		8 == Do Not Call              | -- Don't count as contacts
+		9 == Invalid Lead             |
+		10 == No Sale***           ---o
+		11 == No Sale***    ---o These both... 
+		12 == Sale          ---o count as contacts
+
+		* Undefined refers to when the dialplan had no match for
+		  the HANGUPCAUSE returned by the "Dial" command.  These
+		  records should be called back.
+
+		** "Not Yet Called" is neither a system disposition, nor
+		   is it an agent disposition.  It fits well as "1" because
+		   we don't want to allow an agent to press just "1" as
+		   this would cause ambiguity in the dialplan for dispo-
+		   sitions 10-12.
+
+		*** Note the existence of duplicate "No Sale" dispositions.
+		    This is because some "No Sale" calls should count
+		    against "conversion percentage" (which is contacts/sales)
+		    and some "No Sale" calls should not.
+
+		If you are not satisfied with your options, you should
+		consider using the "subdispo" field via the CRM software.
+
+		The subdispo field is created when you import data. (10 chars) 
+		
+
+4. CAMPAIGN SETUP
+-----------------
+
+	a. Lead Preparation:
+
+		- Get your leads in csv format.
+
+		- Make sure your phone numbers are in the
+		  following format: NXXNXXXXXX
+
+		- Import your leads using the 'IMPORT' button
+		  
+		  Select campaign, click 'import' (READ THIS PAGE CAREFULLY)
+		  The easiest method is to change your data to the ORDER of
+		  the default fields, you do something else, there are 
+		  sections of code that need to mod'd (and you are on your
+		  own)
+		
+		  OR 	
+
+		  Import your leads via phpMyAdmin (manually setup
+		  all data and do NOT use 'IMPORT')
+
+		- Your leads must have a unique "id" field
+		  which is an INT.
+
+		- Your leads must have a unique "phone" field
+		  which is a VARCHAR(10)
+
+		- From a root console, typp:
+		  gnudialer --tzpopulate <table name>
+		  This will add all the necessary fields that
+		  GnuDialer needs while making calls.
+
+		- puff13+ automatically runs tzpopulate/tzstatepopulate
+		  when you import data from dialeradmin.  the data must be
+		  on the local system of one importing the data.
+
+		- puff13+ import/export/crm  features are hardcoded in some
+		  places, so you must use data that fits the fields (and
+		  field order) they are in import.  (otherwise you will 
+		  have to modify the code for export crm, etc)
+		  the 'Import Data' function defaults to what is required.
+
+	b. Campaign Setup
+
+		- Visit http://yourhost/gnudialer/dialerlogin.html
+
+		- Enter your password
+
+		- Click the "Create Campaign" button.
+
+		- Enter the same name for the campaign that you used
+		  when uploading the leads.
+
+		- Done.
+
+5. RUNNING YOUR CAMPAIGNS
+-------------------------
+
+	a. Log in to the GnuDialer web admin.
+
+	b. Highlight your campaign from the campaign list.
+
+	c. Click on "Edit Campaign Members."
+
+	d. Add a member to the campaign by highlighting
+	   his/her name in "Not in Campaign."  Then click
+	   "Add."
+
+	e. Go back to the "Main Menu."
+
+	f. Highlight your campaign from the campaign list.
+
+	g. Click "Manage Campaign."
+
+	h. Click "Start Campaign" from the next page.
+
+6. STOPPING A CAMPAIGN
+----------------------
+
+	a. Log in the the GnuDialer web admin.
+
+	b. Select the campaign from the queue list.
+	   (If it is currently running, it should have
+	    a "*" next to it.)
+
+	c. Click "Manage Campaign."
+
+	d. Click "Stop Campaign."
+
+7. AGENTS
+---------
+
+	a. Use the web admin to add your agents.  It is pretty
+	   straightforward.  All you have to do is enter an
+	   agent name and secret.
+
+	b. Puff is using chan_agent.  So set your agents phone
+	   to goto the agentlogin context in dialer.conf
+	   Then dial the extension; when prompt to enter agent
+	   number, enter agent number followed by #.  Then 
+	   enter your agent password followed by #.  If all is
+	   well you should hear Agent logged in and some MOH.
+
+	c. Your agent can access the CRM program by visiting:
+
+	   http://hostname/crm/crmlogin.html
+
+	   They should enter their agent number in the login
+	   box and click "Go" to login.
+
+	   Please see the crm documentation for more details.
+
+	   If the CRM doesn't say logged in restart your browser
+	   and make sure you have no lingering java threads.
+	   
+	   The CRM tends to not kill the thread if the agent logs
+	   in and doesn't take any calls.  So be warned!  
+
+	   Firefox and Internet Explorer have both been tested 
+	   and used daily.  (since puff-18-pre release)
+ 

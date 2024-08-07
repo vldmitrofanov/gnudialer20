@@ -1,0 +1,30 @@
+
+This version REQUIRES the integration of the following
+----------------------------------------------------------
+1.  manager.c.originate.diff.txt patch that is included with this release.
+
+	*** THIS PATCH ONLY NEEDED ON OLDER VERSIONS OF ASTERISK
+
+        If CallerID and CallerIDName show on the manager output of 
+	OriginateSuccess and OriginateFailure you do NOT need this patch. 
+
+	If you fail to apply this patch, none of the OriginateFailure or 
+	OriginateSuccess Events will trigger changes to the Campaign DB.
+
+
+2.  manager.c.sendevent.diff.txt patch that is include with this release.
+
+        If you fail to apply this patch, the button events in the CRM will
+        will not function.  (making it fairly useless)
+
+	Fairly soon (probably within another 6 months (making it 1 year total)),
+	there should be a variant of this patch in asterisk cvs-head/svn-trunk.
+
+
+-------------------------------------------------------------------------------
+** holding off on this one for now, heath and a few others are putting together
+a new version of this one.
+
+	There is also a res_features.c.bridge.diff.txt that will probably be required 
+	soon.  (twisteds' version of the bridge patch)
+

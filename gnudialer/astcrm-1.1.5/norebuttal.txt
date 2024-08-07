@@ -1,0 +1,13 @@
+# This file lists the states with "No Rebuttal" laws.
+
+AR
+IL
+KS
+KY
+MS
+OR
+PA
+SC
+SD
+UT
+WA

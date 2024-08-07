@@ -1,0 +1,45 @@
+notes about the predictive algorithm
+------------------------------------
+
+
+maxratio        = TheQueues.at(i).GetSetting("maxratio").GetFloat();
+maxlines        = TheQueues.at(i).GetSetting("maxlines").GetInt();
+maxabandons     = TheQueues.at(i).GetSetting("maxabandons").GetFloat();
+calls           = atoi(TheQueues.at(i).GetCalls().c_str());
+abandons        = atoi(TheQueues.at(i).GetAbandons().c_str());
+linesdialing    = TheCallCache->LinesDialing(queue);
+availagents     = TheQueues.at(i).GetAvailAgents(TheAgents);
+linestodial     = evaluate(mode,linesdialing,availagents,maxratio,maxlines,maxabandons,calls,abandons);
+unsigned int remaininglines = maxlines - linestodial;
+
+
+linesdialing	unsigned int	
+availagents	unsigned int	
+maxlines	unsigned int	
+maxratio	double		
+maxabandons	double	
+calls		unsigned long	
+abandons	unsigned long	
+
+06001_COLD: ldg: 0 aa: 0 mr: 2 ml: 24 ma: 3 mode: predictive calls: 4 abs: 0 l2d: 0 rls: 24
+
+
+ldg: 	0 
+aa: 	1 
+mr: 	2 
+ml: 	24 
+ma: 	3 
+calls: 	4 
+abs: 	0 
+l2d: 	2147483648 
+rls: 	2147483672
+
+
+New algorithm
+---------------
+
+double maxabnperc = maxabandons;
+double curabnperc = (dAbandons / dCalls) * 100.0;
+
+(((((maxabnperc / curabnperc) * maxratio) * availagents) - linesdialing) * .51)
+

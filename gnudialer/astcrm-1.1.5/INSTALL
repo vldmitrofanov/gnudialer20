@@ -1,0 +1,29 @@
+Dependencies:
+
+	Apache
+	MySQL (client and server)
+	JDK (optional) - see note below
+
+To install astcrm:
+
+	1. ./configure <path to html document root> <path to cgi-bin directory>
+	2. make
+	3. make install
+
+*** Note ***
+
+	If you get a java error when compiling it is because you don't
+	have JDK installed.  That's okay though, because the precompiled
+	.class file is included.  If you get the error, feel free to go
+	ahead and "make install" anyway.
+
+The file astcrm.conf in "cgi-bin" should contain 5 lines.
+It should look like this:
+
+yourastcrmpassword (not currently used)
+yourMySQLusername
+yourMySQLpassword
+yourMySQLhostname
+yourMySQLdatabase
+
+*** If using with GnuDialer, the dbname should be "dialer"

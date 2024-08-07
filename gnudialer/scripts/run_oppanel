@@ -1,0 +1,3 @@
+#!/bin/bash
+set -e
+`/usr/bin/screen -dmS oppanel /var/www/html/op_panel-0.26/op_server.pl $1`

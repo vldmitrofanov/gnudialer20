@@ -1,0 +1,35 @@
+
+*Machine Stats 		(like agent stats, but based on what the dialer dispos)
+
+Cumulative Stats Report	(*both Machine and Agent, summary for all)
+
+Agent Callbacks 	(both any and particular agent)
+
+*Cleanup /tmp/ files	(*sales, *exports)
+
+*Log Rotate		(asterisk, gnudialer, etc.)
+
+Keep Selected Campaign  (when doing 'agent' stuff)
+
+Use Filter Descriptions (on Edit Filters page, vice the whole (yadda yadda (filter))
+
+Filter Non/Mail/Both 	(Radio select address field empty/not empty/either)
+
+Auto Create DNC Table	(auto add dispo 8 to this table)
+
+Create Export of DNC's	(to text file)
+
+CRM From Where  	(this helps the agent/closer know where the call came from
+			 Agent Transfer, From Messaging, From Callback, etc)
+
+Fix TalkTime		  
+
+Import Errors 		(make upload actually error when something goes wrong)
+
+Option Reset Attps/Pkups
+
+
+
+* = Done
+
+

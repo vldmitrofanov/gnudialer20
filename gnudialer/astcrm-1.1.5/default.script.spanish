@@ -1,0 +1,44 @@
+<html>
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<head>
+</head>
+
+<input type=hidden name=disposition_use>
+
+<table CELLSPACING=1 CELLPADDING=1 COLS=2 WIDTH="100%" >
+<tr><td WIDTH="245"><b><font face="ARIAL"><font size=-1>Contact Information</font></font></b></td>
+<td><i><font face="ARIAL"><font size=-1>Some short comment here.</font></font></i></td></tr>
+<tr><td><div align=right>-</div></td>
+<td> </td></tr>
+<tr><td><div align=right>Phone Number:</div></td>
+<td>${phone}</td></tr>
+<tr><td><div align=right> Name:</div></td>
+<td><input type=text name='name_use' value='${name}' size=40 maxlength=40></td></tr>
+<tr><td><div align=right>Street Address:</div></td>
+<td><input type=text name='address_use' value='${address}' size=40 maxlength=40></td></tr>
+<tr><td><div align=right>City:</div></td>
+<td><input type=text name='city_use' value='${city}' size=20 maxlength=20></td></tr>
+<tr><td><div align=right>State:</div></td>
+<td><input type=text name='state_use' value='${state}' size=5 maxlength=5></td></tr>
+<tr><td><div align=right>Zipcode:</div></td>
+<td><input type=text name='zip_use' value='${zip}' size=5 maxlength=5></td></tr>
+<tr><td><div align=right>-</div></td>
+<td> </td></tr>
+<tr><td><div align=right>Comments:</div></td>
+<td><input type=text name='comments_use' value='${comments}' size=30 maxlength=60></td></tr>
+</table>
+<br><br>
+
+<select name="subdispo_use" size=1">
+<option value=0  >0  -No Hay Servicios en el Area
+<option value=0  >1  -Tiene Adelphia
+<option value=0  >2  -Tiene BrightHouse
+<option value=2  >3  -Tiene Comcast
+<option value=3  >4  -Tiene Directv
+<option value=4  >5  -Tiene DishNetwork
+<option value=5  >6  -Tiene Internet Bellsouth
+</select>
+
+<input type="Text" id="demo1" maxlength="25" size="25"><a href="javascript:NewCal('demo1','ddmmmyyyy',true,24)"><img src="images/cal.gif" width="16" height="16" border="0" alt="Pick a date"></a>
+
+</body></html>

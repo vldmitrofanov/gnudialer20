@@ -1,0 +1,11 @@
+# This file lists the states with "Right to Proceed" laws.
+
+AR
+IL
+KS
+KY
+MS
+OR
+SC
+SD
+UT

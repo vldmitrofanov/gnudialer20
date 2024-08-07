@@ -1,0 +1,8 @@
+/tmp/dialeradmin.log {
+    daily
+    rotate 30
+    copytruncate
+    nocompress
+    notifempty
+    missingok
+}

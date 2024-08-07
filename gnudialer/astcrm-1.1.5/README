@@ -1,0 +1,118 @@
+IMPORTANT NOTE:
+---------------
+
+	By default, astcrm uses "crm" for the manager
+	username and "1234" for the secret.
+
+	EXAMPLE: /etc/asterisk/manager.conf
+ 
+		[general]
+		enabled = yes
+		port = 5038
+		...
+
+		[crm]
+		secret = 1234
+		read = call,agent,user
+		write = call,agent,user
+
+	this is a change, before it used dialer (ages ago)
+	and mon.html was just changed to username 'crm' also.
+
+	You can change them by editing crm.html and mon.html
+	in the APPLET PARAM tags.  Comments are provided for
+	help in locating the correct lines to edit.
+
+0. LICENSE
+----------
+
+	astcrm is a general purpose CRM program for asterisk.
+	It is provided with NO WARRANTY.  Please see LICENSE
+	for details.
+
+1. INSTALLATION
+---------------
+
+	Please see the INSTALL file for instructions.
+
+2. USING ASTCRM
+---------------
+
+	astcrm provides a user interface to edit information
+	in a mysql table by an agent.
+
+	1. When an agent is logged in, it is running a 1x1
+	   applet that is logged in to asterisk manger. It
+	   watches to see if the agent got a call, then it
+	   refreshes the frame and a cgi script allows the
+	   agent to edit the record info.
+
+	2. The user's screen will show your predefined script
+	   allowing them to edit the record as they please.
+
+	3. When another request is made to the user, the
+	   previous record is automatically re-submitted
+	   and updated in MySQL.
+
+	Here's how to set up a script...
+
+	*  Your scripts should be named thesqltable.script
+	   and should be place in your "/cgi-bin/" directory.
+
+	*  They should be written in HTML.
+
+	*  Do not include the <FORM></FORM> tags; they will
+	   already be provided.
+
+	*  Do not provide a <INPUT TYPE=SUBMIT> button of any
+	   kind.  The information is automatically updated in
+	   MySQL when the next record comes in.
+
+	*  To make a value from a field appear on the screen,
+	   use the syntax " ${fieldname} ".
+
+	*  When the info is submitted, astcrm will attempt to
+	   update all form fields that have "-use" appended to
+	   their field name.
+
+	   For example, if you want the user to be able to see
+	   AND edit the field "income", simply write...
+
+	   <input type="text" name="income-use" value="${income}">
+
+	*  See "example.script" if you are having trouble
+	   grasping the concept.
+
+	*  When an agent is finished taking calls, he/she should
+	   always remember to click on the "Logout" link.  This
+	   ensures that the last record is updated in the database
+	   because it won't be otherwise since no other call will
+	   come in to update the previous record.
+
+3. AGENT LOGIN
+--------------
+
+	* Each agent should simply visit:
+
+		http://yourdomainorip/crm/crmlogin.html
+
+	* The agent should enter his/her "agent number"
+	  from agents.conf.
+
+4. AGENT MONITORING
+-------------------
+
+	A separate interface is provided for watching the same as
+	an agent is seeing while he/she is taking calls.
+
+	* To monitor, the staff member should visit:
+
+		http://yourdomainorip/crm/monlogin.html
+
+	* The staff member should enter the agent number of the
+	  agent he/she wishes to monitor.
+
+	* It is important to monitor using this interface instead
+	  of the agent crm interface to ensure, that each record
+	  is not updated 2x, thus allowing for possible information
+	  loss.

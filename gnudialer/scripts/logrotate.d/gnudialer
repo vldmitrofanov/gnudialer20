@@ -1,0 +1,13 @@
+/var/log/asterisk/gnudialer.log {
+    daily
+    rotate 30
+    copytruncate
+    nocompress
+    notifempty
+    missingok
+# This script asks asterisk to rotate its logs on its own.
+    postrotate
+      /usr/sbin/asterisk -rx "logger rotate"
+    endscript
+}
+

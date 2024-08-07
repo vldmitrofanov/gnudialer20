@@ -1,0 +1,26 @@
+#!/bin/bash
+tar czPf current_backup.tar.gz /etc/zaptel.conf \
+	/etc/gnudialer.conf \
+	/etc/gdhosts.conf \
+	/etc/asterisk \
+	/etc/samba \
+	/home/pchammer/gnudialer \
+	/home/pchammer/maindb \
+	/home/pchammer/java \
+	/home/pchammer/webmin \
+	/home/pchammer/mysql \
+	/usr/src/hold \
+	/var/www/html \
+	/var/log/asterisk \
+	/root/movesales \
+	/root/movereloads \
+        /tmp
+	
+	
+
+
+
+
+
+
+

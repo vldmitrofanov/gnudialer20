@@ -1,0 +1,54 @@
+phone,title,name,address,city,state,zip,oc,paidamt,paiddate,comments,countynum
+varchar(15),varchar(5),varchar(40),varchar(40),varchar(20),varchar(15),varchar(10),varchar(40),varchar(10),varchar(10),varchar(60),varchar(5)
+"4085551212","","Richard Lyman","100 MAIN ST","SAN JOAQUIN","CA","93660","","","","","06087"
+
+or viewed side by side
+phone           varchar(15)             "4085551212",
+title           varchar(15)             "",
+name            varchar(40)             "Richard Lyman",
+address         varchar(40)             "100 MAIN ST",
+city            varchar(20)             "SAN JOAQUIN",
+state           varchar(15)             "CA",
+zip             varchar(10)             "93660",
+oc              varchar(40)             "",
+paidamt         varchar(10)             "",
+paiddate        varchar(10)             "",
+comments        varchar(60)             "",
+countynum       varchar(5)              "06087"
+
+
+the data must be in quote-delimited format (csv is quote delimited
+with first record containing field names).
+
+********************************************************************
+
+i've done a modification to up.cpp so that you can upload csv data 
+where you had empty fields, like...
+
+"4085551212",,"Richard Lyman","100 MAIN ST","SAN JOAQUIN","CA","93660",,,,,"06087"
+
+as long as the last field isn't empty, it will now work. so...
+
+"4085551212",,,,,,,,,,,"06087"		this is valid
+"4085551212",,,,,,,,,,,			this is NOT valid
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

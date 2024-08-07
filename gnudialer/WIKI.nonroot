@@ -1,0 +1,112 @@
+Running Asterisk not as root
+
+Q: Can Asterisk run as non-root?
+A: Yes, but it requires a little tweaking.
+
+Q: Why would this be useful?
+A: So that if Asterisk has a remote security compromise, this cannot be used to take over the entire box. Ideally the compromise shouldn't even allow editing of the config files (possible if you don't edit them on-the-fly via the console).
+
+Create a new user account
+Use your system's preferred method of adding a new user. Examples:
+
+    * Red Hat: adduser -c "Asterisk PBX" -d /var/lib/asterisk -u 5060 asterisk
+    * Debian: adduser --system --home /var/lib/asterisk --no-create-home --gecos "Asterisk PBX" asterisk
+    * Debian: groupadd asterisk 
+
+
+Note that recent debian packages do this for you, including chown and chmod.
+Just take care not to start asterisk as root accidentally without '-U' .
+
+Recompile Asterisk with a new run directory
+Edit /usr/src/asterisk/Makefile and change the definition of ASTVARRUNDIR like this:
+
+   ASTVARRUNDIR=$(INSTALL_PREFIX)/var/run/asterisk
+
+Edit your Asterisk config file (/etc/asterisk/asterisk.conf):
+
+   astrundir => /var/run/asterisk
+
+Recompile and reinstall Asterisk. See Compiling Asterisk for details of this process.
+
+Set file and directory permissions
+Asterisk needs write permission for these directories and their contents:
+
+    * /var/lib/asterisk
+    * /var/log/asterisk
+    * /var/run/asterisk
+    * /var/spool/asterisk
+    * /usr/local/share/asterisk
+    * /dev/zap 
+
+
+The files in the /var/spool/asterisk/outgoing directory need to be owned by the asterisk user as well as writable. Writable because asterisk appends lines to indicate retry status. Owner so that it can set the utime. Covered below.
+
+   chown --recursive asterisk:asterisk /var/lib/asterisk
+   chown --recursive asterisk:asterisk /var/log/asterisk
+   chown --recursive asterisk:asterisk /var/run/asterisk
+   chown --recursive asterisk:asterisk /var/spool/asterisk
+   chown --recursive asterisk:asterisk /usr/local/share/asterisk
+   chown --recursive asterisk:asterisk /dev/zap
+
+   chmod --recursive u=rwX,g=rX,o= /var/lib/asterisk
+   chmod --recursive u=rwX,g=rX,o= /var/log/asterisk
+   chmod --recursive u=rwX,g=rX,o= /var/run/asterisk
+   chmod --recursive u=rwX,g=rX,o= /var/spool/asterisk
+   chmod --recursive u=rwX,g=rX,o= /usr/local/share/asterisk
+   chmod --recursive u=rwX,g=rX,o= /dev/zap
+
+Asterisk needs read permission for these directories and their contents:
+
+    * /etc/asterisk 
+
+
+   chown --recursive root:asterisk /etc/asterisk
+   chmod --recursive u=rwX,g=rX,o= /etc/asterisk
+
+You might also have to take a look at the permissions of the web voicemail cgi files/directory.
+
+
+Special devices
+If you run from safe_asterisk and require access via tty9:
+   chown asterisk /dev/tty9
+
+(note* be sure that /dev/tty9 isn't just a symlink . it is in at least one version of Gentoo. If that's the case, be sure to chown recursively (w/ '-R' or '--recursive'))
+
+Other files and devices may also need to be tweaked depending on your exact setup.
+
+e.g. If you use chan_oss:
+   chown asterisk /dev/dsp
+
+If running chan_capi for ISDN devices:
+   chown asterisk /dev/capi20
+
+If using the Sirrix cards :-
+   chown asterisk /dev/bchdev /dev/dchdev
+
+If using chan_alsa:
+   chown --recursive asterisk /dev/snd
+
+Suid executables
+
+If you're using musiconhold with mpg123, you'll probably need to set the suid bit on the executable like this:
+
+   chmod u+s /usr/local/bin/mpg123
+
+this allows mpg123 to run as root even though Asterisk is running as a non-root user. This appears to be necessary for mpg123 to work properly under Asterisk.
+
+However recall that mpg123 has some known security issues. Don't use it to play arbitrary data from the web.
+
+Starting Asterisk
+
+Method 1: Starting asterisk is covered elsewhere. However once you've done the above changes, you can make sure asterisk runs as user asterisk and group asterisk by issuing this command in your startup scripts:
+
+   asterisk -U asterisk -G asterisk
+
+If you use the Debian packages you only need '-U' and the existing init.d scripts are already set up for you.
+
+Method 2: su asterisk -c /usr/sbin/safe_asterisk
+
+Problems getting it to work?
+As root run the command:
+ strace -eopen asterisk -U asterisk
+And look for failures to open files. Modify the ownership and permissions of the culprits and try again. 

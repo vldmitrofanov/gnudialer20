@@ -1,0 +1,62 @@
+--- manager.c.org	2006-03-15 16:43:19.000000000 -0800
++++ manager.c	2006-03-15 16:57:03.000000000 -0800
+@@ -956,7 +956,13 @@
+ 			"Exten: %s\r\n"
+ 			"Reason: %d\r\n"
+ 			"Uniqueid: %s\r\n",
+-			in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>");
++			"CallerID: %s\r\n"
++			"CallerIDName: %s\r\n",
++			in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>",
++                        in->cid_num ? in->cid_num : "<unknown>",
++                        in->cid_name ? in->cid_name : "<unknown>"
++                        );
++
+ 	else
+ 		manager_event(EVENT_FLAG_CALL,
+ 			"OriginateFailure",
+@@ -966,7 +972,12 @@
+ 			"Exten: %s\r\n"
+ 			"Reason: %d\r\n"
+ 			"Uniqueid: %s\r\n",
+-			in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>");
++                        "CallerID: %s\r\n"
++                        "CallerIDName: %s\r\n",
++			in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>",
++                        in->cid_num ? in->cid_num : "<unknown>",
++                        in->cid_name ? in->cid_name : "<unknown>"
++                        );
+ 
+ 	/* Locked by ast_pbx_outgoing_exten or ast_pbx_outgoing_app */
+ 	if (chan)
+@@ -1544,6 +1555,22 @@
+ 	return 0;
+ }
+ 
++static char mandescr_sendevent[] =
++"Description: Send an event to manager sessions.\n"
++"Variables: (Names marked with * are required)\n"
++"       *Event: EventStringToSend\n"
++"       Body: Optional string to send.\n";
++
++static int action_sendevent(struct mansession *s, struct message *m)
++{
++        char *event = astman_get_header(m, "Event");
++        char *body = astman_get_header(m, "Body");
++
++        manager_event(EVENT_FLAG_USER, "ManagerUserEvent", "Event: %s\r\nBody: %s\r\n", event, body ? body : "<none>");
++
++        return 0;
++}
++
+ int ast_manager_unregister( char *action ) 
+ {
+ 	struct manager_action *cur = first_action, *prev = first_action;
+@@ -1656,6 +1683,7 @@
+ 		ast_manager_register("Status", EVENT_FLAG_CALL, action_status, "Lists channel status" );
+ 		ast_manager_register2("Setvar", EVENT_FLAG_CALL, action_setvar, "Set Channel Variable", mandescr_setvar );
+ 		ast_manager_register2("Getvar", EVENT_FLAG_CALL, action_getvar, "Gets a Channel Variable", mandescr_getvar );
++		ast_manager_register2("SendEvent", EVENT_FLAG_USER, action_sendevent, "Send Manager Event", mandescr_sendevent );
+ 		ast_manager_register2("Redirect", EVENT_FLAG_CALL, action_redirect, "Redirect (transfer) a call", mandescr_redirect );
+ 		ast_manager_register2("Originate", EVENT_FLAG_CALL, action_originate, "Originate Call", mandescr_originate);
+ 		ast_manager_register2("Command", EVENT_FLAG_COMMAND, action_command, "Execute Asterisk CLI Command", mandescr_command );

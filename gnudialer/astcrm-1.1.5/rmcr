@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+open(WINFILE, "$ARGV[0]") or die "cant open input file";
+while(<WINFILE>) {
+   $WinFile = $WinFile . $_;
+}
+close(WINFILE);
+while($WinFile =~ m/\r/) {
+#    $WinFile =~ s/\r//;
+#    $WinFile =~ s/\n//;
+#    $WinFile =~ s/\cx//;
+#    $WinFile =~ s/\e//;
+#    $WinFile =~ s/\t//;
+#    $WinFile =~ s/\f//;
+#    $WinFile =~ s/\x0A//;
+#    $WinFile =~ s/\x0a//;
+    $WinFile =~ s/\x0D//;
+    $WinFile =~ s/\x0d//;
+}
+open(UNIXFILE, ">$ARGV[0]") or die "cant open output file" ;
+print UNIXFILE $WinFile;
+close(UNIXFILE);
+exit;

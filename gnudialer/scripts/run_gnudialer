@@ -1,0 +1,3 @@
+#!/bin/bash
+set -e
+`/usr/bin/screen -dmS gnudialer /usr/bin/gnudialer -nd $1`

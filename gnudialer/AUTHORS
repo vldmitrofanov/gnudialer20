@@ -1,0 +1,26 @@
+GnuDialer Developers
+
+Main Developers
+---------------
+
+	Jamerson Medley <nixtux2003@yahoo.com>
+	Heath Schultz <heath1444@yahoo.com>
+	Richard Lyman <richard@dynx.net>
+
+Sockets Program
+---------------
+
+        Rob Tougher <rtougher@yahoo.com>
+
+	GnuDialer's Socket.h and SocketFunctions.h are derivative
+	works of Rob Tougher's c++ sockets implementation.
+
+	They are licensed under the Open Publication License.
+
+	Please see socket.LICENSE for details.
+
+Special Thanks
+--------------
+
+	A very special thanks to CommPartners for providing us with
+	free sips for testing GnuDialer.

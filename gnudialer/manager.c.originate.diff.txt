@@ -1,0 +1,45 @@
+Index: asterisk/manager.c
+===================================================================
+RCS file: /usr/cvsroot/asterisk/manager.c,v
+retrieving revision 1.110
+diff -u -r1.110 manager.c
+--- asterisk/manager.c	26 Aug 2005 23:04:20 -0000	1.110
++++ asterisk/manager.c	14 Sep 2005 18:41:57 -0000
+@@ -908,18 +908,28 @@
+ 			"Context: %s\r\n"
+ 			"Exten: %s\r\n"
+ 			"Reason: %d\r\n"
+-			"Uniqueid: %s\r\n",
+-			in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>");
++			"Uniqueid: %s\r\n"
++			"CallerID: %s\r\n"
++			"CallerIDName: %s\r\n",
++			in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>",
++			in->cid_num ? in->cid_num : "<unknown>",
++			in->cid_name ? in->cid_name : "<unknown>"
++			);
+ 	else
+ 		manager_event(EVENT_FLAG_CALL,
+ 			"OriginateFailure",
+-			"%s"
+-			"Channel: %s/%s\r\n"
+-			"Context: %s\r\n"
+-			"Exten: %s\r\n"
+-			"Reason: %d\r\n"
+-			"Uniqueid: %s\r\n",
+-			in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>");
++                        "%s"
++                        "Channel: %s/%s\r\n"
++                        "Context: %s\r\n"
++                        "Exten: %s\r\n"
++                        "Reason: %d\r\n"
++                        "Uniqueid: %s\r\n"
++                        "CallerID: %s\r\n"
++                        "CallerIDName: %s\r\n",
++                        in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>",
++                        in->cid_num ? in->cid_num : "<unknown>",
++                        in->cid_name ? in->cid_name : "<unknown>"
++                        );
+ 
+ 	/* Locked by ast_pbx_outgoing_exten or ast_pbx_outgoing_app */
+ 	if (chan)

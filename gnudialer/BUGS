@@ -1,0 +1,32 @@
+this file is in no way even close to whats been added/fixed.
+it is just a quick rundown based on a few notes i had.
+
+
+---------------------------------------------------------------------
+added colorized debug info (add more everyday)
+added multiple filters
+added counts for primary filters
+added skip
+added export sales
+added print sales
+added reload campaign data
+added campaign (table) backup/restore
+added closer callbacks
+added subdispo
+added import (including adding more data)
+added enable/disable tzfilter setting
+added enable/disable global debug output
+added enable/disable global log output
+added enable/disable campaign debug output
+added remove campaign
+added per campaign trunk setting
+
+added retain selected campaign (campaign side only)
+added query code to only call records once a day
+
+integrated gnudialer and astcrm - dispo and pause, hangup, logout
+
+reset abandons
+reset calls
+reset filters
+reset skips

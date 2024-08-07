@@ -1,0 +1,33 @@
+--- manager.c.org	2006-03-15 16:43:19.000000000 -0800
++++ manager.c	2006-03-15 16:47:29.000000000 -0800
+@@ -1544,6 +1544,22 @@
+ 	return 0;
+ }
+ 
++static char mandescr_sendevent[] =
++"Description: Send an event to manager sessions.\n"
++"Variables: (Names marked with * are required)\n"
++"       *Event: EventStringToSend\n"
++"       Body: Optional string to send.\n";
++
++static int action_sendevent(struct mansession *s, struct message *m)
++{
++        char *event = astman_get_header(m, "Event");
++        char *body = astman_get_header(m, "Body");
++
++        manager_event(EVENT_FLAG_USER, "ManagerUserEvent", "Event: %s\r\nBody: %s\r\n", event, body ? body : "<none>");
++
++        return 0;
++}
++
+ int ast_manager_unregister( char *action ) 
+ {
+ 	struct manager_action *cur = first_action, *prev = first_action;
+@@ -1656,6 +1672,7 @@
+ 		ast_manager_register("Status", EVENT_FLAG_CALL, action_status, "Lists channel status" );
+ 		ast_manager_register2("Setvar", EVENT_FLAG_CALL, action_setvar, "Set Channel Variable", mandescr_setvar );
+ 		ast_manager_register2("Getvar", EVENT_FLAG_CALL, action_getvar, "Gets a Channel Variable", mandescr_getvar );
++		ast_manager_register2("SendEvent", EVENT_FLAG_USER, action_sendevent, "Send Manager Event", mandescr_sendevent );
+ 		ast_manager_register2("Redirect", EVENT_FLAG_CALL, action_redirect, "Redirect (transfer) a call", mandescr_redirect );
+ 		ast_manager_register2("Originate", EVENT_FLAG_CALL, action_originate, "Originate Call", mandescr_originate);
+ 		ast_manager_register2("Command", EVENT_FLAG_COMMAND, action_command, "Execute Asterisk CLI Command", mandescr_command );

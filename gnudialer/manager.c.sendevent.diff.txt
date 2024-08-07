@@ -1,0 +1,39 @@
+Index: asterisk/manager.c
+===================================================================
+RCS file: /usr/cvsroot/asterisk/manager.c,v
+retrieving revision 1.114
+diff -u -r1.114 manager.c
+--- asterisk/manager.c	28 Sep 2005 23:10:13 -0000	1.114
++++ asterisk/manager.c	29 Sep 2005 00:53:44 -0000
+@@ -1462,6 +1462,22 @@
+ 	return -1;
+ }
+ 
++static char mandescr_sendevent[] =
++"Description: Send an event to manager sessions.\n"
++"Variables: (Names marked with * are required)\n"
++"       *Event: EventStringToSend\n"
++"       Body: Optional string to send.\n";
++
++static int action_sendevent(struct mansession *s, struct message *m)
++{
++        char *event = astman_get_header(m, "Event");
++        char *body = astman_get_header(m, "Body");
++
++        manager_event(EVENT_FLAG_USER, "ManagerUserEvent", "Event: %s\r\nBody: %s\r\n", event, body ? body : "<none>");
++
++        return 0;
++}
++
+ /*--- manager_event: Send AMI event to client */
+ int manager_event(int category, char *event, char *fmt, ...)
+ {
+@@ -1614,6 +1630,7 @@
+ 		ast_manager_register("Status", EVENT_FLAG_CALL, action_status, "Lists channel status" );
+ 		ast_manager_register2("Setvar", EVENT_FLAG_CALL, action_setvar, "Set Channel Variable", mandescr_setvar );
+ 		ast_manager_register2("Getvar", EVENT_FLAG_CALL, action_getvar, "Gets a Channel Variable", mandescr_getvar );
++                ast_manager_register2("SendEvent", EVENT_FLAG_USER, action_sendevent, "Send Manager Event", mandescr_sendevent );		
+		ast_manager_register2("Getvar", EVENT_FLAG_CALL, action_getvar, "Gets a Channel Variable", mandescr_getvar );
+ 		ast_manager_register2("Redirect", EVENT_FLAG_CALL, action_redirect, "Redirect (transfer) a call", mandescr_redirect );
+ 		ast_manager_register2("Originate", EVENT_FLAG_CALL, action_originate, "Originate Call", mandescr_originate);
+ 		ast_manager_register2("Command", EVENT_FLAG_COMMAND, action_command, "Execute Asterisk CLI Command", mandescr_command );

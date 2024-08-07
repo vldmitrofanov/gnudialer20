@@ -1,0 +1,56 @@
+#!/bin/sh
+
+#
+# GnuDialer - Complete, free predictive dialer
+#
+# Complete, free predictive dialer for contact centers.
+#
+# Copyright (C) 2006, GnuDialer Project
+#
+# Heath Schultz <heath1444@yahoo.com>
+# Richard Lyman <richard@dynx.net>
+#
+# This program is free software, distributed under the terms of
+# the GNU General Public License.
+#
+
+# You should not edit this file unless you are absolutely sure that you know
+# what you are doing.  You wouldn't want to delete / on accident would you???
+
+function removequotes {
+
+if [[ `expr substr "${1}" 1 1` == "\"" ]]; then
+
+FIRSTISOFF=`expr substr ${1} 2 50`
+LEN=`expr length ${FIRSTISOFF}`
+LEN=`expr $LEN - 1`
+expr substr ${FIRSTISOFF} 1 $LEN
+
+fi
+
+if [[ `expr substr "${1}" 1 1` != "\"" ]]; then
+
+echo $1
+
+fi
+
+}
+
+if [[ "${1}" == "CGIBIN" ]]; then
+
+THEDIR=`expr substr "$( echo "BUNK" > /tmp/bunkfile && cat $( locate httpd.conf ) /tmp/bunkfile | grep cgi-bin | grep -v "#" | grep ScriptAlias | head -n 1 | sed 's/^[ ^t]*//' )" 23 50`
+removequotes ${THEDIR}
+
+rm /tmp/bunkfile
+
+fi
+
+if [[ "${1}" == "DOCROOT" ]]; then
+
+THEDIR=`expr substr "$( echo "BUNK" > /tmp/bunkfile && cat $( locate httpd.conf ) /tmp/bunkfile | grep DocumentRoot | grep -v "#" | head -n 1 )" 14 50`
+removequotes ${THEDIR}/
+
+rm /tmp/bunkfile
+
+fi
+

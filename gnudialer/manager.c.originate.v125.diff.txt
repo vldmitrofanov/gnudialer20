@@ -1,0 +1,31 @@
+--- manager.c.org	2006-03-15 16:43:19.000000000 -0800
++++ manager.c	2006-03-15 16:55:32.000000000 -0800
+@@ -956,7 +956,13 @@
+ 			"Exten: %s\r\n"
+ 			"Reason: %d\r\n"
+ 			"Uniqueid: %s\r\n",
+-			in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>");
++			"CallerID: %s\r\n"
++			"CallerIDName: %s\r\n",
++			in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>",
++                        in->cid_num ? in->cid_num : "<unknown>",
++                        in->cid_name ? in->cid_name : "<unknown>"
++                        );
++
+ 	else
+ 		manager_event(EVENT_FLAG_CALL,
+ 			"OriginateFailure",
+@@ -966,7 +972,12 @@
+ 			"Exten: %s\r\n"
+ 			"Reason: %d\r\n"
+ 			"Uniqueid: %s\r\n",
+-			in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>");
++                        "CallerID: %s\r\n"
++                        "CallerIDName: %s\r\n",
++			in->idtext, in->tech, in->data, in->context, in->exten, reason, chan ? chan->uniqueid : "<null>",
++                        in->cid_num ? in->cid_num : "<unknown>",
++                        in->cid_name ? in->cid_name : "<unknown>"
++                        );
+ 
+ 	/* Locked by ast_pbx_outgoing_exten or ast_pbx_outgoing_app */
+ 	if (chan)

@@ -1,0 +1,15 @@
+# This file lists the states with "dual-party" or "multi-party" consent laws.
+# In NV it's not statutory, but I ran across a court case that basically had
+# the same effect.
+
+CA
+CT
+DE
+FL
+MA
+MD
+MT
+NH
+PA
+WA
+NV

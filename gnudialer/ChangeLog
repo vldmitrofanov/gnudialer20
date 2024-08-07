@@ -1,0 +1,70 @@
+GnuDialer 3.0 Puff - Wed Feb 07 21:28:01 PDT 2006
+-------------------------------------------------
+
+        * Almost a complete re-write (again)
+        * Design changes due to asterisk deadlocks
+	* The are way to many changes to list them 
+	  all. So please, just load up the current 
+	  release and let us know what you think.
+	* Current Release is Puff18
+	* Make sure you read README, INSTALL, 
+	  README.NOW, and any other text files 
+	  that you find.  
+	* Added BUGS (notes about features/fixes)
+
+GnuDialer 2.1 beta - Tue Jun 14 13:14:47 CDT 2005
+-------------------------------------------------
+
+	* Fixed a typo in INSTALL
+	* Made the admin much more user friendly
+	  via multiple selects.
+
+GnuDialer 2.0 beta - Fri Jun 10 21:16:28 CDT 2005
+-------------------------------------------------
+
+	* Almost a complete re-write.  Every file is re-written or new since the
+	  last version except for command.h
+	* Created astcrm
+	* See README and INSTALL for instructions.
+
+GnuDialer 1.0.4 beta - Sun Jan 30 01:50:37 CST 2005
+---------------------------------------------------
+
+	* Got digital recoring to work (calls with dispo "4" are saved properly)
+	* Tested it with multiple outgoing lines, it calls with some sanity now
+	* Fixed a log of bugs, redid the agi's, got them to work
+	* Fixed serious bug where it would have called back "not interested" "invalid" etc.. leads
+	* Got recorded message to abandons to work for DNC compliance
+	*** Test runs went very smooth
+
+GnuDialer 1.0.3 beta - Fri Jan 28 22:37:27 CST 2005
+---------------------------------------------------
+
+	* Got agent rolling to work
+	* Made some improvements to the statii app
+	* A few bug fixes
+
+GnuDialer 1.0.2 beta - Fri Jan 28 20:35:45 CST 2005
+---------------------------------------------------
+
+	* Lots of new features!
+	* Lot less bugs!
+	* Basic filtering
+	* vdialpad app works
+	* statii app works
+	* Boot agent, boot station, etc.
+	* Error checking on agent login
+	* You could actually use this program now :)
+
+GnuDialer 1.0.1 beta - Wed Jan 26 20:54:33 CST 2005
+---------------------------------------------------
+
+	* Fixed timezone bug where it wouldn't work before 9 GMT
+
+GnuDialer 1.0 beta  - Wed Jan 26 17:15:27 CST 2005
+--------------------------------------------------
+
+	* Initial Beta Release
+	* Major bugfixes from the alpha version
+	* Timezone filtering seems to work great now
+	* Multiple campaigns should work now

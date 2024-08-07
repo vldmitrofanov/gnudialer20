@@ -1,0 +1,331 @@
+Notes for setting up asterisk to run on a nonroot user
+	
+	http://www.voip-info.org/wiki/view/Asterisk+non-root
+	(also in WIKI.nonroot in this dir)
+
+---------------------------------------------------------------------------
+below is a patch set that is being reviewed for inclusion to asterisk, 
+it is to help asterisk not override system file settings (which asterisk does now)
+
+this is here as a placeholder only till i determine if we should make these 
+required (or if asterisk-dev guys decide to include into head/trunk)
+----------------------------------------------------------------------------
+
+
+
+
+Index: channels/chan_zap.c
+===================================================================
+--- channels/chan_zap.c	(revision 10285)
++++ channels/chan_zap.c	(working copy)
+@@ -9284,7 +9284,7 @@
+ 	for (i=0;i<NUM_DCHANS;i++) {
+ 		if (!pri->dchannels[i])
+ 			break;
+-		pri->fds[i] = open("/dev/zap/channel", O_RDWR, 0600);
++		pri->fds[i] = open("/dev/zap/channel", O_RDWR);
+ 		x = pri->dchannels[i];
+ 		if ((pri->fds[i] < 0) || (ioctl(pri->fds[i],ZT_SPECIFY,&x) == -1)) {
+ 			ast_log(LOG_ERROR, "Unable to open D-channel %d (%s)\n", x, strerror(errno));
+Index: channels/chan_iax2.c
+===================================================================
+--- channels/chan_iax2.c	(revision 10285)
++++ channels/chan_iax2.c	(working copy)
+@@ -1192,7 +1192,7 @@
+ 		ast_log(LOG_WARNING, "Cannot open '%s': %s\n", s, strerror(errno));
+ 		return -1;
+ 	}
+-	fd = open(s2, O_RDWR | O_CREAT | O_EXCL);
++	fd = open(s2, O_RDWR | O_CREAT | O_EXCL, AST_FILE_MODE);
+ 	if (fd < 0) {
+ 		ast_log(LOG_WARNING, "Cannot open '%s' for writing: %s\n", s2, strerror(errno));
+ 		close(ifd);
+Index: app.c
+===================================================================
+--- app.c	(revision 10285)
++++ app.c	(working copy)
+@@ -177,7 +177,7 @@
+ 		ast_log(LOG_WARNING, "Unable to create silence detector :(\n");
+ 		return -1;
+ 	}
+-	writer = ast_writefile(dest, dstfmt, "Voice file", 0, 0, 0666);
++	writer = ast_writefile(dest, dstfmt, "Voice file", 0, 0, AST_FILE_MODE);
+ 	if (!writer) {
+ 		ast_log(LOG_WARNING, "Unable to open file '%s' in format '%s' for writing\n", dest, dstfmt);
+ 		ast_dsp_free(sildet);
+@@ -603,7 +603,7 @@
+ 	time(&start);
+ 	end=start;  /* pre-initialize end to be same as start in case we never get into loop */
+ 	for (x=0;x<fmtcnt;x++) {
+-		others[x] = ast_writefile(recordfile, sfmt[x], comment, O_TRUNC, 0, 0700);
++		others[x] = ast_writefile(recordfile, sfmt[x], comment, O_TRUNC, 0, AST_FILE_MODE);
+ 		ast_verbose( VERBOSE_PREFIX_3 "x=%d, open writing:  %s format: %s, %p\n", x, recordfile, sfmt[x], others[x]);
+ 
+ 		if (!others[x]) {
+@@ -833,7 +833,7 @@
+ 	time(&start);
+ 	end=start;  /* pre-initialize end to be same as start in case we never get into loop */
+ 	for (x=0;x<fmtcnt;x++) {
+-		others[x] = ast_writefile(prependfile, sfmt[x], comment, O_TRUNC, 0, 0700);
++		others[x] = ast_writefile(prependfile, sfmt[x], comment, O_TRUNC, 0, AST_FILE_MODE);
+ 		ast_verbose( VERBOSE_PREFIX_3 "x=%d, open writing:  %s format: %s, %p\n", x, prependfile, sfmt[x], others[x]);
+ 		if (!others[x]) {
+ 			break;
+Index: apps/app_chanspy.c
+===================================================================
+--- apps/app_chanspy.c	(revision 10285)
++++ apps/app_chanspy.c	(working copy)
+@@ -441,7 +441,7 @@
+ 	if (recbase) {
+ 		char filename[512];
+ 		snprintf(filename,sizeof(filename),"%s/%s.%d.raw",ast_config_AST_MONITOR_DIR, recbase, (int)time(NULL));
+-		if ((fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0644)) <= 0) {
++		if ((fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, AST_FILE_MODE)) <= 0) {
+ 			ast_log(LOG_WARNING, "Cannot open %s for recording\n", filename);
+ 			fd = 0;
+ 		}
+Index: apps/app_dictate.c
+===================================================================
+--- apps/app_dictate.c	(revision 10285)
++++ apps/app_dictate.c	(working copy)
+@@ -153,7 +153,7 @@
+ 		}
+ 
+ 		snprintf(path, len, "%s/%s", base, filein);
+-		fs = ast_writefile(path, "raw", NULL, O_CREAT|O_APPEND, 0, 0700);
++		fs = ast_writefile(path, "raw", NULL, O_CREAT|O_APPEND, 0, AST_FILE_MODE);
+ 		mode = DMODE_PLAY;
+ 		memset(&flags, 0, sizeof(flags));
+ 		ast_set_flag(&flags, DFLAG_PAUSE);
+@@ -310,7 +310,7 @@
+ 						} else {
+ 							oflags |= O_APPEND;
+ 						}
+-						fs = ast_writefile(path, "raw", NULL, oflags, 0, 0700);
++						fs = ast_writefile(path, "raw", NULL, oflags, 0, AST_FILE_MODE);
+ 						if (ast_test_flag(&flags, DFLAG_TRUNC)) {
+ 							ast_seekstream(fs, 0, SEEK_SET);
+ 							ast_clear_flag(&flags, DFLAG_TRUNC);
+Index: apps/app_festival.c
+===================================================================
+--- apps/app_festival.c	(revision 10285)
++++ apps/app_festival.c	(working copy)
+@@ -402,7 +402,7 @@
+     		snprintf(cachefile, sizeof(cachefile), "%s/%s", cachedir, MD5Hex);
+     		fdesc=open(cachefile,O_RDWR);
+     		if (fdesc==-1) {
+-    			fdesc=open(cachefile,O_CREAT|O_RDWR,0777);
++    			fdesc=open(cachefile,O_CREAT|O_RDWR,AST_FILE_MODE_EXEC);
+     			if (fdesc!=-1) {
+     				writecache=1;
+     				strln=strlen((char *)data);
+Index: apps/app_mixmonitor.c
+===================================================================
+--- apps/app_mixmonitor.c	(revision 10285)
++++ apps/app_mixmonitor.c	(working copy)
+@@ -174,7 +174,7 @@
+ 		ext = "raw";
+ 	}
+ 
+-	fs = ast_writefile(mixmonitor->filename, ext, NULL, oflags, 0, 0644);
++	fs = ast_writefile(mixmonitor->filename, ext, NULL, oflags, 0, AST_FILE_MODE);
+ 	if (!fs) {
+ 		ast_log(LOG_ERROR, "Cannot open %s.%s\n", mixmonitor->filename, ext);
+ 		goto out;
+Index: apps/app_meetme.c
+===================================================================
+--- apps/app_meetme.c	(revision 10285)
++++ apps/app_meetme.c	(working copy)
+@@ -2252,7 +2252,7 @@
+ 			break;
+ 		}
+ 		if (!s && cnf->recordingfilename && (cnf->recordingfilename != oldrecordingfilename)) {
+-			s = ast_writefile(cnf->recordingfilename, cnf->recordingformat, NULL, flags, 0, 0644);
++			s = ast_writefile(cnf->recordingfilename, cnf->recordingformat, NULL, flags, 0, AST_FILE_MODE);
+ 			oldrecordingfilename = cnf->recordingfilename;
+ 		}
+ 		
+Index: apps/app_voicemail.c
+===================================================================
+--- apps/app_voicemail.c	(revision 10285)
++++ apps/app_voicemail.c	(working copy)
+@@ -900,7 +900,7 @@
+ 			SQLFreeHandle (SQL_HANDLE_STMT, stmt);
+ 			goto yuck;
+ 		}
+-		fd = open(full_fn, O_RDWR | O_CREAT | O_TRUNC);
++		fd = open(full_fn, O_RDWR | O_CREAT | O_TRUNC, AST_FILE_MODE);
+ 		if (fd < 0) {
+ 			ast_log(LOG_WARNING, "Failed to write '%s': %s\n", full_fn, strerror(errno));
+ 			SQLFreeHandle (SQL_HANDLE_STMT, stmt);
+@@ -927,7 +927,7 @@
+ 			if (!strcasecmp(coltitle, "recording")) {
+ 				res = SQLGetData(stmt, x + 1, SQL_BINARY, NULL, 0, &colsize);
+ 				fdlen = colsize;
+-				fd = open(full_fn, O_RDWR | O_TRUNC | O_CREAT, 0770);
++				fd = open(full_fn, O_RDWR | O_TRUNC | O_CREAT, AST_FILE_MODE);
+ 				if (fd > -1) {
+ 					char tmp[1]="";
+ 					lseek(fd, fdlen - 1, SEEK_SET);
+Index: apps/app_record.c
+===================================================================
+--- apps/app_record.c	(revision 10285)
++++ apps/app_record.c	(working copy)
+@@ -240,7 +240,7 @@
+ 		
+ 		
+ 	flags = option_append ? O_CREAT|O_APPEND|O_WRONLY : O_CREAT|O_TRUNC|O_WRONLY;
+-	s = ast_writefile( tmp, ext, NULL, flags , 0, 0644);
++	s = ast_writefile( tmp, ext, NULL, flags , 0, AST_FILE_MODE);
+ 		
+ 	if (!s) {
+ 		ast_log(LOG_WARNING, "Could not create file %s\n", filename);
+Index: db.c
+===================================================================
+--- db.c	(revision 10285)
++++ db.c	(working copy)
+@@ -63,7 +63,7 @@
+ 
+ static int dbinit(void) 
+ {
+-	if (!astdb && !(astdb = dbopen((char *)ast_config_AST_DB, O_CREAT | O_RDWR, 0664, DB_BTREE, NULL))) {
++	if (!astdb && !(astdb = dbopen((char *)ast_config_AST_DB, O_CREAT | O_RDWR, AST_FILE_MODE, DB_BTREE, NULL))) {
+ 		ast_log(LOG_WARNING, "Unable to open Asterisk database\n");
+ 		return -1;
+ 	}
+Index: include/asterisk.h
+===================================================================
+--- include/asterisk.h	(revision 10285)
++++ include/asterisk.h	(working copy)
+@@ -18,6 +18,13 @@
+ #ifndef _ASTERISK_H
+ #define _ASTERISK_H
+ 
++#ifndef AST_FILE_MODE
++#define AST_FILE_MODE 0666
++#endif
++#ifndef AST_FILE_MODE_EXEC
++#define AST_FILE_MODE_EXEC 0777
++#endif
++
+ #define DEFAULT_LANGUAGE "en"
+ 
+ #define AST_CONFIG_MAX_PATH 255
+Index: res/res_monitor.c
+===================================================================
+--- res/res_monitor.c	(revision 10285)
++++ res/res_monitor.c	(working copy)
+@@ -207,7 +207,7 @@
+ 		}
+ 		if (!(monitor->read_stream = ast_writefile(monitor->read_filename,
+ 						monitor->format, NULL,
+-						O_CREAT|O_TRUNC|O_WRONLY, 0, 0644))) {
++						O_CREAT|O_TRUNC|O_WRONLY, 0, AST_FILE_MODE))) {
+ 			ast_log(LOG_WARNING, "Could not create file %s\n",
+ 						monitor->read_filename);
+ 			free(monitor);
+@@ -219,7 +219,7 @@
+ 		}
+ 		if (!(monitor->write_stream = ast_writefile(monitor->write_filename,
+ 						monitor->format, NULL,
+-						O_CREAT|O_TRUNC|O_WRONLY, 0, 0644))) {
++						O_CREAT|O_TRUNC|O_WRONLY, 0, AST_FILE_MODE))) {
+ 			ast_log(LOG_WARNING, "Could not create file %s\n",
+ 						monitor->write_filename);
+ 			ast_closestream(monitor->read_stream);
+Index: codecs/codec_g723_1.c
+===================================================================
+--- codecs/codec_g723_1.c	(revision 10285)
++++ codecs/codec_g723_1.c	(working copy)
+@@ -196,7 +196,7 @@
+ 	{ 
+ 		static int fd2 = -1;
+ 		if (fd2 == -1) {
+-			fd2 = open("g723.example", O_WRONLY | O_CREAT | O_TRUNC, 0644);
++			fd2 = open("g723.example", O_WRONLY | O_CREAT | O_TRUNC, AST_FILE_MODE);
+ 		}
+ 		write(fd2, tmp->f.data, tmp->f.datalen);
+ 	} 		
+@@ -328,7 +328,7 @@
+ 		int delay = htonl(30);
+ 		short size;
+ 		if (fd < 0)
+-			fd = open("trans.g723", O_WRONLY | O_CREAT | O_TRUNC, 0644);
++			fd = open("trans.g723", O_WRONLY | O_CREAT | O_TRUNC, AST_FILE_MODE);
+ 		if (fd < 0)
+ 			ast_log(LOG_WARNING, "Unable to create demo\n");
+ 		write(fd, &delay, 4);
+Index: codecs/codec_lpc10.c
+===================================================================
+--- codecs/codec_lpc10.c	(revision 10285)
++++ codecs/codec_lpc10.c	(working copy)
+@@ -170,7 +170,7 @@
+ 	{ static int samplefr = 0;
+ 	if (samplefr == 80) {
+ 		int fd;
+-		fd = open("lpc10.example", O_WRONLY | O_CREAT, 0644);
++		fd = open("lpc10.example", O_WRONLY | O_CREAT, AST_FILE_MODE);
+ 		write(fd, tmp->f.data, tmp->f.datalen);
+ 		close(fd);
+ 	} 		
+@@ -323,7 +323,7 @@
+ 	{ static int samplefr = 0;
+ 	if (samplefr == 0) {
+ 		int fd;
+-		fd = open("lpc10.example", O_WRONLY | O_CREAT, 0644);
++		fd = open("lpc10.example", O_WRONLY | O_CREAT, AST_FILE_MODE);
+ 		write(fd, tmp->f.data, tmp->f.datalen);
+ 		close(fd);
+ 	} 		
+Index: codecs/codec_speex.c
+===================================================================
+--- codecs/codec_speex.c	(revision 10285)
++++ codecs/codec_speex.c	(working copy)
+@@ -367,7 +367,7 @@
+ 	{
+ 		static int fd = -1;
+ 		if (fd < 0) {
+-			fd = open("speex.raw", O_WRONLY|O_TRUNC|O_CREAT);
++			fd = open("speex.raw", O_WRONLY|O_TRUNC|O_CREAT, AST_FILE_MODE);
+ 			if (fd > -1) {
+ 				write(fd, tmp->f.data, tmp->f.datalen);
+ 				close(fd);
+Index: codecs/codec_ilbc.c
+===================================================================
+--- codecs/codec_ilbc.c	(revision 10285)
++++ codecs/codec_ilbc.c	(working copy)
+@@ -240,7 +240,7 @@
+ 	{
+ 		static int fd = -1;
+ 		if (fd == -1) {
+-			fd = open("ilbc.out", O_CREAT|O_TRUNC|O_WRONLY, 0666);
++			fd = open("ilbc.out", O_CREAT|O_TRUNC|O_WRONLY, AST_FILE_MODE);
+ 			write(fd, tmp->f.data, tmp->f.datalen);
+ 			close(fd);
+ 		}
+Index: file.c
+===================================================================
+--- file.c	(revision 10285)
++++ file.c	(working copy)
+@@ -258,7 +258,7 @@
+ 		ast_log(LOG_WARNING, "Unable to open %s in read-only mode\n", infile);
+ 		return -1;
+ 	}
+-	if ((ofd = open(outfile, O_WRONLY | O_TRUNC | O_CREAT, 0600)) < 0) {
++	if ((ofd = open(outfile, O_WRONLY | O_TRUNC | O_CREAT, AST_FILE_MODE)) < 0) {
+ 		ast_log(LOG_WARNING, "Unable to open %s in write-only mode\n", outfile);
+ 		close(ifd);
+ 		return -1;
+Index: cdr/cdr_sqlite.c
+===================================================================
+--- cdr/cdr_sqlite.c	(revision 10285)
++++ cdr/cdr_sqlite.c	(working copy)
+@@ -184,7 +184,7 @@
+ 
+ 	/* is the database there? */
+ 	snprintf(fn, sizeof(fn), "%s/cdr.db", ast_config_AST_LOG_DIR);
+-	db = sqlite_open(fn, 0660, &zErr);
++	db = sqlite_open(fn, AST_FILE_MODE, &zErr);
+ 	if (!db) {
+ 		ast_log(LOG_ERROR, "cdr_sqlite: %s\n", zErr);
+ 		free(zErr);
