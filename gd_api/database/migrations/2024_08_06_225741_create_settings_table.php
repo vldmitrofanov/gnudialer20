@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('campaign_settings', function (Blueprint $table) {
+        Schema::create('settings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('campaign_id')->constrained()->onDelete('cascade');
+            $table->foreignId('queue_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('parameter');  
             $table->string('value'); 
             $table->string('type')->default('string');
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('campaign_settings');
+        Schema::dropIfExists('settings');
     }
 };

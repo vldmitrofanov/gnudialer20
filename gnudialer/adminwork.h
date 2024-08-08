@@ -25,7 +25,8 @@
 bool campaignIsRunning(std::string campaign) {
 
 	Queue TheQueue;
-	TheQueue.ParseQueue(campaign);
+	u_long serverId = 1;
+	TheQueue.ParseQueue(campaign,serverId);
 	if (TheQueue.GetSetting("active").Get() == "true") {
 		return true;
 	} else {
@@ -166,7 +167,8 @@ bool removeQueue(std::string queue) {
 bool startQueue(std::string queue) {
 
 	Queue TheQueue;
-	TheQueue.ParseQueue(queue);
+	u_long serverId = 1;
+	TheQueue.ParseQueue(queue,serverId);
 	TheQueue.SetSetting("active","true");
 	TheQueue.Write();
 	return true;
@@ -177,7 +179,8 @@ bool stopQueue(std::string queue) {
 //	sendToDialer("stop " + queue);
 
 	Queue TheQueue;
-	TheQueue.ParseQueue(queue);
+	u_long serverId = 1;
+	TheQueue.ParseQueue(queue,serverId);
 	TheQueue.SetSetting("active","false");
 	TheQueue.Write();
 

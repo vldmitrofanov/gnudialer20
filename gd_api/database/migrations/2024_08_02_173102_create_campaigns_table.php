@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('campaigns', function (Blueprint $table) {
             $table->id();
-            $table->string('name');           
+            $table->string('name');  
+            $table->string('code')->unique()->index()->comment('A short name');         
             $table->tinyInteger('status')->default(0);
             $table->timestamps();
         });

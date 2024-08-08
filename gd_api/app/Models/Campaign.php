@@ -8,19 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 class Campaign extends Model
 {
     use HasFactory;
+    const STATUS_ACTIVE=1;
+    const STATUS_INACTIVE=0;
+
+    protected $fillable = [
+        'name',        
+        'status'
+    ];
 
     public function queues()
     {
         return $this->hasMany(Queue::class);
     }
 
-    public function settings()
-    {
-        return $this->hasMany(CampaignSetting::class);
-    }
 
-    public function filters()
-    {
-        return $this->hasMany(Filter::class);
-    }
 }

@@ -18,7 +18,7 @@
 #ifndef ETCINFO
 #define ETCINFO
 
-std::string getEtcLine(int line) {
+inline std::string getEtcLine(int line) {
 	std::string etcLine;
 	std::ifstream EtcInfoIn;
 	EtcInfoIn.open("/etc/gnudialer.conf");
@@ -30,17 +30,18 @@ std::string getEtcLine(int line) {
 	return etcLine;
 }
 
-std::string getGnuDialerPassword() { return getEtcLine(1); }
-std::string getMySqlUser() { return getEtcLine(2); }
-std::string getMySqlPass() { return getEtcLine(3); }
-std::string getMySqlPassword() { return getMySqlPass(); }
-std::string getMySqlHost() { return getEtcLine(4); }
-std::string getMySqlHostname() { return getEtcLine(4); }
-std::string getDbName() { return getEtcLine(5); }
-std::string getManagerUser() { return getEtcLine(6); }
-std::string getManagerUsername() { return getEtcLine(6); }
-std::string getManagerPassword() { return getEtcLine(7); }
-std::string getManagerPass() { return getEtcLine(7); }
-std::string getMainHost() { return getEtcLine(8); }
+inline std::string getGnuDialerPassword() { return getEtcLine(1); }
+inline std::string getMySqlUser() { return getEtcLine(2); }
+inline std::string getMySqlPass() { return getEtcLine(3); }
+inline std::string getMySqlPassword() { return getMySqlPass(); }
+inline std::string getMySqlHost() { return getEtcLine(4); }
+inline std::string getMySqlHostname() { return getEtcLine(4); }
+inline std::string getDbName() { return getEtcLine(5); }
+inline std::string getMysqlPort() { return getEtcLine(6); }
+inline std::string getManagerUser() { return getEtcLine(7); }
+inline std::string getManagerUsername() { return getEtcLine(7); }
+inline std::string getManagerPassword() { return getEtcLine(8); }
+inline std::string getManagerPass() { return getEtcLine(8); }
+inline std::string getMainHost() { return getEtcLine(9); }
 
 #endif

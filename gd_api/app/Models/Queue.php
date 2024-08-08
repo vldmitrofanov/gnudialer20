@@ -8,14 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class Queue extends Model
 {
     use HasFactory;
+    const STATUS_ACTIVE=1;
+    const STATUS_INACTIVE=0;
 
     protected $fillable = [
         'campaign_id',
         'server_id',
-        'settings',
+        'status',
+        'synced'
     ];
 
-    protected $cast = [
+    protected $casts = [
         'settings' => 'array'
     ];
 
@@ -32,5 +35,15 @@ class Queue extends Model
     public function campaign()
     {
         return $this->belongsTo(Campaign::class);
+    }
+
+    public function settings()
+    {
+        return $this->hasMany(Setting::class);
+    }
+
+    public function filters()
+    {
+        return $this->hasMany(Filter::class);
     }
 }

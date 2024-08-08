@@ -409,7 +409,8 @@ int main(int argc, char **argv)
 	bool gDebug, gLog;
 	addGlobalSettings("general");
 	Queue TheQueueGlobals;
-	TheQueueGlobals.ParseQueue("general");
+	u_long serverId = 1;
+	TheQueueGlobals.ParseQueue("general",serverId);
 
 	try
 	{
@@ -580,7 +581,8 @@ int main(int argc, char **argv)
 				TheAgents.ParseAgentList();
 				TheQueues.ParseQueues();
 				//			Queue TheQueueGlobals;
-				TheQueueGlobals.ParseQueue("general");
+				u_long serverId = 1;
+				TheQueueGlobals.ParseQueue("general",serverId);
 
 				try
 				{
@@ -1009,7 +1011,7 @@ int main(int argc, char **argv)
 							}
 							else
 							{
-								//		                                       TheQueues.where(TheAgents.where(atoi(theAgent.c_str())).GetCampaign()).AddTalkTime(TheAgents.where(atoi(theAgent.c_str())).SetOnWait(true,true,TheAgents));
+								//TheQueues.where(TheAgents.where(atoi(theAgent.c_str())).GetCampaign()).AddTalkTime(TheAgents.where(atoi(theAgent.c_str())).SetOnWait(true,true,TheAgents));
 								TheQueues.where(TheAgents.where(atoi(theAgent.c_str())).GetCampaign()).AddTalkTime(TheAgents.where(atoi(theAgent.c_str())).SetOnWait(false, false, TheAgents));
 								TheAgents.where(atoi(theAgent.c_str())).writeAgentLog(TheAgents);
 								if (gLog)
@@ -2448,7 +2450,8 @@ int main(int argc, char **argv)
 
 							 this one is a basic reset to first filter
 												Queue TheQueue;
-												TheQueue.ParseQueue(queue);
+												u_long serverId = 1;
+												TheQueue.ParseQueue(queue,serverId);
 													int f = 0;
 													for (int i = 0; i < TheQueue.OccurencesOf("filters"); i++) {
 															TheQueue.GetSetting(i,"filters").SupAttribute("enable","false");

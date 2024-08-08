@@ -16,7 +16,7 @@ class Agent extends Model
         'settings',
     ];
 
-    protected $cast = [
+    protected $casts = [
         'settings' => 'array'
     ];
 

@@ -49,8 +49,8 @@ class Filter extends Model
         ],
     ];
 
-    public function campaign()
+    public function queue()
     {
-        return $this->belongsTo(Campaign::class);
+        return $this->belongsTo(Queue::class);
     }
 }

@@ -24,6 +24,9 @@
 #include "Socket.h"
 #include "exceptions.h"
 #include "etcinfo.h"
+#include "DBConnection.h"
+#include "Campaign.h"
+#include "ParsedAgent.h"
 
 #ifndef AGENT
 #define AGENT
@@ -37,24 +40,25 @@ public:
 Agent() {}
 ~Agent() {}
 
-void ParseAgent(const std::string & dataLine) {
+//void ParseAgent(const std::string & dataLine) {
+void ParseAgent(ParsedAgent parsedAgent) {
 
-	int pos = dataLine.find("agent => ") + 9;
-	int end = dataLine.find(",",pos);
+	//int pos = dataLine.find("agent => ") + 9;
+	//int end = dataLine.find(",",pos);
 
-	herNumber = atoi(dataLine.substr(pos,end-pos).c_str());
+	herNumber = parsedAgent.herNumber; //(dataLine.substr(pos,end-pos).c_str());
 
 	herStatus = -2;
 	herCalltime = 0;
 
-	pos = end;
-	end = dataLine.find(",",pos+1);
+	//pos = end;
+	//end = dataLine.find(",",pos+1);
 
-	herPass = dataLine.substr(pos+1,end-pos-1);
+	herPass = parsedAgent.herPass;//.substr(pos+1,end-pos-1);
 
-	pos = dataLine.rfind(",");
+	//pos = dataLine.rfind(",");
 
-	herName = dataLine.substr(pos+1,dataLine.length()-pos-1);  
+	herName = parsedAgent.herName;//.substr(pos+1,dataLine.length()-pos-1);  
 
 	itsCampaign = "initialized";
 	itsLeadId = "0";
@@ -194,9 +198,9 @@ bool operator<(const Agent & lhs, const Agent & rhs) {
 	else return false;
 }
 
-Agent ReturnAgent(std::string dataLine) {
+Agent ReturnAgent(ParsedAgent dataObj) {
 	Agent TheAgent;
-	TheAgent.ParseAgent(dataLine);
+	TheAgent.ParseAgent(dataObj);
 	return TheAgent;
 }
 
@@ -210,10 +214,18 @@ AgentList() {}
 void ParseAgentList() {
 
 //	std::cout << "Got to beginning of ParseAgentList" << std::endl;
+	DBConnection dbConn;
+	u_long serverId;
+	std::vector<ParsedAgent> agents = dbConn.getAllAgents(serverId);
+	for (const auto& agent : agents) {
+		Agent TempAgent = ReturnAgent(agent);
+		ItsAgents.push_back(TempAgent);
+	}
 
 //	ItsAgents.clear();
-	std::ifstream AgentFileIn;
-	AgentFileIn.open("/etc/asterisk/agents.conf");
+	//std::ifstream AgentFileIn;
+	//AgentFileIn.open("/etc/asterisk/agents.conf");
+	/*
 	for (std::string tempLine; std::getline(AgentFileIn,tempLine,'\n');) {
 		if (tempLine.find("agent => ") != std::string::npos) {
 			if (tempLine[0] == 'a') {
@@ -228,7 +240,8 @@ void ParseAgentList() {
 			}
 		}
 	}
-	AgentFileIn.close();
+	*/
+	//AgentFileIn.close();
 
 	std::stable_sort(ItsAgents.begin(),ItsAgents.end());
 //	std::cout << "Got to end of ParseAgentList" << std::endl;
@@ -285,7 +298,12 @@ Agent & whereConnected(const std::string & channel) {
 void AddTempAgent(int num) {
 	std::ostringstream AgentStream;
 	AgentStream << num;
-	ItsAgents.push_back(ReturnAgent("agent => " + AgentStream.str() + ",1234,temp" + AgentStream.str()));
+	//ItsAgents.push_back(ReturnAgent("agent => " + AgentStream.str() + ",1234,temp" + AgentStream.str()));
+	ItsAgents.push_back(ReturnAgent(ParsedAgent{
+            std::stoi(AgentStream.str()), 
+            "temp" + AgentStream.str(), 
+            "1234"
+        }));
 }
 
 void Initialize(const std::string & managerUsername, const std::string & managerPassword) {
@@ -300,7 +318,7 @@ void Initialize(const std::string & managerUsername, const std::string & manager
 	
 		AsteriskManager << "Action: Login\r\nUserName: " + managerUsername + "\r\nSecret: " + managerPassword + "\r\nEvents:off\r\n\r\n";
 		AsteriskManager >> response;
-		AsteriskManager << "Action: Command\r\nCommand: show agents\r\n\r\n";
+		AsteriskManager << "Action: Command\r\nCommand: queue show\r\n\r\n";
 
 		while (completeResponse.find("END COMMAND",0) == std::string::npos) {
 			AsteriskManager >> response;

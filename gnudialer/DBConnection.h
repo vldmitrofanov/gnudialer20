@@ -8,6 +8,10 @@
 #include <cppconn/statement.h>
 #include <memory>
 #include <string>
+#include <vector>       
+#include <stdexcept>
+#include "Campaign.h"
+#include "ParsedAgent.h"
 
 class DBConnection {
 public:
@@ -15,8 +19,12 @@ public:
     ~DBConnection();
 
     std::shared_ptr<sql::Connection> getConnection();
+    std::vector<std::string> getCampaigns();
     Campaign getCampaignByName(const std::string& name);
-    std::vector<std::string> getCampaignSettings(u_long campaignId);
+    std::vector<std::string> getCampaignSettings(u_long campaigId, u_long serverId);
+    std::vector<std::string> getCampaignFilters(u_long campaignId, u_long serverId);
+    std::vector<u_long> getCampaignAgents(u_long campaignId, u_long serverId);
+    std::vector<ParsedAgent> getAllAgents(u_long serverId);
 
 private:
     sql::mysql::MySQL_Driver* driver;

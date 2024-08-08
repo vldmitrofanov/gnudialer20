@@ -20,7 +20,12 @@ SHELL=/bin/sh
 RUNAS := `ps wwwaux | grep asterisk  | sed -e 's/ /\n/' | sed -e 's/ /\n/' | head -n 1`
 DIST := `./detect`
 
-MYSQLVER := `mysql -V | cut -c25-27`        
+MYSQLVER := `mysql -V | cut -c25-27`    
+
+CXXFLAGS = -std=c++11 -Wall -I/usr/include/mysql
+
+# Linker flags
+LDFLAGS = -L/usr/lib/mysql -lmysqlcppconn   
 
 ifeq ($(shell `detect`),RedHat)
  CGIBIN := `./mkhelper CGIBIN`
@@ -118,31 +123,31 @@ printasteriskv:
 	@echo
 
 thegnudialer:
-	$(CC) gnudialer.cpp -g -o gnudialer `mysql_config --include` `mysql_config --libs`
+	$(CC) gnudialer.cpp DBConnection.cpp -g -o gnudialer `mysql_config --include` `mysql_config --libs` $(CXXFLAGS) $(LDFLAGS)
 
 #dialeradmin:
 #	$(CC) ${MYSQLINC} ${MYSQLLIBLOC} ${LMYSQLCLIENT} dialeradmin.cpp -o dialeradmin.cgi
 
 dialeradmin:
-	$(CC) dialeradmin.cpp -o dialeradmin.cgi `mysql_config --include` `mysql_config --libs`
+	$(CC) dialeradmin.cpp DBConnection.cpp -o dialeradmin.cgi `mysql_config --include` `mysql_config --libs` $(CXXFLAGS) $(LDFLAGS)
 
 agenthours:
-	$(CC) agenthours.cpp -o agenthours.cgi
+	$(CC) agenthours.cpp DBConnection.cpp -o agenthours.cgi $(CXXFLAGS) $(LDFLAGS)
 
 stats:
-	$(CC) stats.cpp -o stats.cgi
+	$(CC) stats.cpp DBConnection.cpp -o stats.cgi $(CXXFLAGS) $(LDFLAGS)
 
 newstats:
-	$(CC) newstats.cpp -o newstats.cgi
+	$(CC) newstats.cpp DBConnection.cpp -o newstats.cgi $(CXXFLAGS) $(LDFLAGS)
 
 allstats:
-	$(CC) allstats.cpp -o allstats.cgi
+	$(CC) allstats.cpp DBConnection.cpp -o allstats.cgi $(CXXFLAGS) $(LDFLAGS)
 	        
 up:
-	$(CC) up.cpp -o up.cgi
+	$(CC) up.cpp DBConnection.cpp -o up.cgi $(CXXFLAGS) $(LDFLAGS)
   
 clean:
-	rm gnudialer dialeradmin.cgi agenthours.cgi stats.cgi up.cgi
+	rm gnudialer dialeradmin.cgi agenthours.cgi stats.cgi up.cgi $(CXXFLAGS) $(LDFLAGS)
 
 install: printdistinfo printrunasinfo printmysqlver printmysqlinc printcgibin printdocroot theinstall
 

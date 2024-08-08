@@ -22,7 +22,8 @@
 void addGlobalSettings(std::string context) {
 
         Queue TheQueueGlobals;
-	TheQueueGlobals.ParseQueue(context);
+        u_long serverId = 1;
+	TheQueueGlobals.ParseQueue(context,serverId);
         TheQueueGlobals.SupSetting("debug","true");
 	TheQueueGlobals.SupSetting("log","true");
 	TheQueueGlobals.Write();
@@ -31,7 +32,8 @@ void addGlobalSettings(std::string context) {
 void resetFilterSettings(std::string campaign) {
 
         Queue TheQueue;
-        TheQueue.ParseQueue(campaign);
+        u_long serverId = 1;
+        TheQueue.ParseQueue(campaign,serverId);
 
         TheQueue.SupSetting("f_mode","0");
         TheQueue.SupSetting("f_areacode","0");
@@ -50,7 +52,8 @@ void resetFilterSettings(std::string campaign) {
 void addBasicSettings(std::string campaign) {
 
         Queue TheQueue;
-        TheQueue.ParseQueue(campaign);
+        u_long serverId = 1;
+        TheQueue.ParseQueue(campaign,serverId);
         TheQueue.SupSetting("active","false");
         TheQueue.SupSetting("function","predictive");
 	TheQueue.SupSetting("calltoday","false");

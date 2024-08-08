@@ -42,7 +42,7 @@ public:
 
 		//	std::cout << "Setting Constructor called!" << std::endl;
 		// format: ;:setting:asdf:jklsemicolon:qwerty
-		std::string tempSetting = rawSetting.substr(10, rawSetting.length() - 10);
+		std::string tempSetting = rawSetting;//.substr(10, rawSetting.length() - 10);
 		std::stringstream SettingStream;
 		SettingStream << tempSetting;
 		for (std::string tempLine; std::getline(SettingStream, tempLine, ':');)
@@ -56,7 +56,7 @@ public:
 
 		std::vector<std::string> tempWords;
 		// format: ;:setting:asdf:jklsemicolon:qwerty
-		std::string tempSetting = rawSetting.substr(10, rawSetting.length() - 10);
+		std::string tempSetting = rawSetting;//.substr(10, rawSetting.length() - 10);
 		std::stringstream SettingStream;
 		SettingStream << tempSetting;
 		for (std::string tempLine; std::getline(SettingStream, tempLine, ':');)
@@ -265,7 +265,7 @@ public:
 	~Queue() {}
 
 	// bool ParseQueue(std::string name, AgentList TheAgents) {
-	bool ParseQueue(const std::string &name)
+	bool ParseQueue(const std::string &name, u_long serverId)
 	{
 		DBConnection dbConn;
 		itsName = name;
@@ -274,6 +274,10 @@ public:
 		if (itsName != "general")
 		{
 			itsAbnHelper.Read(name);
+		} else {
+			itsSettings.push_back(std::string("debug:true")); 
+			itsSettings.push_back(std::string("log:true"));
+			return true;
 		}
 		Campaign campaign = dbConn.getCampaignByName(name);
 
@@ -282,14 +286,28 @@ public:
 		// QueueIn.exceptions ( std::ifstream::eofbit | std::ifstream::failbit | std::ifstream::badbit );
 		// QueueIn.exceptions (std::ios_base::failbit);
 
-		QueueIn.open("/etc/asterisk/queues.conf", std::ios::in | std::ios::out);
+		// QueueIn.open("/etc/asterisk/queues.conf", std::ios::in | std::ios::out);
 
-		std::vector<std::string> settings = dbConn.getCampaignSettings(campaign.id);
+		std::vector<std::string> settings = dbConn.getCampaignSettings(campaign.id, serverId);
 
 		for (const auto& setting : settings) {
 			itsSettings.push_back(setting);
 		}
 
+		std::vector<std::string> filters = dbConn.getCampaignFilters(campaign.id, serverId);
+
+		for (const auto& filter : filters) {
+			itsSettings.push_back("filter:" + filter);
+		}
+
+
+		std::vector<u_long> agents = dbConn.getCampaignAgents(campaign.id, serverId);
+
+		for (const auto& agent : agents) {
+			itsMembersNumbers.push_back(agent);
+		}
+
+		/*
 		for (std::string tempLine; std::getline(QueueIn, tempLine, '\n');)
 		{
 			if (tempLine.length() > 1)
@@ -330,7 +348,8 @@ public:
 				}
 			}
 		}
-		QueueIn.close();
+		*/
+		//QueueIn.close();
 
 		return true;
 
@@ -729,12 +748,13 @@ private:
 	bool changed;
 	CallCache itsCalls;
 	AbnHelper itsAbnHelper;
+	u_long serverId;
 };
 
 Queue ReturnQueue(std::string name)
 {
 	Queue TheQueue;
-	TheQueue.ParseQueue(name);
+	TheQueue.ParseQueue(name,1);
 	return TheQueue;
 }
 
@@ -755,8 +775,12 @@ public:
 
 		std::vector<std::string> queueNames;
 
-		//	std::cout << "Got here 1" << std::endl;
+		DBConnection dbConn;
 
+		queueNames = dbConn.getCampaigns();
+
+		//	std::cout << "Got here 1" << std::endl;
+		/*
 		std::ifstream QueuesIn;
 		QueuesIn.open("/etc/asterisk/queues.conf");
 		for (std::string tempLine; std::getline(QueuesIn, tempLine, '\n');)
@@ -771,6 +795,7 @@ public:
 			}
 		}
 		QueuesIn.close();
+		*/
 
 		//	std::cout << "Actual push_backs now..." << std::endl;
 

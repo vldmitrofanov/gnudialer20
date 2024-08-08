@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->tinyInteger('enabled')->default(0);
             $table->tinyInteger('position')->nullable();
-            $table->foreignId('campaign_id')->constrained()->onDelete('cascade');
+            $table->foreignId('queue_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('filter');  
             $table->timestamps();
         });

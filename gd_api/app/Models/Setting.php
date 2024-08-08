@@ -5,18 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class CampaignSetting extends Model
+class Setting extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'campaign_id',
+        'queue_id',
         'parameter',
         'value',
         'type'
     ];
 
-    protected $defaultSettings = [
+    static $defaultSettings = [
         0 => ['parameter' => 'active', 'value' => true],
         1 => ['parameter' => 'function', 'value' => 'predictive'],
         2 => ['parameter' => 'maxratio', 'value' => 2.0],
@@ -49,8 +49,8 @@ class CampaignSetting extends Model
         29 => ['parameter' => 'f_zipcode', 'value' => 0],
     ];
 
-    public function campaign()
+    public function queue()
     {
-        return $this->belongsTo(Campaign::class);
+        return $this->belongsTo(Queue::class);
     }
 }

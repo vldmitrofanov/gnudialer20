@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('queues', function (Blueprint $table) {
             $table->id();
-            $table->string('code');
             $table->foreignId('campaign_id')->nullable()->index()->constrained()->onDelete('cascade');;
             $table->foreignId('server_id')->nullable()->index()->constrained()->onDelete('cascade');;
             $table->tinyInteger('status')->default(0);
+            $table->tinyInteger('synced')->default(0);
             $table->json('settings')->nullable();
             $table->timestamps();
         });

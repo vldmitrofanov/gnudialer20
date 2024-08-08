@@ -284,7 +284,8 @@ void showEditQueueMembers(Post TheFields) {
 	AgentList TheAgents;  
 	TheAgents.ParseAgentList();  
 	Queue TheQueue;  
-	TheQueue.ParseQueue(queuename);  
+	u_long serverId = 1;
+	TheQueue.ParseQueue(queuename, serverId);  
 	std::cout << "<font face=\"helvetica,arial,sans\" size=4><b>\n";  
 	std::cout << "<br>" + TheQueue.GetName() + "<br><br>\n";  
 	std::cout << "</font></b>";  
@@ -356,7 +357,8 @@ void doManageCampaign(Post TheFields) {
 		printSubHead(".");    
 		std::cout << "<br><br>";          
 		Queue TheQueue;    
-		TheQueue.ParseQueue(queue);    
+		u_long serverId = 1;
+		TheQueue.ParseQueue(queue,serverId);    
 		std::cout << "<table cols=2>" << std::endl;    
 		std::cout << "<tr><td>Dial Mode: 	</td><td>" << TheQueue.GetSetting("function").Get() 	<< "</td></tr>" << std::endl;    
 		std::cout << "<tr><td>Callback Today:   </td><td>" << TheQueue.GetSetting("calltoday").Get()	<< "</td></tr>" << std::endl; 
@@ -490,7 +492,8 @@ void doBackupData(Post TheFields) {
         printSubHead(queue);
         std::cout << "<br><br>";
         Queue TheQueue;
-        TheQueue.ParseQueue(queue);
+		u_long serverId = 1;
+        TheQueue.ParseQueue(queue,serverId);
 	if (TheQueue.GetSetting("active").Get() == "true") {
 		std::cout << "You must stop the campaign first.<br><br>\n";        
 	        std::cout << printSubmit("Stop Campaign");
@@ -510,7 +513,8 @@ void doRestoreData(Post TheFields) {
         std::cout << "<br><br>";
                 
         Queue TheQueue;
-        TheQueue.ParseQueue(queue);
+		u_long serverId = 1;
+        TheQueue.ParseQueue(queue,serverId);
 	if (TheQueue.GetSetting("active").Get() == "true") {
 	        std::cout << "You must stop the campaign first.<br><br>\n";
 		std::cout << printSubmit("Stop Campaign");
@@ -647,8 +651,9 @@ const std::string selectedIf(const std::string & lhs, const std::string & rhs) {
 void doEditGlobals(Post TheFields) {      	
 	std::string queue = TheFields.GetField("queue");	            	
 	std::cout << "<input type=hidden name=\"queue\" value=\"" + queue + "\">";        
-	Queue TheQueueGlobals;        
-	TheQueueGlobals.ParseQueue("general");	
+	Queue TheQueueGlobals;    
+	u_long serverId = 1;    
+	TheQueueGlobals.ParseQueue("general", serverId);	
 	std::string debug	= TheQueueGlobals.GetSetting("debug").Get();    	
 	std::string log		= TheQueueGlobals.GetSetting("log").Get();    	
         
@@ -692,8 +697,9 @@ void doFinishEditingGlobals(Post TheFields) {
 	std::cout << "<input type=hidden name=\"queue\" value=\"" + queue + "\">";        	
 	std::string debug	= TheFields.GetField("debug");	
 	std::string log		= TheFields.GetField("log");         
-	Queue TheQueueGlobals;        
-	TheQueueGlobals.ParseQueue("general");        
+	Queue TheQueueGlobals;  
+	u_long serverId = 1;      
+	TheQueueGlobals.ParseQueue("general",serverId);        
 	TheQueueGlobals.SetSetting("debug",	debug);        
 	TheQueueGlobals.SetSetting("log",	log);
 	TheQueueGlobals.Write();        
@@ -708,8 +714,9 @@ void doAddFilter(Post TheFields) {
 	std::cout << "<input type=hidden name=\"queue\" value=\"" + queue + "\">";        
 	std::string filter       = TheFields.GetField("filter");        
 	if (!filter.empty()) {          	
-		Queue TheQueue;        	
-		TheQueue.ParseQueue(queue);        	
+		Queue TheQueue;  
+		u_long serverId = 1;      	
+		TheQueue.ParseQueue(queue,serverId);        	
 		int f;        	
 		for (int i = 0; i < TheQueue.OccurencesOf("filters"); i++) {               		
 			f = i+1;                     		
@@ -737,8 +744,9 @@ void doDelFilter(Post TheFields) {
 	std::string fnum         = TheFields.GetField("fnum");	
 	std::string filter 	 = TheFields.GetField("filter" + fnum);                
 	if (!fnum.empty()) {                	
-		Queue TheQueue;        	
-		TheQueue.ParseQueue(queue);                	
+		Queue TheQueue;    
+		u_long serverId = 1;    	
+		TheQueue.ParseQueue(queue, serverId);                	
 		for (int i = 0; i < TheQueue.OccurencesOf("filters"); i++) {	        	
 			if (TheQueue.SettingExists("filters","number",fnum)) {        	        	
 				TheQueue.DelSetting("filters","number",fnum);        	        	
@@ -892,7 +900,8 @@ void doEditFilters(Post TheFields) {
     	std::cout << "<input type=hidden name=\"queue\" value=\"" + queue + "\">";
 
     	Queue TheQueue;
-    	TheQueue.ParseQueue(queue);
+		u_long serverId = 1;
+    	TheQueue.ParseQueue(queue,serverId);
 
     	std::string filter            = TheQueue.GetSetting("filter").Get();
     	std::string usetzfilter       = TheQueue.GetSetting("usetzfilter").Get();
@@ -1089,7 +1098,8 @@ void doFinishEditingFilterSettings(Post TheFields) {
   std::string orderby           = TheFields.GetField("orderby");
     
   Queue TheQueue;
-  TheQueue.ParseQueue(queue);
+  u_long serverId = 1;
+  TheQueue.ParseQueue(queue,serverId);
         int f = 0;
   	for (int i = 0; i < TheQueue.OccurencesOf("filters"); i++) {
     		TheQueue.GetSetting(i,"filters").SupAttribute("enable","false");
@@ -1142,7 +1152,8 @@ void doShowDBCounts(Post TheFields) {
     	std::cout << "<input type=hidden name=\"queue\" value=\"" + queue + "\">";
 
     	Queue TheQueue;
-    	TheQueue.ParseQueue(queue);
+		u_long serverId = 1;
+    	TheQueue.ParseQueue(queue,serverId);
 
     	std::string filter            = TheQueue.GetSetting("filter").Get();
     	std::string usetzfilter       = TheQueue.GetSetting("usetzfilter").Get();
@@ -1362,7 +1373,8 @@ void doEditQueue(Post TheFields) {
     std::cout << "<input type=hidden name=\"queue\" value=\"" + queue + "\">";
 
     Queue TheQueue;
-    TheQueue.ParseQueue(queue);
+	u_long serverId = 1;
+    TheQueue.ParseQueue(queue,serverId);
 
     std::string function          = TheQueue.GetSetting("function").Get();
     std::string calltoday         = TheQueue.GetSetting("calltoday").Get();
@@ -1783,7 +1795,8 @@ void doFinishEditingCampaignSettings(Post TheFields) {
         dialprefix = "none";
   }
   Queue TheQueue;
-  TheQueue.ParseQueue(queue);
+  u_long serverId = 1;
+  TheQueue.ParseQueue(queue,serverId);
 
   TheQueue.SetSetting("function",		function);
   TheQueue.SetSetting("calltoday",              calltoday);
@@ -1822,7 +1835,8 @@ void doStartQueue(Post TheFields) {
   std::cout << "<input type=hidden name=\"queue\" value=\"" << queue << "\">";
   
 //  Queue TheQueue;
-//  TheQueue.ParseQueue(queue);
+// u_long serverId = 1;
+//  TheQueue.ParseQueue(queue,serverId);
  
 //  std::string function		= TheQueue.GetSetting("function").Get();
 //  std::string maxratio 		= TheQueue.GetSetting("maxratio").Get();
@@ -1866,7 +1880,8 @@ void doStopQueue(Post TheFields) {
   std::cout << "<input type=hidden name=\"queue\" value=\"" << queue << "\">";
         
   Queue TheQueue;
-  TheQueue.ParseQueue(queue);
+  u_long serverId = 1;
+  TheQueue.ParseQueue(queue,serverId);
  
 //  bool success = stopQueue(queue);
   stopQueue(queue);	
@@ -2399,7 +2414,8 @@ void doDataReload(Post TheFields) {
         std::cout << "<input type=hidden name=\"queue\" value=\"" << queue << "\">";
 
 	Queue TheQueue;
-	TheQueue.ParseQueue(queue);
+	u_long serverId = 1;
+	TheQueue.ParseQueue(queue,serverId);
 
 	MYSQL *mysql = NULL;
 	MYSQL_RES *result;
@@ -2499,7 +2515,8 @@ void doExportRecords(Post TheFields) {
         std::string date2 = "'" + year2 + "-" + mon2 + "-" + day2 + "'";
         
 	Queue TheQueue;
-	TheQueue.ParseQueue(queue);
+	u_long serverId = 1;
+	TheQueue.ParseQueue(queue, serverId);
 
 	bool usecloser = TheQueue.GetSetting("usecloser").GetBool();
 
