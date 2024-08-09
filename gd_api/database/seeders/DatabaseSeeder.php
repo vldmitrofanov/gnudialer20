@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
                 'username' => 'manager',
                 'secret' => 'mysecret123',
                 'host' => '127.0.0.1',
+                'synced' => 0,
             ]);
 
             $agentUser = User::create([
@@ -120,8 +121,7 @@ class DatabaseSeeder extends Seeder
             $queue = Queue:: create([
                 'campaign_id' => $campaign->id,
                 'server_id' => $server->id,
-                'status' => Queue::STATUS_ACTIVE,
-                'synced' => 0,
+                'status' => Queue::STATUS_ACTIVE,               
                 'settings' => [
                     'musicclass' => 'default',
                     'strategy' => 'ringall',

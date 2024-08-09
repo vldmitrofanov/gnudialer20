@@ -13,6 +13,7 @@ class Server extends Model
         'username',
         'secret',
         'host',
+        'synced'
     ];
 
     public function canpaigns()

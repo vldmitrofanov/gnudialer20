@@ -31,7 +31,7 @@ def read_gnudialer_conf(conf_file):
     return config
 
 # Check if there are any queues with synced = 0
-def check_unsynced_queues(config):
+def check_unsynced(config):
     connection = mysql.connector.connect(
         host=config["mysql_host"],
         user=config["mysql_user"],
@@ -43,8 +43,8 @@ def check_unsynced_queues(config):
 
     query = """
     SELECT COUNT(*)
-    FROM queues
-    WHERE server_id = %s AND synced = 0 AND status > 0;
+    FROM servers
+    WHERE servers.id = %s AND synced = 0;
     """
     
     cursor.execute(query, (config["server_id"],))
@@ -68,17 +68,15 @@ def fetch_agents(config):
     # SQL query to select agents and their user details
     query = """
     SELECT 
-        a.id as agent_id, u.first_name, u.last_name, a.password
+        a.id as agent_id, u.first_name, u.last_name, a.password, a.settings
     FROM 
         agents a
     JOIN 
         users u ON a.user_id = u.id
     JOIN 
         agent_queue qa ON qa.agent_id = a.id
-    JOIN 
-        queues q ON q.id = qa.queue_id
     WHERE 
-        q.server_id = %s AND q.synced = 0 AND q.status > 0;
+        a.server_id = %s;
     """
     
     cursor.execute(query, (config["server_id"],))
@@ -88,13 +86,26 @@ def fetch_agents(config):
     return agents
 
 # Write agents to gnudialer_agents.conf
-def write_gnudialer_agents_conf(agents, conf_file):
-    with open(conf_file, 'w') as file:
+def write_gnudialer_agents_and_sip_conf(agents, conf_file, sip_conf_file, server_id):
+    with open(conf_file, 'w') as file, open(sip_conf_file, 'w') as sip_file:
         for agent in agents:
             agent_id = agent["agent_id"]
             agent_name = f"{agent['first_name']} {agent['last_name']}"
             agent_pass = agent["password"]
+            formatted_server_id = f"{server_id:02}"
+            extension = f"9{formatted_server_id}{agent_id}"
+
             file.write(f"agent => {agent_id},{agent_pass},{agent_name}\n")
+
+            sip_settings = json.loads(agent["settings"]).get("sip", {})
+            sip_file.write(f"[{extension}]\n")
+            sip_file.write(f"type=friend\n")
+
+            # Iterate over SIP settings and write key-value pairs
+            for key, value in sip_settings.items():
+                sip_file.write(f"{key}={value}\n")
+
+            sip_file.write("\n")
 
 # Fetch queues and return them as an array
 def fetch_queues(config):
@@ -116,7 +127,7 @@ def fetch_queues(config):
     JOIN 
         campaigns c ON q.campaign_id = c.id
     WHERE 
-        q.server_id = %s AND q.synced = 0 AND q.status > 0;
+        q.server_id = %s AND q.status > 0;
     """
     
     cursor.execute(query, (config["server_id"],))
@@ -183,11 +194,11 @@ def update_queues_synced_status(config):
 
     update_query = """
     UPDATE 
-        queues 
+        servers 
     SET 
         synced = 1 
     WHERE 
-        server_id = %s AND synced = 0 AND status > 0;
+        servers.id = %s;
     """
     
     cursor.execute(update_query, (config["server_id"],))
@@ -225,17 +236,18 @@ def main():
     config_file = "/etc/gnudialer.conf"
     gnudialer_agents_conf = "/etc/asterisk/gnudialer_agents.conf"
     gnudialer_queues_conf = "/etc/asterisk/gnudialer_queues.conf"
+    gnudialer_sip_conf = "/etc/asterisk/gnudialer_sip.conf"
 
     config = read_gnudialer_conf(config_file)
 
     # Check if there are unsynced queues
-    if not check_unsynced_queues(config):
-        print("No unsynced queues found. Exiting.")
+    if not check_unsynced(config):
+        print("No unsynced settings found. Exiting.")
         return
 
     # Fetch agents and write gnudialer_agents.conf
     agents = fetch_agents(config)
-    write_gnudialer_agents_conf(agents, gnudialer_agents_conf)
+    write_gnudialer_agents_and_sip_conf(agents, gnudialer_agents_conf, gnudialer_sip_conf, config["server_id"])
 
     # Fetch queues and write gnudialer_queues.conf
     queues = fetch_queues(config)

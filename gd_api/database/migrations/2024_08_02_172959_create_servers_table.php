@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('username');
             $table->string('secret');
             $table->string('host');
+            $table->tinyInteger('synced')->default(0);
             $table->timestamps();
         });
     }
