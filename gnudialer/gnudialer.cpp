@@ -979,9 +979,9 @@ int main(int argc, char **argv)
 
 					//***********************************************************************************
 					if (block.find("Event: REMOVEFOROLDUSAGEUnlink", 0) != std::string::npos &&
-						block.find("Agent/", 0) != std::string::npos)
+						block.find("PJSIP/", 0) != std::string::npos)
 					{
-						pos = block.find("Agent/", 0) + 6;
+						pos = block.find("PJSIP/", 0) + 6;
 						end = block.find("\n", pos);
 
 						std::string theAgent, theCampaign;
@@ -1028,9 +1028,9 @@ int main(int argc, char **argv)
 
 					//***********************************************************************************
 					if (block.find("Event: Link", 0) != std::string::npos &&
-						block.find("Agent/", 0) != std::string::npos)
+						block.find("PJSIP/", 0) != std::string::npos)
 					{
-						pos = block.find("Agent/", 0) + 6;
+						pos = block.find("PJSIP/", 0) + 6;
 						end = block.find("\n", pos);
 
 						std::string theAgent;
@@ -1541,7 +1541,7 @@ int main(int argc, char **argv)
 					//	if (gDebug) {
 					//        	std::cout << "theChannel: " << theChannel << " - hungup" << std::endl;
 					//	}
-					//	if (TheAgents.existsConnected(theChannel) && block.find("Agent/",0) != std::string::npos) {
+					//	if (TheAgents.existsConnected(theChannel) && block.find("PJSIP/",0) != std::string::npos) {
 					//        	TheAgents.whereConnected(theChannel).SetOnWait(false,false,TheAgents);
 					//        	theAgent = TheAgents.whereConnected(theChannel).GetNumber();
 					//        	if (gDebug) {

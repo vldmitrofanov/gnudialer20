@@ -110,7 +110,7 @@ class AgentLoginHelperList {
 
 		std::stringstream EntryStream;
 
-		if (raw.find("Agent/",0) != std::string::npos) {
+		if (raw.find("PJSIP/",0) != std::string::npos) {
 
 			EntryStream << raw;
 			std::getline(EntryStream,time,'|');

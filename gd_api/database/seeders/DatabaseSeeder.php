@@ -57,23 +57,32 @@ class DatabaseSeeder extends Seeder
                 'server_id' => $server->id,
                 'password' => '9009',
                 'settings' => [
-                    'sip' => [
-                        'extension' => '',
-                        'type' => 'friend',
-                        'secret' => $sip_passwd,
-                        'host' => 'dynamic',
-                        'context' => 'from-internal',
-                        'disallow' => 'all',
-                        'allow' => 'ulaw',
-                        'allow' => 'alaw',
-                        'allow' => 'gsm',
-                        'callerid' => '',
+                    'pjsip' => [
+                        'config' => [],
+                        'content' => ''
                     ]
-                ],
+                ],              
             ]);
             $data = $agent->settings;
-            $data['sip']['extension'] = $agent->id;
-            $data['sip']['callerid'] = 'Agent <' . $agent->id . '>';
+            $ext = $agent->id; //'9' . str_pad($server->id, 2, "0", STR_PAD_LEFT) . $agent->id;
+            $data['sip']['extension'] = $ext;
+            $sip_config = [
+                'extension' => $ext,
+                'type' => 'friend',
+                'password' => $sip_passwd,               
+                'context' => 'gnudialer-default',
+                'auth' => 'auth'.$ext,
+                'aors' => $ext,
+                'disallow' => 'all',
+                'allow' => 'ulaw',
+                'allow2' => 'alaw',
+                'allow3' => 'gsm',
+                'callerid' => 'Agent <' . $ext . '>',
+                'max_contacts' => 1
+            ];
+            $sip_text = convert_pjsip_to_text($sip_config);
+            $data['pjsip']['config'] = $sip_config;
+            $data['pjsip']['content'] = $sip_text;
             $agent->settings = $data;
             $agent->save();
 
@@ -86,29 +95,38 @@ class DatabaseSeeder extends Seeder
             $agentUser2->id = 3;
             $agentUser2->save();
 
-            $sip_passwd = Str::random(20);
+            $sip_passwd2 = Str::random(20);
             $agent2 = Agent::create([
                 'user_id' => $agentUser2->id,
                 'server_id' => $server->id,
                 'password' => '9009',
                 'settings' => [
-                    'sip' => [
-                        'extension' => '',
-                        'type' => 'friend',
-                        'secret' => $sip_passwd,
-                        'host' => 'dynamic',
-                        'context' => 'from-internal',
-                        'disallow' => 'all',
-                        'allow' => 'ulaw',
-                        'allow' => 'alaw',
-                        'allow' => 'gsm',
-                        'callerid' => '',
+                    'pjsip' => [
+                        'config' => [],
+                        'content' => '',
                     ]
                 ],
             ]);
             $data = $agent2->settings;
-            $data['sip']['extension'] = $agent2->id;
-            $data['sip']['callerid'] = 'Agent <' . $agent2->id . '>';
+            $ext = $agent2->id;//'9' . str_pad($server->id, 2, "0", STR_PAD_LEFT) . $agent2->id;
+            $data['pjsip']['extension'] = $ext;
+            $sip_config = [
+                        'extension' => $ext,
+                        'type' => 'friend',
+                        'password' => $sip_passwd2,                      
+                        'context' => 'gnudialer-default',
+                        'aors' => $ext,
+                        'auth' => 'auth'.$ext,
+                        'disallow' => 'all',
+                        'allow' => 'ulaw',
+                        'allow2' => 'alaw',
+                        'allow3' => 'gsm',
+                        'callerid' => 'Agent <' . $ext . '>',
+                        'max_contacts' => 1
+                    ];
+            $sip_text = convert_pjsip_to_text($sip_config);
+            $data['pjsip']['content'] = $sip_text;
+            $data['pjsip']['config'] = $sip_config;
             $agent2->settings = $data;
             $agent2->save();
 
@@ -129,6 +147,7 @@ class DatabaseSeeder extends Seeder
                     'retry' => '5',
                     'wrapuptime' => '10',
                     'maxlen' => '0',
+                    'servicelevel' => 60,
                     'announce-frequency' => '0',
                     'min-announce-frequency' => '15',
                     'periodic-announce-frequency' => '0',
@@ -157,4 +176,32 @@ class DatabaseSeeder extends Seeder
             }
         }
     }
+   
 }
+
+/* 
+more queue settings
+
+musicclass=default
+strategy=ringall
+timeout=15
+retry=5
+wrapuptime=10
+maxlen=0
+servicelevel=60
+announce-frequency=30
+announce-holdtime=yes
+announce-position=yes
+monitor-type=MixMonitor
+memberdelay=0
+weight=0
+periodic-announce=queue-marketing
+periodic-announce-frequency=60
+relative-periodic-announce=yes
+announce-round-seconds=10
+joinempty=yes
+leavewhenempty=no
+ringinuse=no
+eventwhencalled=yes
+eventmemberstatus=yes
+*/

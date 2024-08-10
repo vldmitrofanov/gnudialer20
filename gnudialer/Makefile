@@ -168,7 +168,7 @@ theinstall:
 	cp *.html ${DOCROOT}gnudialer/
 	cp *.gif ${DOCROOT}gnudialer/
 	cp *.script ${CGIBIN}
-	cp dialer.conf /etc/asterisk/dialer.conf
+#	cp dialer.conf /etc/asterisk/gnudialer_dialer.conf
 	mkdir -p /tmp/exports
 	mkdir -p /tmp/sales
 	chmod 755 /tmp/exports

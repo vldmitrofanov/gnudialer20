@@ -336,13 +336,13 @@ void Initialize(const std::string & managerUsername, const std::string & manager
 			if (tempLine.find("talking",0) != std::string::npos) {
 
 //				tempLine = tempLine.substr(0,tempLine.find("\t",0));
-				std::cout << "GnuDialer: Setting Agent/" << atoi(tempLine.substr(0,tempLine.find("(",0)-1).c_str()) << " on call..." << std::endl;
+				std::cout << "GnuDialer: Setting PJSIP/" << atoi(tempLine.substr(0,tempLine.find("(",0)-1).c_str()) << " on call..." << std::endl;
 				where(atoi(tempLine.substr(0,tempLine.find("(",0)-1).c_str())).SetOnCall();
 			}
 
 			if (tempLine.find("idle",0) != std::string::npos) {
 //				tempLine = tempLine.substr(0,tempLine.find("\t",0));
-				std::cout << "GnuDialer: Setting Agent/" << atoi(tempLine.substr(0,tempLine.find("(",0)-1).c_str()) << " on wait..." << std::endl;
+				std::cout << "GnuDialer: Setting PJSIP/" << atoi(tempLine.substr(0,tempLine.find("(",0)-1).c_str()) << " on wait..." << std::endl;
 				where(atoi(tempLine.substr(0,tempLine.find("(",0)-1).c_str())).SetLoggedIn();
 			}
 		}

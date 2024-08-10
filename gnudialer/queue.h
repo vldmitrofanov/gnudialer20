@@ -654,7 +654,7 @@ public:
 
 		for (unsigned int i = 0; i < itsMembersNumbers.size(); i++)
 		{
-			QueueStream << "member => Agent/";
+			QueueStream << "member => PJSIP/";
 			QueueStream << itsMembersNumbers.at(i) << std::endl;
 		}
 

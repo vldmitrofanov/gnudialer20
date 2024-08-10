@@ -86,26 +86,25 @@ def fetch_agents(config):
     return agents
 
 # Write agents to gnudialer_agents.conf
-def write_gnudialer_agents_and_sip_conf(agents, conf_file, sip_conf_file, server_id):
-    with open(conf_file, 'w') as file, open(sip_conf_file, 'w') as sip_file:
+def write_gnudialer_agents_and_sip_conf(agents, conf_file, pjsip_conf_file):
+    with open(conf_file, 'w') as file, open(pjsip_conf_file, 'w') as sip_file:
         for agent in agents:
             agent_id = agent["agent_id"]
             agent_name = f"{agent['first_name']} {agent['last_name']}"
             agent_pass = agent["password"]
-            formatted_server_id = f"{server_id:02}"
-            extension = f"9{formatted_server_id}{agent_id}"
+            # formatted_server_id = f"{server_id:02}"
+            sip_settings = json.loads(agent["settings"]).get("pjsip", {})
+            # extension = sip_settings.get("extension", "")
+            content = sip_settings.get("content", {})
 
             file.write(f"agent => {agent_id},{agent_pass},{agent_name}\n")
 
-            sip_settings = json.loads(agent["settings"]).get("sip", {})
-            sip_file.write(f"[{extension}]\n")
-            sip_file.write(f"type=friend\n")
+            if content:
+                #sip_file.write(f"[{extension}]\n")
 
-            # Iterate over SIP settings and write key-value pairs
-            for key, value in sip_settings.items():
-                sip_file.write(f"{key}={value}\n")
-
-            sip_file.write("\n")
+                # Iterate over SIP settings and write key-value pairs
+                sip_file.write(content.strip())  # Write the content directly
+                sip_file.write("\n\n")
 
 # Fetch queues and return them as an array
 def fetch_queues(config):
@@ -150,7 +149,7 @@ def write_gnudialer_queues_conf(config, queues, conf_file):
             # Fetch and write agents associated with this queue
             agents = fetch_agents_for_queue(config, queue["queue_id"])
             for agent_id in agents:
-                file.write(f"member => Agent/{agent_id}\n")
+                file.write(f"member => PJSIP/{agent_id}\n")
             file.write("\n")
 
 # Fetch agents associated with a specific queue
@@ -236,7 +235,7 @@ def main():
     config_file = "/etc/gnudialer.conf"
     gnudialer_agents_conf = "/etc/asterisk/gnudialer_agents.conf"
     gnudialer_queues_conf = "/etc/asterisk/gnudialer_queues.conf"
-    gnudialer_sip_conf = "/etc/asterisk/gnudialer_sip.conf"
+    gnudialer_pjsip_conf = "/etc/asterisk/gnudialer_pjsip.conf"
 
     config = read_gnudialer_conf(config_file)
 
@@ -247,7 +246,7 @@ def main():
 
     # Fetch agents and write gnudialer_agents.conf
     agents = fetch_agents(config)
-    write_gnudialer_agents_and_sip_conf(agents, gnudialer_agents_conf, gnudialer_sip_conf, config["server_id"])
+    write_gnudialer_agents_and_sip_conf(agents, gnudialer_agents_conf, gnudialer_pjsip_conf)
 
     # Fetch queues and write gnudialer_queues.conf
     queues = fetch_queues(config)
