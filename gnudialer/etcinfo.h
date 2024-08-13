@@ -43,5 +43,6 @@ inline std::string getManagerUsername() { return getEtcLine(7); }
 inline std::string getManagerPassword() { return getEtcLine(8); }
 inline std::string getManagerPass() { return getEtcLine(8); }
 inline std::string getMainHost() { return getEtcLine(9); }
+inline std::string getServerId() { return getEtcLine(10); }
 
 #endif

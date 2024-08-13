@@ -17,7 +17,7 @@ class Setting extends Model
     ];
 
     static $defaultSettings = [
-        0 => ['parameter' => 'active', 'value' => true],
+        0 => ['parameter' => 'active', 'value' => 'true'],
         1 => ['parameter' => 'function', 'value' => 'predictive'],
         2 => ['parameter' => 'maxratio', 'value' => 2.0],
         3 => ['parameter' => 'maxabandons', 'value' => 3.0],
@@ -47,6 +47,9 @@ class Setting extends Model
         27 => ['parameter' => 'f_areacode', 'value' => 0],
         28 => ['parameter' => 'f_areacode_prefix', 'value' => 0],
         29 => ['parameter' => 'f_zipcode', 'value' => 0],
+        30 => ['parameter' => 'calltoday', 'value' => 0, 'type' => 'int'],
+        31 => ['parameter' => 'usednc','value' => 'true' ],
+        32 => ['parameter' => 'orderby','value' => 'id' ]
     ];
 
     public function queue()

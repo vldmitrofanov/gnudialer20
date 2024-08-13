@@ -1848,7 +1848,7 @@ try {
 				}
 				
 				//this is just a base to get the building of the query string going
-				query = "SELECT id, phone FROM " + queue + " WHERE 1 ";
+				query = "SELECT id, phone FROM campaign_" + queue + " WHERE 1 ";
                                 
                                 if (calltoday != "true"){
                                 	query += " AND (LEFT(lastupdated,10) = LEFT(NOW(),10) AND disposition = 1) OR LEFT(lastupdated,10) <> LEFT(NOW(),10) ";
@@ -1951,7 +1951,7 @@ try {
 				} else {
 					
 					result = mysql_use_result(mysql);
-					query = "UPDATE " + queue + " SET attempts=attempts+1 WHERE ";
+					query = "UPDATE campaign_" + queue + " SET attempts=attempts+1 WHERE ";
 					for(counter = 0; (row = mysql_fetch_row(result)); counter++) {
 						if (counter) {
 							query += " OR ";
@@ -2030,7 +2030,7 @@ try {
 				if (debugCampaignSettings) {
 			        	std::cout << currentTime << ":" << queue << ": availclosers: " << availclosers << " - remaininglines: " << remaininglines << std::endl;                
 
-		                	query = "SELECT count(*) FROM " + queue + " WHERE ";
+		                	query = "SELECT count(*) FROM campaign_" + queue + " WHERE ";
         	                	query += " disposition = 12 AND closerdispo = 0 ";
 
 					if(mysql_query(mysql, query.c_str()) != 0) {
@@ -2051,7 +2051,7 @@ try {
                                 //std::cout << queue << ": Testing - got here " << std::endl;
                 
                                 if (availclosers) {
-		                	query = "SELECT id, phone FROM " + queue + " WHERE ";
+		                	query = "SELECT id, phone FROM campaign_" + queue + " WHERE ";
         	                        query += " disposition = 12 AND closerdispo = 0 AND ((lastupdated) < DATE_SUB(NOW(),INTERVAL 3 MINUTE)) ";
                         	        query += " ORDER BY attempts + pickups ASC LIMIT 1";
                         	        //query += " ORDER BY attempts + pickups ASC LIMIT " + itos(selectLessorOf(remaininglines,availclosers));
@@ -2062,7 +2062,7 @@ try {
 					} else {    
 	                                	result = mysql_use_result(mysql);
 
-        	                        	query = "UPDATE " + queue + " SET attempts=attempts+1 WHERE ";
+        	                        	query = "UPDATE campaign_" + queue + " SET attempts=attempts+1 WHERE ";
                 	                	for(counter = 0; (row = mysql_fetch_row(result)); counter++) {
 							if (counter) {
 								query += " OR ";
@@ -2105,7 +2105,7 @@ try {
                         			std::cout << "remaininglines: " << remaininglines << std::endl;
 					}
 
-	                                query = "SELECT id, phone FROM " + queue + " WHERE ";
+	                                query = "SELECT id, phone FROM campaign_" + queue + " WHERE ";
 
         	                        if (filter.empty() == false && filter != "0") {
                 	                        if (debug) {
@@ -2141,7 +2141,7 @@ try {
 	                                	result = mysql_use_result(mysql);
                                                 //currently we set cb_datetime to '', we should leave it and set it to '' 
                                                 //connected to agent
-        	                        	query = "UPDATE " + queue + " SET attempts=attempts+1,cb_datetime='' WHERE ";
+        	                        	query = "UPDATE campaign_" + queue + " SET attempts=attempts+1,cb_datetime='' WHERE ";
                 	                	for(counter = 0; (row = mysql_fetch_row(result)); counter++) {
 							if (counter) {
 								query += " OR ";

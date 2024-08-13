@@ -14,7 +14,7 @@ CREATE TABLE stats (
 DNC NOTES
 -----------------
 
-query = "SELECT id, phone FROM " + queue + " WHERE phone NOT IN (SELECT
+query = "SELECT id, phone FROM campaign_" + queue + " WHERE phone NOT IN (SELECT
 phone FROM DNC) AND ";
 
 
@@ -158,9 +158,15 @@ if ((f->frametype == AST_FRAME_CONTROL) && !(config->flags & AST_BRIDGE_IGNORE_S
 
 
 ------------------------------------
-g++ -Wall -Wshadow gnudialer.cpp -g -o gnudialer ysql_config --include
-ysql_config --libsg++ -Wall -Wshadow dialeradmin.cpp -o dialeradmin.cgi
-ysql_config --include ysql_config --libsdialeradmin.cpp: In function oid
+g++ -Wall -Wshadow gnudialer.cpp -g -o gnudialer 
+ysql_config --include
+
+ysql_config --libs
+g++ -Wall -Wshadow dialeradmin.cpp -o dialeradmin.cgi
+
+ysql_config --include 
+ysql_config --libs
+dialeradmin.cpp: In function oid
 doPrintNow(Post)
 dialeradmin.cpp:460: warning: suggest parentheses around assignment used as truth value
 dialeradmin.cpp: In function oid doAreacodePrefixFilter(std::string, std::string, std::string)
@@ -179,9 +185,15 @@ g++ -Wall -Wshadow up.cpp -o up.cgi
 
 
 
-g++ -Wall -Wshadow gnudialer.cpp -g -o gnudialer ysql_config --include
-ysql_config --libsg++ -Wall -Wshadow dialeradmin.cpp -o dialeradmin.cgi
-ysql_config --include ysql_config --libsdialeradmin.cpp: In function oid doPrintNow(Post)
+g++ -Wall -Wshadow gnudialer.cpp -g -o gnudialer 
+ysql_config --include
+
+ysql_config --libs
+g++ -Wall -Wshadow dialeradmin.cpp -o dialeradmin.cgi
+
+ysql_config --include 
+ysql_config --libs
+dialeradmin.cpp: In function oid doPrintNow(Post)
 dialeradmin.cpp:460: warning: suggest parentheses around assignment used as truth value
 dialeradmin.cpp: In function oid doAreacodePrefixFilter(std::string, std::string, std::string)
 dialeradmin.cpp:780: warning: suggest parentheses around assignment used as truth value

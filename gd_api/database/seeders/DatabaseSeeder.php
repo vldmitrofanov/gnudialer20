@@ -174,6 +174,52 @@ class DatabaseSeeder extends Seeder
                     'position' => $filter['position']
                 ]));
             }
+
+            $closerCampaign = Campaign::create([
+                'name' => 'CLOSER',
+                'code' => 'CLOSER',
+                'status' => Campaign::STATUS_ACTIVE
+            ]);
+
+            $closerQueue = Queue::create([
+                'campaign_id' => $closerCampaign->id,
+                'server_id' => $server->id,
+                'status' => Queue::STATUS_ACTIVE,               
+                'settings' => [
+                    'musicclass' => 'default',
+                    'strategy' => 'ringall',
+                    'timeout' => '15',
+                    'retry' => '5',
+                    'wrapuptime' => '10',
+                    'maxlen' => '0',
+                    'servicelevel' => 60,
+                    'announce-frequency' => '0',
+                    'min-announce-frequency' => '15',
+                    'periodic-announce-frequency' => '0',
+                    'announce-round-seconds' => '10',
+                ]
+            ]);
+            foreach ($settings as $setting ){
+                if($setting['parameter'] == 'active'){
+                    $closerQueue->settings()->save(\App\Models\Setting::create([
+                        'parameter' => $setting['parameter'],
+                        'value' => false,
+                    ]));
+                } else {
+                    $closerQueue->settings()->save(\App\Models\Setting::create([
+                        'parameter' => $setting['parameter'],
+                        'value' => $setting['value'],
+                    ]));
+                }
+            }
+            $filters = \App\Models\Filter::$defaultFilters;
+            foreach ($filters as $filter ){
+                $closerQueue->filters()->save(\App\Models\Filter::create([
+                    'filter' => $filter['filter'],
+                    'enabled' => $filter['enabled'],
+                    'position' => $filter['position']
+                ]));
+            }
         }
     }
    

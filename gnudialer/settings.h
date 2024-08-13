@@ -26,14 +26,15 @@ void addGlobalSettings(std::string context) {
 	TheQueueGlobals.ParseQueue(context,serverId);
         TheQueueGlobals.SupSetting("debug","true");
 	TheQueueGlobals.SupSetting("log","true");
-	TheQueueGlobals.Write();
+	//TheQueueGlobals.Write();
 }
 
 void resetFilterSettings(std::string campaign) {
 
         Queue TheQueue;
-        u_long serverId = 1;
+        u_long serverId = std::stoull(getServerId());
         TheQueue.ParseQueue(campaign,serverId);
+        //TheQueue.printSettings();
 
         TheQueue.SupSetting("f_mode","0");
         TheQueue.SupSetting("f_areacode","0");
@@ -42,17 +43,18 @@ void resetFilterSettings(std::string campaign) {
 
         for (int f = 0; f < TheQueue.OccurencesOf("filters"); f++) {
         	TheQueue.GetSetting(f,"filters").SupAttribute("enable","false");
-        	//std::cout << campaign << ": Resetting Filter Number : " << f << std::endl;
+        	std::cout << campaign << ": Resetting Filter Number : " << f << std::endl;
 	}
         TheQueue.GetSetting(0,"filters").SupAttribute("enable","true");
         TheQueue.Write();
+        // TheQueue.printSettings();
 }
 
                 
 void addBasicSettings(std::string campaign) {
 
         Queue TheQueue;
-        u_long serverId = 1;
+        u_long serverId = std::stoull(getServerId());
         TheQueue.ParseQueue(campaign,serverId);
         TheQueue.SupSetting("active","false");
         TheQueue.SupSetting("function","predictive");
@@ -142,7 +144,8 @@ void addBasicSettings(std::string campaign) {
 //                TheQueue.AddSetting("fields","number:8:name:countynum:type:varchar:size:5:export:true");
 //                }
 
-        TheQueue.Write();        
+        //TheQueue.Write(); 
+        return;       
 }
 
 //queue notes

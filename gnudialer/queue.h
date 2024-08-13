@@ -42,9 +42,9 @@ public:
 
 		//	std::cout << "Setting Constructor called!" << std::endl;
 		// format: ;:setting:asdf:jklsemicolon:qwerty
-		std::string tempSetting = rawSetting;//.substr(10, rawSetting.length() - 10);
+		// std::string tempSetting = rawSetting;//.substr(10, rawSetting.length() - 10);
 		std::stringstream SettingStream;
-		SettingStream << tempSetting;
+		SettingStream << rawSetting; //tempSetting;
 		for (std::string tempLine; std::getline(SettingStream, tempLine, ':');)
 		{
 			itsWords.push_back(tempLine);
@@ -242,6 +242,15 @@ public:
 			return false;
 	}
 
+	void print() const {
+        std::cout << "queue.h SETTINGS ";
+        for (const auto& word : itsWords) {
+            std::cout << word << "_:_";
+        }
+        std::cout << std::endl;
+
+    }
+
 	~Setting() {}
 
 private:
@@ -275,11 +284,21 @@ public:
 		{
 			itsAbnHelper.Read(name);
 		} else {
-			itsSettings.push_back(std::string("debug:true")); 
-			itsSettings.push_back(std::string("log:true"));
+			itsId = 0;
+			itsSettings.push_back(ReturnSetting("debug:true")); 
+			itsSettings.push_back(ReturnSetting("log:true"));
 			return true;
 		}
 		Campaign campaign = dbConn.getCampaignByName(name);
+
+		if (campaign.id>0) {
+			// std::cout << "queue.h::Campaign found successfully!" << std::endl;
+			// std::cout << "queue.h::Campaign ID: " << campaign.id << std::endl;
+			//std::cout << "queue.h::Campaign Name: " << campaign.name << std::endl;
+			std::cout << "queue.h::Campaign Code: " << campaign.code << std::endl;
+		} else {
+			std::cout << "queue.h::Campaign not found." << std::endl;
+		}
 
 		std::ifstream QueueIn;
 		// QueueIn.exceptions ( std::ifstream::eofbit );
@@ -291,19 +310,22 @@ public:
 		std::vector<std::string> settings = dbConn.getCampaignSettings(campaign.id, serverId);
 
 		for (const auto& setting : settings) {
-			itsSettings.push_back(setting);
+			//std::cout << "Added setting for campaign " << name << " setting: " << setting << std::endl;
+			itsSettings.push_back(ReturnSetting(setting));
 		}
 
 		std::vector<std::string> filters = dbConn.getCampaignFilters(campaign.id, serverId);
 
 		for (const auto& filter : filters) {
-			itsSettings.push_back("filter:" + filter);
+			// std::cout << "queue.h::Added filter for campaign " << name << " STRING: " << filter << std::endl;
+			itsSettings.push_back(ReturnSetting(filter));
 		}
 
 
 		std::vector<u_long> agents = dbConn.getCampaignAgents(campaign.id, serverId);
 
 		for (const auto& agent : agents) {
+			// std::cout << "queue.h::Added agent for campaign " << name << " agent: " << agent << std::endl;
 			itsMembersNumbers.push_back(agent);
 		}
 
@@ -398,12 +420,15 @@ public:
 		int occurence = 0;
 		for (unsigned int i = 0; i < itsSettings.size(); i++)
 		{
+			//std::cout << "Checking setting type " << type << " at index " << i << " against type " << itsSettings.at(i).GetType() << std::endl;
 			if (itsSettings.at(i).GetType() == type)
 			{
 				occurence++;
+				//std::cout << "Occurrence " << occurence << " of type " << type << std::endl;
 			}
 			if (occurence == whichSetting + 1)
 			{
+				// std::cout << "Returning setting at index " << i << " for occurrence " << whichSetting << std::endl;
 				return itsSettings.at(i);
 			}
 		}
@@ -531,13 +556,15 @@ public:
 
 	void SetSetting(const std::string &type, const std::string &rawSetting)
 	{
-		itsSettings.at(GetSettingNumber(type)).Set(";:setting:" + type + ":" + rawSetting);
+		// itsSettings.at(GetSettingNumber(type)).Set(";:setting:" + type + ":" + rawSetting);
+		itsSettings.at(GetSettingNumber(type)).Set(type + ":" + rawSetting);
 		changed = true;
 	}
 
 	void AddSetting(const std::string &type, const std::string &settingString)
 	{
-		itsSettings.push_back(ReturnSetting(";:setting:" + type + ":" + settingString));
+		//itsSettings.push_back(ReturnSetting(";:setting:" + type + ":" + settingString));
+		itsSettings.push_back(ReturnSetting(type + ":" + settingString));
 	}
 
 	void SupSetting(const std::string &type, const std::string &settingString)
@@ -550,8 +577,11 @@ public:
 				exists = true;
 			}
 		}
-		if (!exists)
+		if (!exists){
 			AddSetting(type, settingString);
+			std::cout<< type << " not found in settings"<< std::endl; 
+			std::cout<< type << ":" << settingString << " setting up" << std::endl; 
+		}
 	}
 
 	// void SetName(std::string name) { itsName = name; }
@@ -575,7 +605,7 @@ public:
 	void dumpAllAgents()
 	{
 
-		std::cout << "Member List: " << std::endl;
+		// std::cout << "Member List: " << std::endl;
 		//	for (int i = 0; i < itsMembersNumbers.size(); i++) {
 		//		std::cout << itsMembersNumbers.at(i) << std::endl;
 		//		}
@@ -628,7 +658,7 @@ public:
 
 	void Write()
 	{
-
+		return;
 		std::stable_sort(itsMembersNumbers.begin(), itsMembersNumbers.end());
 
 		std::stringstream QueueStream;
@@ -740,7 +770,15 @@ public:
 		return availAgents;
 	}
 
+	void printSettings() const {
+        std::cout << "Queue settings:" << std::endl;
+        for (const auto& setting : itsSettings) {
+            setting.print();
+        }
+    }
+
 private:
+	u_long itsId;
 	std::string itsName;
 	std::vector<int> itsMembersNumbers;
 	std::vector<std::string> itsMembersNames, otherSettings;
@@ -808,7 +846,7 @@ public:
 		}
 
 		//	std::cout << "Got to end of ParseQueues" << std::endl;
-		//	std::cout << "size of queues " << ItsQueues.size() << std::endl;
+		std::cout << "size of queues " << ItsQueues.size() << std::endl;
 	}
 
 	Queue at(int whichQueue) const { return ItsQueues.at(whichQueue); }

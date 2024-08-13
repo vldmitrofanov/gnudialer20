@@ -22,7 +22,7 @@ std::string createTzQuery(std::string campaign, \
 		          std::string filename, \
 		          std::string tzh, std::string tzl) {
 
-	std::string theQuery = "UPDATE " + campaign + " SET tzl=" + tzl;
+	std::string theQuery = "UPDATE campaign_" + campaign + " SET tzl=" + tzl;
 	theQuery += ", tzh=" + tzh + " WHERE";
 	std::ifstream TzFileIn;
 	TzFileIn.open(("/usr/lib/gnudialer/timezones/" + filename).c_str());
@@ -50,14 +50,14 @@ void tzpopulate(std::string campaign) {
 	std::string dbName = getDbName();
 	std::string mySqlHost = getMySqlHost();
 
-	std::string initialQuery = "ALTER IGNORE TABLE " + campaign + " ADD tzl INT(8), ADD tzh INT(8), ADD attempts int(8), ADD pickups int(8), ADD abandons int(8), ADD disposition int(8), ADD agent varchar(10), ADD closerdispo int(8), ADD closer varchar(10), ADD subdispo varchar(10) default \'\', ADD lastupdated timestamp NOT NULL default \'0000-00-00 00:00:00\' on update CURRENT_TIMESTAMP, ADD cb_datetime timestamp NOT NULL default \'0000-00-00 00:00:00\', ADD INDEX ( attempts ), ADD INDEX ( pickups ), ADD INDEX ( disposition ), ADD INDEX ( phone )";
+	std::string initialQuery = "ALTER IGNORE TABLE campaign_" + campaign + " ADD tzl INT(8), ADD tzh INT(8), ADD attempts int(8), ADD pickups int(8), ADD abandons int(8), ADD disposition int(8), ADD agent varchar(10), ADD closerdispo int(8), ADD closer varchar(10), ADD subdispo varchar(10) default \'\', ADD lastupdated timestamp NOT NULL default \'0000-00-00 00:00:00\' on update CURRENT_TIMESTAMP, ADD cb_datetime timestamp NOT NULL default \'0000-00-00 00:00:00\', ADD INDEX ( attempts ), ADD INDEX ( pickups ), ADD INDEX ( disposition ), ADD INDEX ( phone )";
 	TheQueries.push_back(initialQuery);
-	std::string initializeValuesQuery = "UPDATE " + campaign + " SET tzl=0, tzh=0, attempts=0, pickups=0, abandons=0, disposition=1, agent=\\\"000\\\", closerdispo=0, closer=\\\"000\\\" WHERE disposition is NULL" ;
+	std::string initializeValuesQuery = "UPDATE campaign_" + campaign + " SET tzl=0, tzh=0, attempts=0, pickups=0, abandons=0, disposition=1, agent=\\\"000\\\", closerdispo=0, closer=\\\"000\\\" WHERE disposition is NULL" ;
 	TheQueries.push_back(initializeValuesQuery);
 
-	//std::string initializeValuesQuery = "ALTER TABLE " + campaign + " ADD INDEX ( attempts )" ;
+	//std::string initializeValuesQuery = "ALTER TABLE campaign_" + campaign + " ADD INDEX ( attempts )" ;
 	//TheQueries.push_back(initializeValuesQuery);
-	//std::string initializeValuesQuery = "ALTER TABLE " + campaign + " ADD INDEX ( pickups )" ;
+	//std::string initializeValuesQuery = "ALTER TABLE campaign_" + campaign + " ADD INDEX ( pickups )" ;
 	//TheQueries.push_back(initializeValuesQuery);
 
 	TheQueries.push_back(createTzQuery(campaign,"hawaiian.final","-10","-10"));

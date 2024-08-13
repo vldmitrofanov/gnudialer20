@@ -6,6 +6,7 @@
 struct Campaign {
     u_long id;
     std::string name;
+    std::string code;
 };
 
 #endif // CAMPAIGN_H

@@ -410,7 +410,7 @@ int main(int argc, char **argv)
 	addGlobalSettings("general");
 	Queue TheQueueGlobals;
 	u_long serverId = 1;
-	TheQueueGlobals.ParseQueue("general",serverId);
+	TheQueueGlobals.ParseQueue("general", serverId);
 
 	try
 	{
@@ -556,13 +556,18 @@ int main(int argc, char **argv)
 			}
 			resetFilterSettings(tempCheckCampaign);
 		}
-		TheQueues.ParseQueues();
+		// TheQueues.ParseQueues(); // Temporary disabled
 
 		HERE(INITIALIZED QUEUES AND AGENTS)
 		timeval tv;
 		unsigned long int timeSinceLastQueueUpdate = 0, timeSinceLastCallbackCheck = 0, currentTime = 0;
+
 		for (unsigned long int t = 0; true; t++)
 		{
+			if (gDebug)
+			{
+				std::cout << "INITIALIZED QUEUES AND AGENTS FOR LOOP" << std::endl;
+			}
 			gettimeofday(&tv, NULL);
 			currentTime = tv.tv_sec % 1000000;
 			if ((t != 0 && t % 10 == 0 && currentTime - timeSinceLastQueueUpdate > 5) || (currentTime - timeSinceLastQueueUpdate > 20 && t != 0))
@@ -582,7 +587,7 @@ int main(int argc, char **argv)
 				TheQueues.ParseQueues();
 				//			Queue TheQueueGlobals;
 				u_long serverId = 1;
-				TheQueueGlobals.ParseQueue("general",serverId);
+				TheQueueGlobals.ParseQueue("general", serverId);
 
 				try
 				{
@@ -1011,7 +1016,7 @@ int main(int argc, char **argv)
 							}
 							else
 							{
-								//TheQueues.where(TheAgents.where(atoi(theAgent.c_str())).GetCampaign()).AddTalkTime(TheAgents.where(atoi(theAgent.c_str())).SetOnWait(true,true,TheAgents));
+								// TheQueues.where(TheAgents.where(atoi(theAgent.c_str())).GetCampaign()).AddTalkTime(TheAgents.where(atoi(theAgent.c_str())).SetOnWait(true,true,TheAgents));
 								TheQueues.where(TheAgents.where(atoi(theAgent.c_str())).GetCampaign()).AddTalkTime(TheAgents.where(atoi(theAgent.c_str())).SetOnWait(false, false, TheAgents));
 								TheAgents.where(atoi(theAgent.c_str())).writeAgentLog(TheAgents);
 								if (gLog)
@@ -2297,7 +2302,7 @@ int main(int argc, char **argv)
 						}
 
 						// this is just a base to get the building of the query string going
-						query = "SELECT id, phone FROM " + queue + " WHERE 1 ";
+						query = "SELECT id, phone FROM campaign_" + queue + " WHERE 1 ";
 
 						if (calltoday != "true")
 						{
@@ -2392,7 +2397,7 @@ int main(int argc, char **argv)
 
 						if (usednc == "true")
 						{
-							query += " AND phone NOT IN (SELECT phone FROM DNC ";
+							query += " AND phone NOT IN (SELECT phone FROM (SELECT phone FROM DNC ";
 						}
 
 						// query += " ORDER BY attempts + pickups ASC LIMIT " + itos(skip) + "," + itos(linestodial);
@@ -2413,7 +2418,7 @@ int main(int argc, char **argv)
 							query += " ORDER BY attempts + pickups ASC ";
 						}
 
-						query += " LIMIT " + itos(skip) + "," + itos(linestodial);
+						query += " LIMIT " + itos(skip) + "," + itos(linestodial) + ") AS limited_dnc)";
 
 						if (debug)
 						{
@@ -2433,7 +2438,7 @@ int main(int argc, char **argv)
 						{
 
 							result = mysql_use_result(mysql);
-							query = "UPDATE " + queue + " SET attempts=attempts+1 WHERE ";
+							query = "UPDATE campaign_" + queue + " SET attempts=attempts+1 WHERE ";
 							for (counter = 0; (row = mysql_fetch_row(result)); counter++)
 							{
 								if (counter)
@@ -2526,7 +2531,7 @@ int main(int argc, char **argv)
 						{
 							std::cout << currentTime << ":" << queue << ": availclosers: " << availclosers << " - remaininglines: " << remaininglines << std::endl;
 
-							query = "SELECT count(*) FROM " + queue + " WHERE ";
+							query = "SELECT count(*) FROM campaign_" + queue + " WHERE ";
 							query += " disposition = 12 AND closerdispo = 0 ";
 
 							if (mysql_query(mysql, query.c_str()) != 0)
@@ -2557,7 +2562,7 @@ int main(int argc, char **argv)
 
 						if (availclosers)
 						{
-							query = "SELECT id, phone FROM " + queue + " WHERE ";
+							query = "SELECT id, phone FROM campaign_" + queue + " WHERE ";
 							query += " disposition = 12 AND closerdispo = 0 AND ((lastupdated) < DATE_SUB(NOW(),INTERVAL 3 MINUTE)) ";
 							query += " ORDER BY attempts + pickups ASC LIMIT 1";
 							// query += " ORDER BY attempts + pickups ASC LIMIT " + itos(selectLessorOf(remaininglines,availclosers));
@@ -2571,7 +2576,7 @@ int main(int argc, char **argv)
 							{
 								result = mysql_use_result(mysql);
 
-								query = "UPDATE " + queue + " SET attempts=attempts+1 WHERE ";
+								query = "UPDATE campaign_" + queue + " SET attempts=attempts+1 WHERE ";
 								for (counter = 0; (row = mysql_fetch_row(result)); counter++)
 								{
 									if (counter)
@@ -2622,7 +2627,7 @@ int main(int argc, char **argv)
 							std::cout << "remaininglines: " << remaininglines << std::endl;
 						}
 
-						query = "SELECT id, phone FROM " + queue + " WHERE ";
+						query = "SELECT id, phone FROM campaign_" + queue + " WHERE ";
 
 						if (filter.empty() == false && filter != "0")
 						{
@@ -2668,7 +2673,7 @@ int main(int argc, char **argv)
 							result = mysql_use_result(mysql);
 							// currently we set cb_datetime to '', we should leave it and set it to ''
 							// connected to agent
-							query = "UPDATE " + queue + " SET attempts=attempts+1,cb_datetime='' WHERE ";
+							query = "UPDATE campaign_" + queue + " SET attempts=attempts+1,cb_datetime='' WHERE ";
 							for (counter = 0; (row = mysql_fetch_row(result)); counter++)
 							{
 								if (counter)
@@ -2740,6 +2745,19 @@ int main(int argc, char **argv)
 		std::cerr << "Caught Exception: " << e.what() << std::endl;
 		return 1;
 	}
+
+	catch (xLoopEnd e) {
+		std::cout << "Caught exception while trying to get debug & log settings!" << std::endl;
+		std::cout << e.what();
+		std::cout << std::endl << std::endl;
+		return 1;
+	}
+
+	catch (const std::runtime_error& e) {
+        // Handle the runtime_error exception
+        std::cerr << "Caught a runtime_error exception: " << e.what() << std::endl;
+		return 1;
+    }
 
 	catch (...)
 	{

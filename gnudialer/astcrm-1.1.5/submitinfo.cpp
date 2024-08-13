@@ -152,9 +152,9 @@ int main() {
 
 	std::string theQuery;
 	if (isclosercam) {
-        	theQuery = "echo \"UPDATE " + campaign + " SET closer='" + agent + "',";
+        	theQuery = "echo \"UPDATE campaign_" + campaign + " SET closer='" + agent + "',";
 	} else {
-        	theQuery = "echo \"UPDATE " + campaign + " SET agent='" + agent + "',";
+        	theQuery = "echo \"UPDATE campaign_" + campaign + " SET agent='" + agent + "',";
 	}
         
 	for (unsigned int i = 3, j = 0; i < TheFields.size(); i++) {

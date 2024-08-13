@@ -15,6 +15,7 @@ class Queue extends Model
         'campaign_id',
         'server_id',
         'status',
+        'settings'
     ];
 
     protected $casts = [

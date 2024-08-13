@@ -13,7 +13,8 @@ class Campaign extends Model
 
     protected $fillable = [
         'name',        
-        'status'
+        'status',
+        'code'
     ];
 
     public function queues()

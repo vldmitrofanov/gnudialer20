@@ -459,7 +459,7 @@ void doPrintNow(Post TheFields) {
                 	std::cerr << "MySql connection failed!" << std::endl;
         	}
 
-	        std::string query = "SELECT * FROM " + queue + " WHERE id=" + leadid + "";
+	        std::string query = "SELECT * FROM campaign_" + queue + " WHERE id=" + leadid + "";
 
 
 	        if(mysql_query(mysql, query.c_str()) != 0) {
@@ -550,7 +550,7 @@ void doBackupNow(Post TheFields) {
                                 std::cerr << "MySql connection failed!" << std::endl;
         }
 
-        query = "BACKUP TABLE " + queue +  " TO '/tmp'";
+        query = "BACKUP TABLE campaign_" + queue +  " TO '/tmp'";
 
         if(mysql_query(mysql, query.c_str()) != 0) {
                 std::cout << "<pre>Error backing up data!</pre>" << std::endl;
@@ -589,12 +589,12 @@ void doRestoreNow(Post TheFields) {
         }
 
 
-        query = "DROP TABLE " + queue +  "";
+        query = "DROP TABLE campaign_" + queue +  "";
         if(mysql_query(mysql, query.c_str()) != 0) {
                 std::cout << "<pre>Error dropping table!</pre>" << std::endl;
         }
 
-        query = "RESTORE TABLE " + queue +  " FROM '/tmp'";
+        query = "RESTORE TABLE campaign_" + queue +  " FROM '/tmp'";
         if(mysql_query(mysql, query.c_str()) != 0) {
                 std::cout << "<pre>Error restoring data!</pre>" << std::endl;
         }
@@ -785,7 +785,7 @@ void doAreacodeFilter(std::string theCampaign, std::string theSettingName, std::
         	std::cerr << "MySql connection failed!" << std::endl;
 	}
         	
-        std::string query = "SELECT DISTINCT SQL_CALC_FOUND_ROWS left( phone, 3 ) FROM " + theCampaign + "";
+        std::string query = "SELECT DISTINCT SQL_CALC_FOUND_ROWS left( phone, 3 ) FROM campaign_" + theCampaign + "";
         if(mysql_query(mysql, query.c_str()) != 0) {
                 std::cout << "<pre>Error selecting areacodes!</pre>" << std::endl;
 	} else {
@@ -826,7 +826,7 @@ void doAreacodePrefixFilter(std::string theCampaign, std::string theSettingName,
 		std::cerr << "MySql connection failed!" << std::endl;                
 	} 
 
-	std::string query = "SELECT DISTINCT SQL_CALC_FOUND_ROWS left( phone, 6 ) FROM " + theCampaign + "";                
+	std::string query = "SELECT DISTINCT SQL_CALC_FOUND_ROWS left( phone, 6 ) FROM campaign_" + theCampaign + "";                
 	if(mysql_query(mysql, query.c_str()) != 0) {                
 		std::cout << "<pre>Error selecting areacodes!</pre>" << std::endl;                
 	} else {                       
@@ -868,7 +868,7 @@ void doZipcodeFilter(std::string theCampaign, std::string theSettingName, std::s
                 std::cerr << "MySql connection failed!" << std::endl;
 	}
                 
-        std::string query = "SELECT DISTINCT SQL_CALC_FOUND_ROWS left( zip, 5 ) FROM " + theCampaign + "";
+        std::string query = "SELECT DISTINCT SQL_CALC_FOUND_ROWS left( zip, 5 ) FROM campaign_" + theCampaign + "";
         if(mysql_query(mysql, query.c_str()) != 0) {
                 std::cout << "<pre>Error selecting zipcodes!</pre>" << std::endl;
 	} else {
@@ -1019,7 +1019,7 @@ void doEditFilters(Post TheFields) {
                 fstring = TheQueue.GetSetting(i,"filters").GetAttribute("string");
 		enabled = TheQueue.GetSetting(i,"filters").GetAttribute("enable");	
 
-		query = "SELECT COUNT(*) FROM " + queue + " WHERE left(lastupdated,10) <> left(now(),10) AND " + fstring + "";
+		query = "SELECT COUNT(*) FROM campaign_" + queue + " WHERE left(lastupdated,10) <> left(now(),10) AND " + fstring + "";
 		if (mysql_query(mysql, query.c_str()) != 0) {
 			std::cout << "<pre>Error selecting filter!</pre>" << std::endl;
 		} else {
@@ -1200,7 +1200,7 @@ void doShowDBCounts(Post TheFields) {
         	//if (i == 1) {
         		//do nothing
 		//} else {
-			query = "SELECT COUNT(*) FROM " + queue + " WHERE disposition = '" + itos(i) + "' ";
+			query = "SELECT COUNT(*) FROM campaign_" + queue + " WHERE disposition = '" + itos(i) + "' ";
 			if (mysql_query(mysql, query.c_str()) != 0) {
 				//std::cout << "<pre>Error selecting filter!</pre>" << std::endl;
 			} else {
@@ -1272,7 +1272,7 @@ void doShowAllDBCounts(Post TheFields) {
     			int totaldispos = 0;
         		for (int i = -7; i < 13; i++) {               
      
-				query = "SELECT COUNT(*) FROM " + tempCampaign + " WHERE disposition = '" + itos(i) + "' ";
+				query = "SELECT COUNT(*) FROM campaign_" + tempCampaign + " WHERE disposition = '" + itos(i) + "' ";
 				if (mysql_query(mysql, query.c_str()) != 0) {
 					//std::cout << "<pre>Error selecting filter!</pre>" << std::endl;
 				} else {
@@ -1343,7 +1343,7 @@ void doShowAllDBCountsForToday(Post TheFields) {
                         std::cout << "<td>" << tempCampaign << "</td>";
     			int totaldispos = 0;
         		for (int i = -7; i < 13; i++) {
-				query = "SELECT COUNT(*) FROM " + tempCampaign + " WHERE disposition = '" + itos(i) + "' AND LEFT(lastupdated,10) = LEFT(NOW(),10) ";
+				query = "SELECT COUNT(*) FROM campaign_" + tempCampaign + " WHERE disposition = '" + itos(i) + "' AND LEFT(lastupdated,10) = LEFT(NOW(),10) ";
 				if (mysql_query(mysql, query.c_str()) != 0) {
 					//std::cout << "<pre>Error selecting filter!</pre>" << std::endl;
 				} else {
@@ -2439,7 +2439,7 @@ void doDataReload(Post TheFields) {
         	}
 
 	std::string query = "SELECT SQL_CALC_FOUND_ROWS phone,title,name,address,city,state,zip,oc,paidamt,paiddate,comments,countynum ";
-	query += "FROM " + queue + " WHERE ((disposition > -7 AND disposition < 7) ";
+	query += "FROM campaign_" + queue + " WHERE ((disposition > -7 AND disposition < 7) ";
 	query += "OR disposition = 9 ";
 	query += "OR disposition = 10 ";
 	query += "OR disposition = 11) ";
@@ -2543,7 +2543,7 @@ void doExportRecords(Post TheFields) {
         	std::cerr << "MySql connection failed!" << std::endl;
 	}
         
-        std::string query = "SELECT * FROM " + queue + " WHERE ";
+        std::string query = "SELECT * FROM campaign_" + queue + " WHERE ";
 	query += "(left(lastupdated,10) >= STR_TO_DATE(" + date1 + ", '%Y-%m-%d') ";
 	query += "AND left(lastupdated,10) <= STR_TO_DATE(" + date2 + ", '%Y-%m-%d')) ";
 	if (usecloser) {
@@ -2643,7 +2643,7 @@ void doExportRecords(Post TheFields) {
 //
         if (usecloser) {
         	std::cout << "<hr>";
-	        query = "SELECT * FROM " + queue + " WHERE ";
+	        query = "SELECT * FROM campaign_" + queue + " WHERE ";
 		//query += "(left(lastupdated,10) >= STR_TO_DATE(" + date1 + ", '%Y-%m-%d') ";
 		//query += "AND left(lastupdated,10) <= STR_TO_DATE(" + date2 + ", '%Y-%m-%d')) ";
 
@@ -2726,7 +2726,7 @@ void doBuildCallists(Post TheFields) {
 		std::cerr << "MySql connection failed!" << std::endl;
 	}
 
-        std::string query = "SELECT * FROM " + queue + " WHERE ";
+        std::string query = "SELECT * FROM campaign_" + queue + " WHERE ";
         query += "disposition >=-5 AND disposition <= 5 AND ";
         query += "attempts <= 6 LIMIT 10000";
   

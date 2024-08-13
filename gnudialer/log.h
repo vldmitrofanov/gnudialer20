@@ -57,7 +57,7 @@ void __writeCampaignSale(const std::string & printstring, const std::string & ca
                 }
       
                       
-        std::string query = "SELECT * FROM " + campaign + " WHERE id='" + leadid + "'";
+        std::string query = "SELECT * FROM campaign_" + campaign + " WHERE id='" + leadid + "'";
 
 //        std::cout << "campaign: " << campaign << " leadid: " << leadid << " query: " << query << std::endl;
         

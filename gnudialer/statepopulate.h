@@ -26,7 +26,7 @@ void statepopulate(std::string campaign) {
 	std::string dbName = getDbName();
 	std::string mySqlHost = getMySqlHost();
 
-	std::string initialQuery = "ALTER TABLE " + campaign;
+	std::string initialQuery = "ALTER TABLE campaign_" + campaign;
 	initialQuery += " ADD wdayl INT(8)";
 	initialQuery += ",ADD wdayh INT(8)";
 	initialQuery += ",ADD satl INT(8)";
@@ -36,7 +36,7 @@ void statepopulate(std::string campaign) {
 	initialQuery += ",ADD holl INT(8)";
 	initialQuery += ",ADD holh INT(8)";
 
-	std::string initializeValuesQuery = "UPDATE " + campaign;
+	std::string initializeValuesQuery = "UPDATE campaign_" + campaign;
 	initializeValuesQuery += " SET wdayl=0";
 	initializeValuesQuery += ", wdayh=24";
 	initializeValuesQuery += ", satl=0";
@@ -68,7 +68,7 @@ void statepopulate(std::string campaign) {
 	for (unsigned int i = 0; i < TheStates.size(); i++) {
         	std::cout << static_cast<int>(static_cast<float>(i) / static_cast<float>(TheStates.size()) * 100.0) << "\%" << std::endl;
 
-        	theQuery = "UPDATE " + campaign + " SET";
+        	theQuery = "UPDATE campaign_" + campaign + " SET";
         	theQuery += " wdayl=" + itos(TheStates.at(i).GetWdayL());
         	theQuery += ", wdayh=" + itos(TheStates.at(i).GetWdayH());
         	theQuery += ", satl=" + itos(TheStates.at(i).GetSatL());

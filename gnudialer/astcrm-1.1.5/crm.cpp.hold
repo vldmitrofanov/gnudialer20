@@ -38,8 +38,8 @@ MySqlValues(std::string campaign, std::string leadid) {
 	mySqlIn.close();
 
 //	this allowed the lookup to work see LookupValue below
-//	std::string thecommand = "echo \"SELECT * FROM " + campaign + " WHERE id=" + leadid + " || phone=" + leadid + " || name=\\\"" + leadid + "\\\" ORDER BY id ASC LIMIT 1\" | mysql -u" + mySqlUser + " -p" + mySqlPass + " -h" + mySqlHost + " " + dbName;
-	std::string thecommand = "echo \"SELECT * FROM " + campaign + " WHERE id=" + leadid + "\" | mysql -u"  + mySqlUser + " -p" + mySqlPass + " -h" + mySqlHost + " " + dbName;
+//	std::string thecommand = "echo \"SELECT * FROM campaign_" + campaign + " WHERE id=" + leadid + " || phone=" + leadid + " || name=\\\"" + leadid + "\\\" ORDER BY id ASC LIMIT 1\" | mysql -u" + mySqlUser + " -p" + mySqlPass + " -h" + mySqlHost + " " + dbName;
+	std::string thecommand = "echo \"SELECT * FROM campaign_" + campaign + " WHERE id=" + leadid + "\" | mysql -u"  + mySqlUser + " -p" + mySqlPass + " -h" + mySqlHost + " " + dbName;
 
 	// debug info
 	std::cout << "<!-- ";
@@ -169,7 +169,7 @@ void lookupValue(std::string value, std::string campaign, std::string leadid) {
   std::getline(mySqlIn,dbName,'\n');
   mySqlIn.close();
 
-  std::string thecommand = "echo \"SELECT " + value + " FROM " + campaign + " WHERE id=" +leadid + "\" | mysql -u" + mySqlUser + " -p" + mySqlPass + " " + dbName + " -N";
+  std::string thecommand = "echo \"SELECT " + value + " FROM campaign_" + campaign + " WHERE id=" +leadid + "\" | mysql -u" + mySqlUser + " -p" + mySqlPass + " " + dbName + " -N";
   std::cout << "<!-- ";
   std::cout << thecommand;
   std::cout << " -->" << std::endl;

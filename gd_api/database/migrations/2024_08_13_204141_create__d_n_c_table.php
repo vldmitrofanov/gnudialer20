@@ -11,15 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('settings', function (Blueprint $table) {
+        Schema::create('DNC', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('queue_id')->nullable()->constrained()->onDelete('cascade');
-            $table->string('parameter');  
-            $table->string('value'); 
-            $table->string('type')->default('string');
+            $table->string('phone', 15)->index()->unique();
             $table->timestamps();
-
-            $table->unique(['queue_id', 'parameter']);
         });
     }
 
@@ -28,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('settings');
+        Schema::dropIfExists('DNC');
     }
 };

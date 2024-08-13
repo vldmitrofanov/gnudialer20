@@ -25,7 +25,7 @@ MYSQLVER := `mysql -V | cut -c25-27`
 CXXFLAGS = -std=c++11 -Wall -I/usr/include/mysql
 
 # Linker flags
-LDFLAGS = -L/usr/lib/mysql -lmysqlcppconn   
+LDFLAGS = -L/usr/lib/mysql -lmysqlcppconn -lcurl 
 
 ifeq ($(shell `detect`),RedHat)
  CGIBIN := `./mkhelper CGIBIN`

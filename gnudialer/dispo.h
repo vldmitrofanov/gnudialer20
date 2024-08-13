@@ -183,7 +183,7 @@ void writeDBAbandon(const std::string & agent, const std::string & campaign, con
         std::string dbName = getDbName();
         std::string mySqlHost = getMySqlHost();
 
-        std::string theDBQuery = "UPDATE " + campaign + " SET abandons=abandons+1 WHERE id=" + leadid + "";
+        std::string theDBQuery = "UPDATE campaign_" + campaign + " SET abandons=abandons+1 WHERE id=" + leadid + "";
 
         std::system(std::string("echo \"" + theDBQuery + "\" | mysql -u" + mySqlUser + " -p" + mySqlPass + " -h" + mySqlHost + " " + dbName).c_str());
 }        
@@ -195,7 +195,7 @@ void writeDBDispo(const std::string & agent, const std::string & campaign, const
         std::string dbName = getDbName();
         std::string mySqlHost = getMySqlHost();
 
-        std::string theDBQuery = "UPDATE " + campaign + " SET disposition=" + thedispo + ",agent=" + agent + " WHERE id=" + leadid + "";
+        std::string theDBQuery = "UPDATE campaign_" + campaign + " SET disposition=" + thedispo + ",agent=" + agent + " WHERE id=" + leadid + "";
 
         std::system(std::string("echo \"" + theDBQuery + "\" | mysql -u" + mySqlUser + " -p" + mySqlPass + " -h" + mySqlHost + " " + dbName).c_str());
 }
@@ -207,7 +207,7 @@ void writeDBString(const std::string & campaign, const std::string & leadid, con
         std::string dbName = getDbName();
         std::string mySqlHost = getMySqlHost();
 
-        std::string theDBQuery = "UPDATE " + campaign + " SET " + thestring + " WHERE id=" + leadid + "";
+        std::string theDBQuery = "UPDATE campaign_" + campaign + " SET " + thestring + " WHERE id=" + leadid + "";
 
         std::system(std::string("echo \"" + theDBQuery + "\" | mysql -u" + mySqlUser + " -p" + mySqlPass + " -h" + mySqlHost + " " + dbName).c_str());
 }

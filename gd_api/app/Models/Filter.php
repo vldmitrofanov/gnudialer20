@@ -20,32 +20,32 @@ class Filter extends Model
         0 => [
             'filter' => '((disposition > -6 AND disposition < 6) AND attempts < 4)',
             'enabled' => 1,
-            'position' => 1
+            'position' => 0
         ],
         1 => [
             'filter' => '((disposition > -6 AND disposition < 6) AND (attempts > 3 AND attempts < 8))',
             'enabled' => 0,
-            'position' => 2
+            'position' => 1
         ],
         2 => [
             'filter' => '((disposition > -6 AND disposition < 6) AND attempts > 7)',
             'enabled' => 0,
-            'position' => 3
+            'position' => 2
         ],
         3 => [
             'filter' => '(disposition = -3 OR disposition = 3)',
             'enabled' => 0,
-            'position' => 4
+            'position' => 3
         ],
         4 => [
             'filter' => '(disposition = 0)',
             'enabled' => 1,
-            'position' => 5
+            'position' => 4
         ],
         5 => [
             'filter' => '(disposition = -7)',
             'enabled' => 1,
-            'position' => 6
+            'position' => 5
         ],
     ];
 

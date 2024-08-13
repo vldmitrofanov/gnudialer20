@@ -207,7 +207,7 @@ bool addQueueMember(int agent, std::string queue) {
 				inQueue = true;
 			}
 		}
-		if (tempLine.find("member => Agent/") != std::string::npos) {
+		if (tempLine.find("member => PJSIP/") != std::string::npos) {
 			if (tempLine[0] == 'm') {
 				if (inQueue) {
 					inPos = true;
@@ -218,7 +218,7 @@ bool addQueueMember(int agent, std::string queue) {
 		}
 		if (inQueue && inPos) {
 			if (!writeComplete) {
-				QueueLines.push_back("member => Agent/" + AgentStream.str());
+				QueueLines.push_back("member => PJSIP/" + AgentStream.str());
 				writeComplete = true;
 			}
 		}
@@ -264,7 +264,7 @@ bool removeQueueMember(std::string agent, std::string queue) {
 		}
 		if (!inQueue) QueueLines.push_back(tempLine);
 		else
-			if (std::string(tempLine + "foo").find("member => Agent/" + agent + "foo",0) == std::string::npos) {
+			if (std::string(tempLine + "foo").find("member => PJSIP/" + agent + "foo",0) == std::string::npos) {
 				QueueLines.push_back(tempLine);
 			}
 		}
