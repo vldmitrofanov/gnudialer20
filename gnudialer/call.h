@@ -186,11 +186,27 @@ public:
 		*/
 
 			curl = curl_easy_init();
+			// std::cout << "ARI creds: " <<  TheAsterisk.GetAriHost() << ":" + TheAsterisk.GetAriPort() + " - " + TheAsterisk.GetAriUser() + ":" + TheAsterisk.GetAriPass() << std::endl;
 			if (curl)
 			{
 				std::string url = "http://" + TheAsterisk.GetAriHost() + ":" + TheAsterisk.GetAriPort() + "/ari/channels";
-				std::string postFields = "endpoint=SIP/" + itsTrunk + "/" + itsDialPrefix + itsNumber +
-										 "&extension=s" +
+				std::string dialPrefix = (itsDialPrefix == "none") ? "" : itsDialPrefix;
+				std::string finalNumber = dialPrefix + itsNumber;
+				std::cout << "TRUNK: " + itsTrunk <<std::endl;
+				size_t pos = itsTrunk.find('!');
+				while (pos != std::string::npos) {
+					itsTrunk.replace(pos, 1, ":");
+					pos = itsTrunk.find('!', pos + 1);
+				}
+				pos = itsTrunk.find("_EXTEN_");
+				if (pos != std::string::npos) {
+					// Replace _EXTEN_ with the actual number
+					itsTrunk.replace(pos, 7, finalNumber);  // 7 is the length of "_EXTEN_"
+				} else {
+					throw std::runtime_error("Placeholder _EXTEN_ not found in the trunk string. Trunk example: SIP/faketrunk/sip=_EXTEN_@127.0.0.1=5062");
+				}
+				std::string postFields = "endpoint=" + itsTrunk +
+										 "&extension=" + dialPrefix + itsNumber +
 										 "&context=" + (itsTransfer == "TRANSFER" ? "gdtransfer" : "gdincoming") +
 										 "&priority=1" +
 										 "&callerId=" + itsCampaign + "-" + itsLeadId + "-" + itsUseCloser +
@@ -200,7 +216,7 @@ public:
 										 "&variables[__DSPMODE]=" + itsDSPMode +
 										 "&variables[__ISTRANSFER]=" + itsTransfer +
 										 "&account=" + itsCampaign;
-
+				curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 				curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 				curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postFields.c_str());
 				curl_easy_setopt(curl, CURLOPT_USERNAME, TheAsterisk.GetAriUser().c_str());
@@ -210,8 +226,10 @@ public:
 				res = curl_easy_perform(curl);
 				if (res != CURLE_OK)
 				{
-					std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
-					throw std::runtime_error("curl_easy_perform() failed");
+					std::string errorMessage = "curl_easy_perform() failed: " + std::string(curl_easy_strerror(res));
+					std::cerr << errorMessage << std::endl;
+					curl_easy_cleanup(curl);
+					throw std::runtime_error(errorMessage);
 				}
 				else
 				{
@@ -221,6 +239,18 @@ public:
 				// Cleanup
 				curl_easy_cleanup(curl);
 			}
+			if (doColor)
+			{
+				std::cout << mainHost << neon << ": " + itsCampaign + " - " + itsNumber + " - " + itsLeadId + " - " + itsUseCloser << norm << std::endl;
+			}
+			else
+			{
+				std::cout << mainHost << ": " + itsCampaign + " - " + itsNumber + " - " + itsLeadId + " - " + itsUseCloser << std::endl;
+			}
+
+			usleep(10000000);
+
+			exit(0);
 		}
 
 		if (pid == -1)

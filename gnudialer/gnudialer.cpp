@@ -2397,10 +2397,11 @@ int main(int argc, char **argv)
 
 						if (usednc == "true")
 						{
-							query += " AND phone NOT IN (SELECT phone FROM (SELECT phone FROM DNC ";
+							//query += " AND phone NOT IN (SELECT phone FROM DNC) ";
 						}
 
 						// query += " ORDER BY attempts + pickups ASC LIMIT " + itos(skip) + "," + itos(linestodial);
+						query += " AND NOT EXISTS (SELECT 1 FROM DNC WHERE DNC.phone = campaign_" + queue + ".phone)";
 
 						if (orderby == "id" || orderby == "phone")
 						{
@@ -2418,7 +2419,7 @@ int main(int argc, char **argv)
 							query += " ORDER BY attempts + pickups ASC ";
 						}
 
-						query += " LIMIT " + itos(skip) + "," + itos(linestodial) + ") AS limited_dnc)";
+						query += " LIMIT " + itos(skip) + "," + itos(linestodial) ;
 
 						if (debug)
 						{
