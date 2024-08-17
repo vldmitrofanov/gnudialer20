@@ -106,84 +106,143 @@ public:
 			CURL *curl;
 			CURLcode res;
 
-			/*
-				ClientSocket AsteriskManager(TheAsterisk.GetHost(),TheAsterisk.GetPortInt());
-				AsteriskManager >> response;
-				AsteriskManager << "Action: Login\r\nUserName: " + \
-						TheAsterisk.GetUser() + \
-						"\r\nSecret: " + \
-						TheAsterisk.GetPass() + \
-						"\r\nEvents: off\r\n\r\n";
-				AsteriskManager >> response;
+			ClientSocket AsteriskManager(TheAsterisk.GetHost(), TheAsterisk.GetPortInt());
+			AsteriskManager >> response;
+			AsteriskManager << "Action: Login\r\nUserName: " +
+								   TheAsterisk.GetUser() +
+								   "\r\nSecret: " +
+								   TheAsterisk.GetPass() +
+								   "\r\nEvents: off\r\n\r\n";
+			AsteriskManager >> response;
 
-				AsteriskManager << "Action: Originate\r\n";
-		//		AsteriskManager << "Channel: iax2/gnudialer@" + TheAsterisk.GetHost() + "/" + itsNumber + "\r\n";
+			AsteriskManager << "Action: Originate\r\n";
+			//		AsteriskManager << "Channel: iax2/gnudialer@" + TheAsterisk.GetHost() + "/" + itsNumber + "\r\n";
 
-					if (itsTrunk.find("%3A",0) != std::string::npos) {
-							int trunkPos = itsTrunk.find("%3A",0);
-							itsTrunk.erase(trunkPos,3);
-							itsTrunk.insert(trunkPos,":");
-					}
+			if (itsTrunk.find("%3A", 0) != std::string::npos)
+			{
+				int trunkPos = itsTrunk.find("%3A", 0);
+				itsTrunk.erase(trunkPos, 3);
+				itsTrunk.insert(trunkPos, ":");
+			}
 
-						if (itsTrunk != "none") {
-					if (itsDialPrefix == "none") {
-								AsteriskManager << "Channel: " + itsTrunk + "/" + itsNumber + "\r\n";
-		//              	          AsteriskManager << "Channel: Local/" + itsNumber + "@gdincoming/n\r\n";
-					} else {
-									AsteriskManager << "Channel: " + itsTrunk + "/" + itsDialPrefix + itsNumber + "\r\n";
-		//                		AsteriskManager << "Channel: Local/" + itsDialPrefix + itsNumber + "@gdincoming/n\r\n";
-					}
-				} else {
-					std::cout << mainHost << ": NO TRUNK DEFINED! (currently set to: " + itsTrunk + ")" << std::endl;
-					exit(0);
-				}
-				if (itsTransfer == "TRANSFER") {
-								AsteriskManager << "Context: gdtransfer\r\n";
-				} else {
-						AsteriskManager << "Context: gdincoming\r\n";
-				}
-				AsteriskManager << "Extension: s\r\n";
-				AsteriskManager << "Priority: 1\r\n";
-				AsteriskManager << "Variable: __LEADID=" + itsLeadId + "\r\n";
-						AsteriskManager << "Variable: __CAMPAIGN=" + itsCampaign + "\r\n";
-				AsteriskManager << "Variable: __DSPMODE=" + itsDSPMode + "\r\n";
-						AsteriskManager << "Variable: __ISTRANSFER=" + itsTransfer + "\r\n";
-						AsteriskManager << "Account: " + itsCampaign + "\r\n";
-				AsteriskManager << "Async: true\r\n";
-				AsteriskManager << "Timeout: " + itos(itsTimeout) + "\r\n";
+			std::string dialPrefix = (itsDialPrefix == "none") ? "" : itsDialPrefix;
+			std::string finalNumber = dialPrefix + itsNumber;
+			std::cout << "TRUNK: " + itsTrunk << std::endl;
+			size_t pos = itsTrunk.find('!');
+			while (pos != std::string::npos)
+			{
+				itsTrunk.replace(pos, 1, ":");
+				pos = itsTrunk.find('!', pos + 1);
+			}
+			pos = itsTrunk.find("_EXTEN_");
+			if (pos != std::string::npos)
+			{
+				// Replace _EXTEN_ with the actual number
+				itsTrunk.replace(pos, 7, finalNumber); // 7 is the length of "_EXTEN_"
+			}
+			else
+			{
+				throw std::runtime_error("Placeholder _EXTEN_ not found in the trunk string. Trunk example: SIP/faketrunk/sip!_EXTEN_@127.0.0.1!5062");
+			}
 
-				if (itsCallerId == "0123456789") {
-					itsCallerId = itsNumber;
-				}
-						if (itsCallerId == "0123459999") {
-					itsCallerId = itsNumber.substr(1,6);
-				}
+			std::cout << "TRUNK: " + itsTrunk << std::endl;
 
-				AsteriskManager << "CallerID: ~" + itsCampaign + "-" + itsLeadId + "-" + itsUseCloser + "~ <" + itsCallerId + ">\r\n\r\n";
+			if (itsTrunk != "none")
+			{
+				AsteriskManager << "Channel: " + itsTrunk + "\r\n";
+				// AsteriskManager << "Channel: " + itsTrunk + "/" + itsDialPrefix + itsNumber + "\r\n";
+					//                		AsteriskManager << "Channel: Local/" + itsDialPrefix + itsNumber + "@gdincoming/n\r\n";
 
-		// buffer fix
-
-				AsteriskManager >> response;
-				AsteriskManager << "Action: Logoff\r\n\r\n";
-				AsteriskManager >> response;
-
-		// end buffer fix
-
-		//		std::cout << TheAsterisk.GetHost() << std::endl;
-		//		std::cout << TheAsterisk.GetPort() << std::endl;
-		//		std::cout << TheAsterisk.GetUser() << std::endl;
-		//		std::cout << TheAsterisk.GetPass() << std::endl;
-
-						if (doColor) {
-					std::cout << mainHost << neon << ": " + itsCampaign + " - " + itsNumber + " - " + itsLeadId + " - " + itsUseCloser << norm << std::endl;
-						} else {
-					std::cout << mainHost << ": " + itsCampaign + " - " + itsNumber + " - " + itsLeadId + " - " + itsUseCloser << std::endl;
-						}
-
-				usleep(10000000);
-
+			}
+			else
+			{
+				std::cout << mainHost << ": NO TRUNK DEFINED! (currently set to: " + itsTrunk + ")" << std::endl;
 				exit(0);
-		*/
+			}
+			if (itsTransfer == "TRANSFER")
+			{
+				AsteriskManager << "Context: gdtransfer\r\n";
+			}
+			else
+			{
+				AsteriskManager << "Context: gdincoming\r\n";
+				std::cout << "AMI Originate Context: gdincoming" <<std::endl;
+			}
+			AsteriskManager << "Exten: s\r\n";
+			AsteriskManager << "Priority: 1\r\n";
+			AsteriskManager << "Variable: __LEADID=" + itsLeadId + "\r\n";
+			AsteriskManager << "Variable: __CAMPAIGN=" + itsCampaign + "\r\n";
+			AsteriskManager << "Variable: __DSPMODE=" + itsDSPMode + "\r\n";
+			AsteriskManager << "Variable: __ISTRANSFER=" + itsTransfer + "\r\n";
+			AsteriskManager << "Account: " + itsCampaign + "\r\n";
+			AsteriskManager << "Async: true\r\n";
+			AsteriskManager << "Timeout: " + itos(itsTimeout) + "\r\n";
+
+			if (itsCallerId == "0123456789")
+			{
+				itsCallerId = itsNumber;
+			}
+			if (itsCallerId == "0123459999")
+			{
+				itsCallerId = itsNumber.substr(1, 6);
+			}
+
+			AsteriskManager << "CallerID: ~" + itsCampaign + "-" + itsLeadId + "-" + itsUseCloser + "~ <" + itsCallerId + ">\r\n\r\n";
+
+			// buffer fix
+
+			AsteriskManager >> response;
+			std::cout << "AMI Response: " << response <<std::endl;
+			AsteriskManager << "Action: Logoff\r\n\r\n";
+			AsteriskManager >> response;
+
+			// end buffer fix
+
+			//		std::cout << TheAsterisk.GetHost() << std::endl;
+			//		std::cout << TheAsterisk.GetPort() << std::endl;
+			//		std::cout << TheAsterisk.GetUser() << std::endl;
+			//		std::cout << TheAsterisk.GetPass() << std::endl;
+
+			if (doColor)
+			{
+				std::cout << mainHost << neon << ": " + itsCampaign + " - " + itsNumber + " - " + itsLeadId + " - " + itsUseCloser << norm << std::endl;
+			}
+			else
+			{
+				std::cout << mainHost << ": " + itsCampaign + " - " + itsNumber + " - " + itsLeadId + " - " + itsUseCloser << std::endl;
+			}
+
+			usleep(10000000);
+
+			exit(0);
+		}
+
+		if (pid == -1)
+		{
+
+			throw xForkError();
+		}
+	}
+
+	// TODO move to ARI interface
+	void DoAriCall(const Asterisk &TheAsterisk, const std::string &mainHost)
+	{
+
+		std::string response;
+
+		called = true;
+
+		signal(SIGCLD, SIG_IGN);
+
+		int pid = fork();
+
+		if (pid == 0)
+		{
+
+			usleep(rand() % 2000000);
+
+			CURL *curl;
+			CURLcode res;
 
 			curl = curl_easy_init();
 			// std::cout << "ARI creds: " <<  TheAsterisk.GetAriHost() << ":" + TheAsterisk.GetAriPort() + " - " + TheAsterisk.GetAriUser() + ":" + TheAsterisk.GetAriPass() << std::endl;
@@ -192,18 +251,22 @@ public:
 				std::string url = "http://" + TheAsterisk.GetAriHost() + ":" + TheAsterisk.GetAriPort() + "/ari/channels";
 				std::string dialPrefix = (itsDialPrefix == "none") ? "" : itsDialPrefix;
 				std::string finalNumber = dialPrefix + itsNumber;
-				std::cout << "TRUNK: " + itsTrunk <<std::endl;
+				std::cout << "TRUNK: " + itsTrunk << std::endl;
 				size_t pos = itsTrunk.find('!');
-				while (pos != std::string::npos) {
+				while (pos != std::string::npos)
+				{
 					itsTrunk.replace(pos, 1, ":");
 					pos = itsTrunk.find('!', pos + 1);
 				}
 				pos = itsTrunk.find("_EXTEN_");
-				if (pos != std::string::npos) {
+				if (pos != std::string::npos)
+				{
 					// Replace _EXTEN_ with the actual number
-					itsTrunk.replace(pos, 7, finalNumber);  // 7 is the length of "_EXTEN_"
-				} else {
-					throw std::runtime_error("Placeholder _EXTEN_ not found in the trunk string. Trunk example: SIP/faketrunk/sip=_EXTEN_@127.0.0.1=5062");
+					itsTrunk.replace(pos, 7, finalNumber); // 7 is the length of "_EXTEN_"
+				}
+				else
+				{
+					throw std::runtime_error("Placeholder _EXTEN_ not found in the trunk string. Trunk example: SIP/faketrunk/sip!_EXTEN_@127.0.0.1!5062");
 				}
 				std::string postFields = "endpoint=" + itsTrunk +
 										 "&extension=" + dialPrefix + itsNumber +

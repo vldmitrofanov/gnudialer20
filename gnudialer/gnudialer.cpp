@@ -28,6 +28,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <mysql.h>
+#include <cstdlib>
 #include "queue.h"
 #include "Socket.h"
 #include "tzfilter.h"
@@ -167,6 +168,7 @@ void doRedirect(const std::string &channel,
 
 		AsteriskRedir << "Priority: 1\r\n\r\n";
 		AsteriskRedir >> response;
+		std::cout << "Redirect Response: " << response << std::endl;
 		AsteriskRedir << "Action: Logoff\r\n\r\n";
 		AsteriskRedir >> response;
 		usleep(10000000);
@@ -617,6 +619,12 @@ int main(int argc, char **argv)
 			for (std::string tempLine; std::getline(BlockStream, tempLine, '\n');)
 			{
 				tempLine = tempLine.substr(0, tempLine.length() - 1);
+
+				// DEBUGGING AMI OUTPUT
+				std::string command = "echo \"" + tempLine + "\" >> /tmp/gnudialer-ami.log";
+				int result = system(command.c_str());
+				// END DEBUGGING AMI OUTPUT
+
 				// strip '\r'
 				if (tempLine.empty())
 				{
@@ -651,254 +659,255 @@ int main(int argc, char **argv)
 						}
 						std::system("killall gnudialer");
 					}
-
-					//***********************************************************************************
-					if (block.find("Event: OriginateFailure", 0) != std::string::npos && block.find("Context: gdincoming", 0) != std::string::npos)
+					if (block.find("Event: OriginateResponse", 0) != std::string::npos && block.find("Context: gdincoming", 0) != std::string::npos)
 					{
-						// if (block.find("Event: OriginateFailure",0) != std::string::npos) {
-						int iTheReason = 0;
-						std::string theReason, theCallerIDName, theCampaign, theLeadid;
-						std::string theDispo = "0";
-						std::string theReasonDesc = "Unknown";
-
-						if (block.find("Reason: ", 0) != std::string::npos)
+						//***********************************************************************************
+						if (block.find("Response: Failure", 0) != std::string::npos)
 						{
-							pos = block.find("Reason: ", 0) + 8;
-							end = block.find("\n", pos);
-							theReason = block.substr(pos, end - pos);
-							iTheReason = atoi(theReason.c_str());
-						}
-						if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos && !theReason.empty())
-						{
-							pos = block.find("CallerIDName: ", 0) + 15;
-							end = block.find("\n", pos);
-							theCallerIDName = block.substr(pos, end - pos);
+							// if (block.find("Event: OriginateFailure",0) != std::string::npos) {
+							int iTheReason = 0;
+							std::string theReason, theCallerIDName, theCampaign, theLeadid;
+							std::string theDispo = "0";
+							std::string theReasonDesc = "Unknown";
 
-							if (block.find("~", 0) != std::string::npos)
+							if (block.find("Reason: ", 0) != std::string::npos)
 							{
-								pos = theCallerIDName.find("~", end) + 1;
-								end = theCallerIDName.find("-", pos + 1);
-								pos2 = end + 1;
-								end2 = theCallerIDName.find("-", pos2);
-								theCampaign = theCallerIDName.substr(pos, end - pos);
-								theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
+								pos = block.find("Reason: ", 0) + 8;
+								end = block.find("\n", pos);
+								theReason = block.substr(pos, end - pos);
+								iTheReason = atoi(theReason.c_str());
 							}
-							if (!theCampaign.empty() && !theLeadid.empty() && TheQueues.exists(theCampaign))
+							if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos && !theReason.empty())
 							{
-								// unknown failure, disconnect
-								if (theReason == "0")
-								{
-									theDispo = "-7";
-									writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
-									TheQueues.rWhere(theCampaign).IncrementDisconnects();
-								}
-								// AST_CONTROL_RINGING
-								// timed out while ringing, no answer
-								if (theReason == "3")
-								{
-									theDispo = "-2";
-									writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
-									TheQueues.rWhere(theCampaign).IncrementNoanswers();
-								}
-								// AST_CONTROL_BUSY
-								// busy
-								if (theReason == "5")
-								{
-									theDispo = "-4";
-									writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
-									TheQueues.rWhere(theCampaign).IncrementBusies();
-								}
-								// AST_CONTROL_HANGUP
-								// hangup, no answer
-								if (theReason == "1")
-								{
-									theDispo = "-2";
-									writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
-									TheQueues.rWhere(theCampaign).IncrementNoanswers();
-								}
-								// AST_CONTROL_CONGESTION
-								// congestion
-								if (theReason == "8")
-								{
-									theDispo = "-5";
-									writeDBString(theCampaign, theLeadid, "disposition=(((disposition=-5)*-2)-5)");
-									TheQueues.rWhere(theCampaign).IncrementCongestions();
-								}
-								if (theDispo == "0")
-								{
-									if (doColorize)
-									{
-										std::cout << theCampaign << fg_light_red << ": OriginateFailure - " << theReason << " (" << dispo2long(std::stoi(theDispo)) << ") " << normal << std::endl;
-									}
-									else
-									{
-										std::cout << theCampaign << ": OriginateFailure - " << theReason << " (" << dispo2long(std::stoi(theDispo)) << ") " << std::endl;
-									}
-								}
-								if (gDebug)
-								{
-									if (doColorize)
-									{
-										std::cout << theCampaign << fg_light_green << ": OriginateFailure - theLeadid: " << theLeadid << " theReason: " << theReason << " theDispo: " << theDispo << " (" << dispo2long(std::stoi(theDispo)) << ") " << normal << std::endl;
-									}
-									else
-									{
-										std::cout << theCampaign << ": OriginateFailure - theLeadid: " << theLeadid << " theReason: " << theReason << " theDispo: " << theDispo << " (" << dispo2long(std::stoi(theDispo)) << ") " << std::endl;
-									}
-								}
-								if (gLog)
-								{
-									writeGnudialerLog(theCampaign + ": OriginateFailure - theLeadid: " + theLeadid + " theReason: " + theReason + " theDispo: " + theDispo);
-								}
-							}
-							else
-							{
-								if (doColorize)
-								{
-									std::cout << fg_light_red << "OriginateFailure: PARSE ERROR " << normal << std::endl;
-								}
-								else
-								{
-									std::cout << "OriginateFailure: PARSE ERROR " << std::endl;
-								}
-								if (gLog)
-								{
-									writeGnudialerLog("OriginateFailure - PARSE ERROR - Something Empty (block: " + block + ")");
-								}
-							}
-						}
-						else
-						{
-							if (gLog)
-							{
-								writeGnudialerLog("OriginateFailure - PARSE ERROR - No CallerIDName or Empty Reason (block: " + block + ")");
-							}
-						}
-					}
+								pos = block.find("CallerIDName: ", 0) + 15;
+								end = block.find("\n", pos);
+								theCallerIDName = block.substr(pos, end - pos);
 
-					//***********************************************************************************
-					if (block.find("Event: OriginateSuccess", 0) != std::string::npos && block.find("Context: gdincoming", 0) != std::string::npos)
-					{
-						// if (block.find("Event: OriginateSuccess",0) != std::string::npos) {
-						int iTheReason = 0;
-						std::string theReason, theCallerIDName, theCampaign, theLeadid;
-						std::string theDispo = "-3";
-						if (block.find("Reason: ", 0) != std::string::npos)
-						{
-							pos = block.find("Reason: ", 0) + 8;
-							end = block.find("\n", pos);
-							theReason = block.substr(pos, end - pos);
-							iTheReason = atoi(theReason.c_str());
-						}
-						if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos && !theReason.empty())
-						{
-							pos = block.find("CallerIDName: ", 0) + 15;
-							end = block.find("\n", pos);
-							theCallerIDName = block.substr(pos, end - pos);
-
-							if (block.find("~", 0) != std::string::npos)
-							{
-								pos = theCallerIDName.find("~", end) + 1;
-								end = theCallerIDName.find("-", pos + 1);
-
-								pos2 = end + 1;
-								end2 = theCallerIDName.find("-", pos2);
-
-								theCampaign = theCallerIDName.substr(pos, end - pos);
-								theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
-							}
-
-							if (!theCampaign.empty() && !theLeadid.empty() && TheQueues.exists(theCampaign))
-							{
-								// answer, we'll assume voicemail/answering machine
-								// if it passes talkdetect it will be sent to agent
-								// or abandons++
-								if (theReason == "4")
+								if (block.find("~", 0) != std::string::npos)
 								{
-									theDispo = "-3";
-									writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
-									TheQueues.rWhere(theCampaign).IncrementAnsmachs();
+									pos = theCallerIDName.find("~", end) + 1;
+									end = theCallerIDName.find("-", pos + 1);
+									pos2 = end + 1;
+									end2 = theCallerIDName.find("-", pos2);
+									theCampaign = theCallerIDName.substr(pos, end - pos);
+									theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
 								}
-								// timed out while ringing, no answer
-								if (theReason == "3")
+								if (!theCampaign.empty() && !theLeadid.empty() && TheQueues.exists(theCampaign))
 								{
-									theDispo = "-2";
-									writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
-								}
-								// busy
-								if (theReason == "5")
-								{
-									theDispo = "-4";
-									writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
-								}
-								// hangup, no answer
-								if (theReason == "1")
-								{
-									theDispo = "-2";
-									writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
-								}
-								// congestion
-								if (theReason == "8")
-								{
-									theDispo = "-5";
-									writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
-								}
-								if (theDispo == "0")
-								{
-									if (doColorize)
+									// unknown failure, disconnect
+									if (theReason == "0")
 									{
-										std::cout << theCampaign << fg_light_red << ": OriginateSuccess - UNKNOWN REASON - " << theReason << normal << std::endl;
+										theDispo = "-7";
+										writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
+										TheQueues.rWhere(theCampaign).IncrementDisconnects();
 									}
-									else
+									// AST_CONTROL_RINGING
+									// timed out while ringing, no answer
+									if (theReason == "3")
 									{
-										std::cout << theCampaign << ": OriginateSuccess - UNKNOWN REASON - " << theReason << std::endl;
+										theDispo = "-2";
+										writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
+										TheQueues.rWhere(theCampaign).IncrementNoanswers();
+									}
+									// AST_CONTROL_BUSY
+									// busy
+									if (theReason == "5")
+									{
+										theDispo = "-4";
+										writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
+										TheQueues.rWhere(theCampaign).IncrementBusies();
+									}
+									// AST_CONTROL_HANGUP
+									// hangup, no answer
+									if (theReason == "1")
+									{
+										theDispo = "-2";
+										writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
+										TheQueues.rWhere(theCampaign).IncrementNoanswers();
+									}
+									// AST_CONTROL_CONGESTION
+									// congestion
+									if (theReason == "8")
+									{
+										theDispo = "-5";
+										writeDBString(theCampaign, theLeadid, "disposition=(((disposition=-5)*-2)-5)");
+										TheQueues.rWhere(theCampaign).IncrementCongestions();
+									}
+									if (theDispo == "0")
+									{
+										if (doColorize)
+										{
+											std::cout << theCampaign << fg_light_red << ": OriginateFailure - " << theReason << " (" << dispo2long(std::stoi(theDispo)) << ") " << normal << std::endl;
+										}
+										else
+										{
+											std::cout << theCampaign << ": OriginateFailure - " << theReason << " (" << dispo2long(std::stoi(theDispo)) << ") " << std::endl;
+										}
+									}
+									if (gDebug)
+									{
+										if (doColorize)
+										{
+											std::cout << theCampaign << fg_light_green << ": OriginateFailure - theLeadid: " << theLeadid << " theReason: " << theReason << " theDispo: " << theDispo << " (" << dispo2long(std::stoi(theDispo)) << ") " << normal << std::endl;
+										}
+										else
+										{
+											std::cout << theCampaign << ": OriginateFailure - theLeadid: " << theLeadid << " theReason: " << theReason << " theDispo: " << theDispo << " (" << dispo2long(std::stoi(theDispo)) << ") " << std::endl;
+										}
 									}
 									if (gLog)
 									{
-										writeGnudialerLog(theCampaign + ": OriginateSuccess - UNKNOWN REASON - theLeadid: " + theLeadid + " theReason: " + theReason + " theDispo: " + theDispo);
+										writeGnudialerLog(theCampaign + ": OriginateFailure - theLeadid: " + theLeadid + " theReason: " + theReason + " theDispo: " + theDispo);
 									}
 								}
-								if (gDebug)
+								else
 								{
 									if (doColorize)
 									{
-										std::cout << theCampaign << fg_green << ": OriginateSuccess - theLeadid: " << theLeadid << " theReason: " << theReason << " theDispo: " << theDispo << " (" << dispo2long(std::stoi(theDispo)) << ") " << normal << std::endl;
+										std::cout << fg_light_red << "OriginateFailure: PARSE ERROR " << normal << std::endl;
 									}
 									else
 									{
-										std::cout << theCampaign << ": OriginateSuccess - theLeadid: " << theLeadid << " theReason: " << theReason << " theDispo: " << theDispo << " (" << dispo2long(std::stoi(theDispo)) << ") " << std::endl;
+										std::cout << "OriginateFailure: PARSE ERROR " << std::endl;
 									}
-								}
-								if (gLog)
-								{
-									writeGnudialerLog(theCampaign + ": OriginateSuccess - theLeadid: " + theLeadid + " theReason: " + theReason + " theDispo: " + theDispo);
+									if (gLog)
+									{
+										writeGnudialerLog("OriginateFailure - PARSE ERROR - Something Empty (block: " + block + ")");
+									}
 								}
 							}
 							else
 							{
-								if (doColorize)
+								if (gLog)
 								{
-									std::cout << fg_light_red << "OriginateSuccess: PARSE ERROR " << normal << std::endl;
+									writeGnudialerLog("OriginateFailure - PARSE ERROR - No CallerIDName or Empty Reason (block: " + block + ")");
+								}
+							}
+						}
+
+						//***********************************************************************************
+						if (block.find("Response: Success", 0) != std::string::npos)
+						{
+							// if (block.find("Event: OriginateSuccess",0) != std::string::npos) {
+							int iTheReason = 0;
+							std::string theReason, theCallerIDName, theCampaign, theLeadid;
+							std::string theDispo = "-3";
+							if (block.find("Reason: ", 0) != std::string::npos)
+							{
+								pos = block.find("Reason: ", 0) + 8;
+								end = block.find("\n", pos);
+								theReason = block.substr(pos, end - pos);
+								iTheReason = atoi(theReason.c_str());
+							}
+							if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos && !theReason.empty())
+							{
+								pos = block.find("CallerIDName: ", 0) + 15;
+								end = block.find("\n", pos);
+								theCallerIDName = block.substr(pos, end - pos);
+
+								if (block.find("~", 0) != std::string::npos)
+								{
+									pos = theCallerIDName.find("~", end) + 1;
+									end = theCallerIDName.find("-", pos + 1);
+
+									pos2 = end + 1;
+									end2 = theCallerIDName.find("-", pos2);
+
+									theCampaign = theCallerIDName.substr(pos, end - pos);
+									theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
+								}
+
+								if (!theCampaign.empty() && !theLeadid.empty() && TheQueues.exists(theCampaign))
+								{
+									// answer, we'll assume voicemail/answering machine
+									// if it passes talkdetect it will be sent to agent
+									// or abandons++
+									if (theReason == "4")
+									{
+										theDispo = "-3";
+										writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
+										TheQueues.rWhere(theCampaign).IncrementAnsmachs();
+									}
+									// timed out while ringing, no answer
+									if (theReason == "3")
+									{
+										theDispo = "-2";
+										writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
+									}
+									// busy
+									if (theReason == "5")
+									{
+										theDispo = "-4";
+										writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
+									}
+									// hangup, no answer
+									if (theReason == "1")
+									{
+										theDispo = "-2";
+										writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
+									}
+									// congestion
+									if (theReason == "8")
+									{
+										theDispo = "-5";
+										writeDBString(theCampaign, theLeadid, "disposition='" + theDispo + "'");
+									}
+									if (theDispo == "0")
+									{
+										if (doColorize)
+										{
+											std::cout << theCampaign << fg_light_red << ": OriginateSuccess - UNKNOWN REASON - " << theReason << normal << std::endl;
+										}
+										else
+										{
+											std::cout << theCampaign << ": OriginateSuccess - UNKNOWN REASON - " << theReason << std::endl;
+										}
+										if (gLog)
+										{
+											writeGnudialerLog(theCampaign + ": OriginateSuccess - UNKNOWN REASON - theLeadid: " + theLeadid + " theReason: " + theReason + " theDispo: " + theDispo);
+										}
+									}
+									if (gDebug)
+									{
+										if (doColorize)
+										{
+											std::cout << theCampaign << fg_green << ": OriginateSuccess - theLeadid: " << theLeadid << " theReason: " << theReason << " theDispo: " << theDispo << " (" << dispo2long(std::stoi(theDispo)) << ") " << normal << std::endl;
+										}
+										else
+										{
+											std::cout << theCampaign << ": OriginateSuccess - theLeadid: " << theLeadid << " theReason: " << theReason << " theDispo: " << theDispo << " (" << dispo2long(std::stoi(theDispo)) << ") " << std::endl;
+										}
+									}
+									if (gLog)
+									{
+										writeGnudialerLog(theCampaign + ": OriginateSuccess - theLeadid: " + theLeadid + " theReason: " + theReason + " theDispo: " + theDispo);
+									}
 								}
 								else
 								{
-									std::cout << "OriginateSuccess: PARSE ERROR " << std::endl;
-								}
-								if (gLog)
-								{
-									writeGnudialerLog("OriginateSuccess - PARSE ERROR - Something Empty (block: " + block + ")");
+									if (doColorize)
+									{
+										std::cout << fg_light_red << "OriginateSuccess: PARSE ERROR " << normal << std::endl;
+									}
+									else
+									{
+										std::cout << "OriginateSuccess: PARSE ERROR " << std::endl;
+									}
+									if (gLog)
+									{
+										writeGnudialerLog("OriginateSuccess - PARSE ERROR - Something Empty (block: " + block + ")");
+									}
 								}
 							}
-						}
-						else
-						{
-							if (gLog)
+							else
 							{
-								writeGnudialerLog("OriginateSuccess - PARSE ERROR - No CallerIDName or Empty Reason (block: " + block + ")");
+								if (gLog)
+								{
+									writeGnudialerLog("OriginateSuccess - PARSE ERROR - No CallerIDName or Empty Reason (block: " + block + ")");
+								}
 							}
 						}
 					}
-
 					//***********************************************************************************
 					if (block.find("Event: Agentlogin", 0) != std::string::npos || block.find("Event: Agentcallbacklogin", 0) != std::string::npos)
 					{
@@ -1066,205 +1075,378 @@ int main(int argc, char **argv)
 					}
 
 					//***********************************************************************************
-					if ((block.find("Event: UserEventQueue", 0) != std::string::npos && block.find("~", 0) != std::string::npos) ||
-						(block.find("Event: UserEventQueueTRANSFER", 0) != std::string::npos && block.find("~", 0) != std::string::npos))
+					if (block.find("Event: UserEvent", 0) != std::string::npos)
 					{
 
-						bool isNone = false;
-						std::string theChannel, theAgent, theLeadid, theCampaign;
-						bool isTransfer = false;
-						std::string tempQueueAgent, tempQueueCampaign;
-
-						if (block.find("Channel: ", 0) != std::string::npos)
-						{
-							pos = block.find("Channel: ", 0) + 9;
-							end = block.find("\n", pos);
-							theChannel = block.substr(pos, end - pos);
-							if (gDebug)
-							{
-								std::cout << "UserEventQueue: theChannel - " << theChannel << std::endl;
-							}
-						}
-						if (block.find("~", 0) != std::string::npos)
-						{
-							pos = block.find("~", end) + 1;
-							end = block.find("-", pos + 1);
-							theCampaign = block.substr(pos, end - pos);
-							if (theCampaign.find("none", 0) != std::string::npos)
-							{
-								isNone = true;
-							}
-							if (gDebug)
-							{
-								std::cout << "UserEventQueue: theCampaign - " << theCampaign << std::endl;
-							}
-							pos2 = end + 1;
-							end2 = block.find("-", pos2);
-							theLeadid = block.substr(pos2, end2 - pos2);
-							if (gDebug)
-							{
-								std::cout << "UserEventQueue: theLeadid - " << theLeadid << std::endl;
-							}
-						}
-
-						if (TheQueues.exists(theCampaign))
+						if ((block.find("UserEvent: Queue|", 0) != std::string::npos && block.find("~", 0) != std::string::npos) ||
+							(block.find("UserEvent: QueueTRANSFER", 0) != std::string::npos && block.find("~", 0) != std::string::npos))
 						{
 
-							if (block.find("TRANSFER", 0) != std::string::npos && !isNone)
+							bool isNone = false;
+							std::string theChannel, theAgent, theLeadid, theCampaign;
+							bool isTransfer = false;
+							std::string tempQueueAgent, tempQueueCampaign;
+
+							if (block.find("Channel: ", 0) != std::string::npos)
 							{
-								isTransfer = true;
+								pos = block.find("Channel: ", 0) + 9;
+								end = block.find("\n", pos);
+								theChannel = block.substr(pos, end - pos);
 								if (gDebug)
 								{
-									std::cout << "UserEventQueue: isTransfer - " << isTransfer << std::endl;
+									std::cout << "UserEventQueue: theChannel - " << theChannel << std::endl;
+								}
+							}
+							if (block.find("~", 0) != std::string::npos)
+							{
+								pos = block.find("~", end) + 1;
+								end = block.find("-", pos + 1);
+								theCampaign = block.substr(pos, end - pos);
+								if (theCampaign.find("none", 0) != std::string::npos)
+								{
+									isNone = true;
 								}
 								if (gDebug)
 								{
-									std::cout << theCampaign << ": Setting Answered - theLeadid: " << theLeadid << std::endl;
+									std::cout << "UserEventQueue: theCampaign - " << theCampaign << std::endl;
 								}
-								TheCallCache->SetAnswered(theCampaign, theLeadid);
+								pos2 = end + 1;
+								end2 = block.find("-", pos2);
+								theLeadid = block.substr(pos2, end2 - pos2);
+								if (gDebug)
+								{
+									std::cout << "UserEventQueue: theLeadid - " << theLeadid << std::endl;
+								}
 							}
 
-							// do not IGNore, we want the core
-							// signal(SIGCLD, SIG_IGN);
-
-							if (isTransfer)
+							if (TheQueues.exists(theCampaign))
 							{
-								//******************************************************************************
-								// this section is where calls are handled for CLOSERS
-								try
+
+								if (block.find("TRANSFER", 0) != std::string::npos && !isNone)
 								{
-									tempQueueAgent = TheQueues.LeastRecent(TheQueues.rWhere(theCampaign).GetSetting("closercam").Get(), TheAgents);
-									tempQueueCampaign = TheQueues.rWhere(theCampaign).GetSetting("closercam").Get();
-								}
-								catch (xLoopEnd e)
-								{
-									std::cout << "Caught xLoopEnd when getting closercam." << std::endl;
-									std::cout << e.what();
-									std::cout << std::endl
-											  << std::endl;
-								}
-								if (atoi(tempQueueAgent.c_str()))
-								{
+									isTransfer = true;
 									if (gDebug)
 									{
-										std::cout << theCampaign << ": Transfer - tempQueueAgent: " << tempQueueAgent << std::endl;
+										std::cout << "UserEventQueue: isTransfer - " << isTransfer << std::endl;
 									}
+									if (gDebug)
+									{
+										std::cout << theCampaign << ": Setting Answered - theLeadid: " << theLeadid << std::endl;
+									}
+									TheCallCache->SetAnswered(theCampaign, theLeadid);
+								}
 
-									if (isNone == false)
+								// do not IGNore, we want the core
+								// signal(SIGCLD, SIG_IGN);
+
+								if (isTransfer)
+								{
+									//******************************************************************************
+									// this section is where calls are handled for CLOSERS
+									try
+									{
+										tempQueueAgent = TheQueues.LeastRecent(TheQueues.rWhere(theCampaign).GetSetting("closercam").Get(), TheAgents);
+										tempQueueCampaign = TheQueues.rWhere(theCampaign).GetSetting("closercam").Get();
+									}
+									catch (xLoopEnd e)
+									{
+										std::cout << "Caught xLoopEnd when getting closercam." << std::endl;
+										std::cout << e.what();
+										std::cout << std::endl
+												  << std::endl;
+									}
+									if (atoi(tempQueueAgent.c_str()))
 									{
 										if (gDebug)
 										{
-											std::cout << theCampaign << ": Setting Answered - theLeadid: " << theLeadid << std::endl;
+											std::cout << theCampaign << ": Transfer - tempQueueAgent: " << tempQueueAgent << std::endl;
 										}
-										TheCallCache->SetAnswered(theCampaign, theLeadid);
-									}
 
-									if (TheAgents.exists(atoi(tempQueueAgent.c_str())))
-									{
-										TheAgents.where(atoi(tempQueueAgent.c_str())).SetConnectedChannel(theChannel);
-										TheAgents.where(atoi(tempQueueAgent.c_str())).SetCampaign(theCampaign);
-										// TheAgents.where(atoi(tempQueueAgent.c_str())).SetCampaign(TheQueues.rWhere(theCampaign).GetSetting("closercam").Get());
-										TheAgents.where(atoi(tempQueueAgent.c_str())).SetLeadId(theLeadid);
-										TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnWait(false, false, TheAgents);
-										// TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnWait(false,true,TheAgents);
-
-										if (gDebug)
-										{
-											std::cout << theCampaign << ": theLeadid - " << theLeadid << std::endl;
-										}
-									}
-
-									pid = fork();
-									if (pid == 0)
-									{
 										if (isNone == false)
 										{
-											doRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, managerUser, managerPass, true);
-											exit(0);
+											if (gDebug)
+											{
+												std::cout << theCampaign << ": Setting Answered - theLeadid: " << theLeadid << std::endl;
+											}
+											TheCallCache->SetAnswered(theCampaign, theLeadid);
+										}
+
+										if (TheAgents.exists(atoi(tempQueueAgent.c_str())))
+										{
+											TheAgents.where(atoi(tempQueueAgent.c_str())).SetConnectedChannel(theChannel);
+											TheAgents.where(atoi(tempQueueAgent.c_str())).SetCampaign(theCampaign);
+											// TheAgents.where(atoi(tempQueueAgent.c_str())).SetCampaign(TheQueues.rWhere(theCampaign).GetSetting("closercam").Get());
+											TheAgents.where(atoi(tempQueueAgent.c_str())).SetLeadId(theLeadid);
+											TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnWait(false, false, TheAgents);
+											// TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnWait(false,true,TheAgents);
+
+											if (gDebug)
+											{
+												std::cout << theCampaign << ": theLeadid - " << theLeadid << std::endl;
+											}
+										}
+
+										pid = fork();
+										if (pid == 0)
+										{
+											if (isNone == false)
+											{
+												doRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, managerUser, managerPass, true);
+												exit(0);
+											}
+										}
+
+										if (pid == -1)
+										{
+											throw xForkError();
 										}
 									}
-
-									if (pid == -1)
+									else
 									{
-										throw xForkError();
+
+										std::cout << theCampaign << ": No available Closers! (QUEUE)" << std::endl;
+
+										pid = fork();
+										if (pid == 0)
+										{
+											doRedirect(theChannel, "699", theCampaign, theLeadid, managerUser, managerPass, true);
+											// doHangupCall(theChannel,theAgent,managerUser,managerPass);
+											exit(0);
+										}
+										if (pid == -1)
+										{
+											throw xForkError();
+										}
 									}
 								}
 								else
 								{
-
-									std::cout << theCampaign << ": No available Closers! (QUEUE)" << std::endl;
-
-									pid = fork();
-									if (pid == 0)
+									//******************************************************************************
+									// this section is where calls are handled for AGENTS
+									tempQueueAgent = TheQueues.LeastRecent(theCampaign, TheAgents);
+									if (atoi(tempQueueAgent.c_str()))
 									{
-										doRedirect(theChannel, "699", theCampaign, theLeadid, managerUser, managerPass, true);
-										// doHangupCall(theChannel,theAgent,managerUser,managerPass);
-										exit(0);
+										if (gDebug)
+										{
+											std::cout << theCampaign << ": Non-Transfer - tempQueueAgent: " << tempQueueAgent << std::endl;
+										}
+
+										if (isNone == false)
+										{
+											if (gDebug)
+											{
+												std::cout << theCampaign << ": Setting Answered - theLeadid: " << theLeadid << std::endl;
+											}
+											TheCallCache->SetAnswered(theCampaign, theLeadid);
+											TheQueues.rWhere(theCampaign).DecrementAnsmachs();
+										}
+
+										if (TheAgents.exists(atoi(tempQueueAgent.c_str())))
+										{
+											TheAgents.where(atoi(tempQueueAgent.c_str())).SetConnectedChannel(theChannel);
+											TheAgents.where(atoi(tempQueueAgent.c_str())).SetCampaign(theCampaign);
+											TheAgents.where(atoi(tempQueueAgent.c_str())).SetLeadId(theLeadid);
+											TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnWait(false, false, TheAgents);
+											if (gDebug)
+											{
+												std::cout << theCampaign << ": theLeadid - " << theLeadid << std::endl;
+											}
+										}
+
+										pid = fork();
+										if (pid == 0)
+										{
+											if (isNone == false)
+											{
+												doRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, managerUser, managerPass, false);
+												exit(0);
+											}
+										}
+										if (pid == -1)
+										{
+											throw xForkError();
+										}
 									}
-									if (pid == -1)
+									else
 									{
-										throw xForkError();
+										std::cout << theCampaign << ": No available Agents! (QUEUE)" << std::endl;
 									}
 								}
 							}
 							else
 							{
-								//******************************************************************************
-								// this section is where calls are handled for AGENTS
-								tempQueueAgent = TheQueues.LeastRecent(theCampaign, TheAgents);
-								if (atoi(tempQueueAgent.c_str()))
+								std::cout << theCampaign << ": Parse ERROR! (QUEUE)" << std::endl;
+							}
+						}
+
+						if (block.find("UserEvent: Abandon", 0) != std::string::npos)
+						{
+							std::string theCallerIDName, theCampaign, theAgent, theLeadid;
+							if (gDebug)
+							{
+								std::cout << "UserEvent - Abandon ";
+							}
+
+							if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos)
+							{
+
+								pos = block.find("CallerIDName: ", 0) + 15;
+								end = block.find("\n", pos);
+								theCallerIDName = block.substr(pos, end - pos);
+
+								pos = theCallerIDName.find("~", end) + 1;
+								end = theCallerIDName.find("-", pos + 1);
+
+								pos2 = end + 1;
+								end2 = theCallerIDName.find("-", pos2);
+
+								theCampaign = theCallerIDName.substr(pos, end - pos);
+								if (gDebug)
 								{
+									std::cout << " theCampaign: " << theCampaign;
+								}
+
+								theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
+								if (gDebug)
+								{
+									std::cout << " theLeadid: " << theLeadid;
+								}
+
+								if (gDebug)
+								{
+									std::cout << std::endl;
+								}
+
+								if (!theCampaign.empty() && !theLeadid.empty() && TheQueues.exists(theCampaign))
+								{
+									TheQueues.rWhere(theCampaign).IncrementAbandons();
+									TheQueues.rWhere(theCampaign).WriteAbn();
+									TheQueues.rWhere(theCampaign).WriteCalls();
+
+									writeDBString(theCampaign, theLeadid, "abandons=abandons+1");
 									if (gDebug)
 									{
-										std::cout << theCampaign << ": Non-Transfer - tempQueueAgent: " << tempQueueAgent << std::endl;
+										std::cout << theCampaign << ": writeDBString - Abandon " << std::endl;
 									}
-
-									if (isNone == false)
+									if (gLog)
 									{
-										if (gDebug)
-										{
-											std::cout << theCampaign << ": Setting Answered - theLeadid: " << theLeadid << std::endl;
-										}
-										TheCallCache->SetAnswered(theCampaign, theLeadid);
-										TheQueues.rWhere(theCampaign).DecrementAnsmachs();
-									}
-
-									if (TheAgents.exists(atoi(tempQueueAgent.c_str())))
-									{
-										TheAgents.where(atoi(tempQueueAgent.c_str())).SetConnectedChannel(theChannel);
-										TheAgents.where(atoi(tempQueueAgent.c_str())).SetCampaign(theCampaign);
-										TheAgents.where(atoi(tempQueueAgent.c_str())).SetLeadId(theLeadid);
-										TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnWait(false, false, TheAgents);
-										if (gDebug)
-										{
-											std::cout << theCampaign << ": theLeadid - " << theLeadid << std::endl;
-										}
-									}
-
-									pid = fork();
-									if (pid == 0)
-									{
-										if (isNone == false)
-										{
-											doRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, managerUser, managerPass, false);
-											exit(0);
-										}
-									}
-									if (pid == -1)
-									{
-										throw xForkError();
+										writeGnudialerLog(theCampaign + ": theLeadid - " + theLeadid + " was abanadoned");
 									}
 								}
 								else
 								{
-									std::cout << theCampaign << ": No available Agents! (QUEUE)" << std::endl;
+									if (gDebug)
+									{
+										std::cout << "UserEventAbandon: Parse ERROR " << std::endl;
+									}
 								}
 							}
 						}
-						else
+
+						if (block.find("UserEvent: Pickup", 0) != std::string::npos)
 						{
-							std::cout << theCampaign << ": Parse ERROR! (QUEUE)" << std::endl;
+							std::string theCallerIDName, theCampaign, theAgent, theLeadid;
+							if (gDebug)
+							{
+								std::cout << "UserEvent - Pickup ";
+							}
+
+							if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos)
+							{
+								pos = block.find("CallerIDName: ", 0) + 15;
+								end = block.find("\n", pos);
+								theCallerIDName = block.substr(pos, end - pos);
+
+								pos = theCallerIDName.find("~", end) + 1;
+								end = theCallerIDName.find("-", pos + 1);
+
+								pos2 = end + 1;
+								end2 = theCallerIDName.find("-", pos2);
+
+								theCampaign = theCallerIDName.substr(pos, end - pos);
+								if (gDebug)
+								{
+									std::cout << " theCampaign: " << theCampaign;
+								}
+
+								theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
+								if (gDebug)
+								{
+									std::cout << " theLeadid: " << theLeadid;
+								}
+
+								if (gDebug)
+								{
+									std::cout << std::endl;
+								}
+
+								if (!theCampaign.empty() && !theLeadid.empty() && TheQueues.exists(theCampaign))
+								{
+									writeDBString(theCampaign, theLeadid, "pickups=pickups+1");
+									if (gDebug)
+									{
+										std::cout << theCampaign << ": writeDBString - Pickup " << std::endl;
+									}
+									if (gLog)
+									{
+										writeGnudialerLog(theCampaign + ": theLeadid - " + theLeadid + " was picked-up");
+									}
+								}
+								else
+								{
+									if (gDebug)
+									{
+										std::cout << "UserEventPickup: Parse ERROR " << std::endl;
+									}
+								}
+							}
 						}
+
+						if (block.find("UserEvent: Fax", 0) != std::string::npos)
+					{
+						std::string theCallerIDName, theCampaign, theAgent, theLeadid;
+						if (gDebug)
+						{
+							std::cout << "UserEvent - Fax ";
+						}
+
+						if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos)
+						{
+
+							pos = block.find("CallerIDName: ", 0) + 15;
+							end = block.find("\n", pos);
+							theCallerIDName = block.substr(pos, end - pos);
+
+							pos = theCallerIDName.find("~", end) + 1;
+							end = theCallerIDName.find("-", pos + 1);
+
+							pos2 = end + 1;
+							end2 = theCallerIDName.find("-", pos2);
+
+							theCampaign = theCallerIDName.substr(pos, end - pos);
+							if (gDebug)
+							{
+								std::cout << " theCampaign: " << theCampaign;
+							}
+
+							theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
+							if (gDebug)
+							{
+								std::cout << " theLeadid: " << theLeadid;
+							}
+
+							if (gDebug)
+							{
+								std::cout << std::endl;
+							}
+							writeDBString(theCampaign, theLeadid, "disposition='-6',pickups=pickups+1");
+							if (gDebug)
+							{
+								std::cout << theCampaign << ": writeDBString - Fax " << std::endl;
+							}
+						}
+					}
+						// END USER_EVENTS
 					}
 
 					//***********************************************************************************
@@ -2000,131 +2182,7 @@ int main(int argc, char **argv)
 							std::cout << theCampaign << ": Parse ERROR! (DISPO)" << std::endl;
 						}
 					}
-					//***********************************************************************************
-					if (block.find("Event: UserEventAbandon", 0) != std::string::npos)
-					{
-						std::string theCallerIDName, theCampaign, theAgent, theLeadid;
-						if (gDebug)
-						{
-							std::cout << "UserEvent - Abandon ";
-						}
-
-						if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos)
-						{
-
-							pos = block.find("CallerIDName: ", 0) + 15;
-							end = block.find("\n", pos);
-							theCallerIDName = block.substr(pos, end - pos);
-
-							pos = theCallerIDName.find("~", end) + 1;
-							end = theCallerIDName.find("-", pos + 1);
-
-							pos2 = end + 1;
-							end2 = theCallerIDName.find("-", pos2);
-
-							theCampaign = theCallerIDName.substr(pos, end - pos);
-							if (gDebug)
-							{
-								std::cout << " theCampaign: " << theCampaign;
-							}
-
-							theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
-							if (gDebug)
-							{
-								std::cout << " theLeadid: " << theLeadid;
-							}
-
-							if (gDebug)
-							{
-								std::cout << std::endl;
-							}
-
-							if (!theCampaign.empty() && !theLeadid.empty() && TheQueues.exists(theCampaign))
-							{
-								TheQueues.rWhere(theCampaign).IncrementAbandons();
-								TheQueues.rWhere(theCampaign).WriteAbn();
-								TheQueues.rWhere(theCampaign).WriteCalls();
-
-								writeDBString(theCampaign, theLeadid, "abandons=abandons+1");
-								if (gDebug)
-								{
-									std::cout << theCampaign << ": writeDBString - Abandon " << std::endl;
-								}
-								if (gLog)
-								{
-									writeGnudialerLog(theCampaign + ": theLeadid - " + theLeadid + " was abanadoned");
-								}
-							}
-							else
-							{
-								if (gDebug)
-								{
-									std::cout << "UserEventAbandon: Parse ERROR " << std::endl;
-								}
-							}
-						}
-					}
-
-					//***********************************************************************************
-					if (block.find("Event: UserEventPickup", 0) != std::string::npos)
-					{
-						std::string theCallerIDName, theCampaign, theAgent, theLeadid;
-						if (gDebug)
-						{
-							std::cout << "UserEvent - Pickup ";
-						}
-
-						if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos)
-						{
-							pos = block.find("CallerIDName: ", 0) + 15;
-							end = block.find("\n", pos);
-							theCallerIDName = block.substr(pos, end - pos);
-
-							pos = theCallerIDName.find("~", end) + 1;
-							end = theCallerIDName.find("-", pos + 1);
-
-							pos2 = end + 1;
-							end2 = theCallerIDName.find("-", pos2);
-
-							theCampaign = theCallerIDName.substr(pos, end - pos);
-							if (gDebug)
-							{
-								std::cout << " theCampaign: " << theCampaign;
-							}
-
-							theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
-							if (gDebug)
-							{
-								std::cout << " theLeadid: " << theLeadid;
-							}
-
-							if (gDebug)
-							{
-								std::cout << std::endl;
-							}
-
-							if (!theCampaign.empty() && !theLeadid.empty() && TheQueues.exists(theCampaign))
-							{
-								writeDBString(theCampaign, theLeadid, "pickups=pickups+1");
-								if (gDebug)
-								{
-									std::cout << theCampaign << ": writeDBString - Pickup " << std::endl;
-								}
-								if (gLog)
-								{
-									writeGnudialerLog(theCampaign + ": theLeadid - " + theLeadid + " was picked-up");
-								}
-							}
-							else
-							{
-								if (gDebug)
-								{
-									std::cout << "UserEventPickup: Parse ERROR " << std::endl;
-								}
-							}
-						}
-					}
-
+					
 					//***********************************************************************************
 					//        	                if (block.find("Event: UserEventPickup",0) != std::string::npos) {
 					//                	                std::string theCallerIDName, theCampaign, theAgent, theLeadid;
@@ -2165,50 +2223,7 @@ int main(int argc, char **argv)
 					//				}
 
 					//***********************************************************************************
-					if (block.find("Event: UserEventFax", 0) != std::string::npos)
-					{
-						std::string theCallerIDName, theCampaign, theAgent, theLeadid;
-						if (gDebug)
-						{
-							std::cout << "UserEvent - Fax ";
-						}
-
-						if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos)
-						{
-
-							pos = block.find("CallerIDName: ", 0) + 15;
-							end = block.find("\n", pos);
-							theCallerIDName = block.substr(pos, end - pos);
-
-							pos = theCallerIDName.find("~", end) + 1;
-							end = theCallerIDName.find("-", pos + 1);
-
-							pos2 = end + 1;
-							end2 = theCallerIDName.find("-", pos2);
-
-							theCampaign = theCallerIDName.substr(pos, end - pos);
-							if (gDebug)
-							{
-								std::cout << " theCampaign: " << theCampaign;
-							}
-
-							theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
-							if (gDebug)
-							{
-								std::cout << " theLeadid: " << theLeadid;
-							}
-
-							if (gDebug)
-							{
-								std::cout << std::endl;
-							}
-							writeDBString(theCampaign, theLeadid, "disposition='-6',pickups=pickups+1");
-							if (gDebug)
-							{
-								std::cout << theCampaign << ": writeDBString - Fax " << std::endl;
-							}
-						}
-					}
+					
 
 					//***********************************************************************************
 					// End block analysis
@@ -2397,7 +2412,7 @@ int main(int argc, char **argv)
 
 						if (usednc == "true")
 						{
-							//query += " AND phone NOT IN (SELECT phone FROM DNC) ";
+							// query += " AND phone NOT IN (SELECT phone FROM DNC) ";
 						}
 
 						// query += " ORDER BY attempts + pickups ASC LIMIT " + itos(skip) + "," + itos(linestodial);
@@ -2419,7 +2434,7 @@ int main(int argc, char **argv)
 							query += " ORDER BY attempts + pickups ASC ";
 						}
 
-						query += " LIMIT " + itos(skip) + "," + itos(linestodial) ;
+						query += " LIMIT " + itos(skip) + "," + itos(linestodial);
 
 						if (debug)
 						{
@@ -2747,18 +2762,21 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	catch (xLoopEnd e) {
+	catch (xLoopEnd e)
+	{
 		std::cout << "Caught exception while trying to get debug & log settings!" << std::endl;
 		std::cout << e.what();
-		std::cout << std::endl << std::endl;
+		std::cout << std::endl
+				  << std::endl;
 		return 1;
 	}
 
-	catch (const std::runtime_error& e) {
-        // Handle the runtime_error exception
-        std::cerr << "Caught a runtime_error exception: " << e.what() << std::endl;
+	catch (const std::runtime_error &e)
+	{
+		// Handle the runtime_error exception
+		std::cerr << "Caught a runtime_error exception: " << e.what() << std::endl;
 		return 1;
-    }
+	}
 
 	catch (...)
 	{

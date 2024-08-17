@@ -13,8 +13,14 @@ class Server extends Model
         'username',
         'secret',
         'host',
-        'synced'
+        'synced',
+        'data'
     ];
+
+    protected $casts = [
+        'data' => 'array'
+    ];
+
 
     public function canpaigns()
     {

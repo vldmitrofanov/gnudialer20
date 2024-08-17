@@ -1,3 +1,9 @@
 .vscode
 AmiWsServer/build
 AmiWsServer/.vscode
+gnudialer/agenthours.cgi
+gnudialer/allstats.cgi
+gnudialer/dialeradmin.cgi
+gnudialer/gnudialer
+gnudialer/newstats.cgi
+gnudialer/stats.cgi

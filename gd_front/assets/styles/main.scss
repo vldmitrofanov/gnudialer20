@@ -1,0 +1,10 @@
+// assets/styles/main.scss
+@import "../../node_modules/ant-design-vue/dist/reset.css";
+
+body {
+  font-family: Arial, sans-serif;
+}
+
+.ant-btn-primary {
+  background-color: #1890ff;
+}
