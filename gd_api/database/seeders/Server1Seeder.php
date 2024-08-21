@@ -26,6 +26,12 @@ class Server1Seeder extends Seeder
                 'password' => 'secret123',
                 'host' => '127.0.0.1:8088',
                 'app_name' => 'my_app'
+            ],
+            'ami' => [
+                'host' => '127.0.0.1',
+                'port' => 5038,
+                'username' => 'manager',
+                'secret' => 'mysecret123',           
             ]
         ];
         \App\Models\Server::find(1)->update([

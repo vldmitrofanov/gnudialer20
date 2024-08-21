@@ -153,22 +153,118 @@ void doRedirect(const std::string &channel,
 		AsteriskRedir >> response;
 		AsteriskRedir << "Action: Login\r\nUserName: " + managerUser + "\r\nSecret: " + managerPass + "\r\nEvents:off\r\n\r\n";
 		AsteriskRedir >> response;
-		AsteriskRedir << "Action: Redirect\r\n";
-		AsteriskRedir << "Channel: " + channel + "\r\n";
-		AsteriskRedir << "Exten: " + agent + "\r\n";
+		// AsteriskRedir << "Action: Redirect\r\n";
+		// AsteriskRedir << "Channel: " + channel + "\r\n";
+		// AsteriskRedir << "Exten: " + agent + "\r\n";
 
-		if (!doChangeCallerId)
+		std::string line;
+		std::string currentChannel;
+		std::string fullResponse;
+		bool inChannelBlock = false;
+
+		AsteriskRedir << "Action: CoreShowChannels\r\n\r\n";
+		AsteriskRedir >> response;
+
+		while (true)
 		{
-			AsteriskRedir << "Context: agent\r\n";
+			AsteriskRedir >> response;
+			fullResponse += response;
+
+			// Check if we've reached the end of the response
+			if (response.find("EventList: Complete") != std::string::npos)
+			{
+				break;
+			}
+		}
+		std::istringstream responseStream(fullResponse);
+		while (std::getline(responseStream, line))
+		{
+
+			// Trim the line
+			line.erase(line.find_last_not_of(" \n\r\t") + 1);
+			std::cout << "Line: " << line << std::endl; // Debugging output
+			if (line.empty())
+			{
+				// End of an event block, reset variables
+				inChannelBlock = false;
+				currentChannel.clear();
+				continue;
+			}
+
+			if (line.find("Event: CoreShowChannel") != std::string::npos)
+			{
+				inChannelBlock = true;
+			}
+
+			if (inChannelBlock)
+			{
+				if (line.find("Channel: ") != std::string::npos)
+				{
+					currentChannel = line.substr(line.find(": ") + 2);
+				}
+
+				std::cout << "Found channel: " << currentChannel << " Agent: " << agent << std::endl;
+
+				// Check if this is the agent we are looking for
+				if (!currentChannel.empty() && currentChannel.find("PJSIP/" + agent) != std::string::npos)
+				{
+					break;
+				}
+			}
+			if (line.find("EventList: Complete") != std::string::npos)
+			{
+				break;
+			}
+		}
+
+		if (!currentChannel.empty())
+		{
+			if (doColorize)
+			{
+				std::cout << campaign << fg_magenta << ": Bridging - " << channel << " to Agent's channel: " << currentChannel << normal << std::endl;
+			}
+			else
+			{
+				std::cout << campaign << ": Bridging - " << channel << " to Agent's channel: " << currentChannel << std::endl;
+			}
+			AsteriskRedir << "Action: Bridge\r\n";
+			AsteriskRedir << "Channel1: " + channel + "\r\n";
+			AsteriskRedir << "Channel2: " + currentChannel + "\r\n";
+			AsteriskRedir << "Tone: yes\r\n\r\n";
+			AsteriskRedir >> response;
+			std::cout << "Bridge Response: " << response << std::endl;
+
+			AsteriskRedir << "Action: UserEvent\r\n";
+			AsteriskRedir << "UserEvent: SetOnCall\r\n";
+			AsteriskRedir << "Header: Agent: " + agent + "\r\n\r\n";
+			AsteriskRedir >> response;
 		}
 		else
 		{
-			AsteriskRedir << "Context: closer\r\n";
+			if (doColorize)
+			{
+				std::cout << campaign << fg_red << ": ERROR - " << channel << " to Agent's channel NOT FOUND: " << agent << normal << std::endl;
+			}
+			else
+			{
+				std::cout << campaign << ": ERROR - " << channel << " to Agent's channel NOT FOUND: " << agent << std::endl;
+			}
 		}
 
-		AsteriskRedir << "Priority: 1\r\n\r\n";
-		AsteriskRedir >> response;
-		std::cout << "Redirect Response: " << response << std::endl;
+		/**
+				if (!doChangeCallerId)
+				{
+					AsteriskRedir << "Context: agent\r\n";
+				}
+				else
+				{
+					AsteriskRedir << "Context: closer\r\n";
+				}
+		*/
+		// AsteriskRedir << "Priority: 1\r\n\r\n";
+		// AsteriskRedir >> response;
+		// std::cout << "Redirect Response: " << response << std::endl;
+
 		AsteriskRedir << "Action: Logoff\r\n\r\n";
 		AsteriskRedir >> response;
 		usleep(10000000);
@@ -659,6 +755,57 @@ int main(int argc, char **argv)
 						}
 						std::system("killall gnudialer");
 					}
+
+					if (block.find("Event: QueueMemberPaused", 0) != std::string::npos)
+					{
+						std::string interface;
+						std::string agentIDQP;
+						std::string pausedString;
+						bool isPaused = false;
+
+						// Find and extract the "Interface" line
+						size_t interfacePos = block.find("Interface: ", 0);
+						if (interfacePos != std::string::npos)
+						{
+							interface = block.substr(interfacePos + 11); // 11 is the length of "Interface: "
+							// std::cout << "Interface: " << interface << std::endl;
+
+							// Extract agent ID from the Interface
+							size_t pos = interface.find('/');
+							if (pos != std::string::npos && pos + 1 < interface.size())
+							{
+								agentIDQP = interface.substr(pos + 1);
+								// std::cout << "Agent ID: " << agentIDQP << std::endl;
+							}
+						}
+
+						// Find and extract the "Paused" line
+						size_t pausedPos = block.find("Paused: ", 0);
+						if (pausedPos != std::string::npos)
+						{
+							pausedString = block.substr(pausedPos + 8); // 8 is the length of "Paused: "
+							if (pausedString == "1")
+							{
+								isPaused = true;
+							}
+						}
+
+						// Set the agent's state based on the pause status
+						if (!agentIDQP.empty())
+						{
+							if (isPaused)
+							{
+								TheAgents.where(atoi(agentIDQP.c_str())).SetOnPause();
+								std::cout << "Agent ID: " << agentIDQP << " is PAUSED" << std::endl;
+							}
+							else
+							{
+								// TheAgents.where(atoi(agentIDQP.c_str())).SetOnWait();
+								std::cout << "Agent ID: " << agentIDQP << " on WAIT" << std::endl;
+							}
+						}
+					}
+
 					if (block.find("Event: OriginateResponse", 0) != std::string::npos && block.find("Context: gdincoming", 0) != std::string::npos)
 					{
 						//***********************************************************************************
@@ -1077,7 +1224,28 @@ int main(int argc, char **argv)
 					//***********************************************************************************
 					if (block.find("Event: UserEvent", 0) != std::string::npos)
 					{
+						if (block.find("UserEvent: SetOnCall") != std::string::npos)
+						{
+							size_t agentPos = block.find("Agent: ");
+							std::string agentID;
+							if (agentPos != std::string::npos)
+							{
+								agentID = block.substr(agentPos + 7); // "Agent: " is 7 characters long
+								std::cout << "Agent on call: " << agentID << std::endl;
+								TheAgents.where(atoi(agentID.c_str())).SetOnCall();
+							}
+						}
 
+						if(block.find("UserEvent: SetOnWait") != std::string::npos){
+							size_t agentPos = block.find("Agent: ");
+							std::string agentID;
+							if (agentPos != std::string::npos)
+							{
+								agentID = block.substr(agentPos + 7); // "Agent: " is 7 characters long
+								std::cout << "Agent on Wait: " << agentID << std::endl;
+								TheQueues.where(TheAgents.where(atoi(agentID.c_str())).GetCampaign()).AddTalkTime(TheAgents.where(atoi(agentID.c_str())).SetOnWait(false, false, TheAgents));
+							}						
+						}
 						if ((block.find("UserEvent: Queue|", 0) != std::string::npos && block.find("~", 0) != std::string::npos) ||
 							(block.find("UserEvent: QueueTRANSFER", 0) != std::string::npos && block.find("~", 0) != std::string::npos))
 						{
@@ -1403,49 +1571,49 @@ int main(int argc, char **argv)
 						}
 
 						if (block.find("UserEvent: Fax", 0) != std::string::npos)
-					{
-						std::string theCallerIDName, theCampaign, theAgent, theLeadid;
-						if (gDebug)
 						{
-							std::cout << "UserEvent - Fax ";
+							std::string theCallerIDName, theCampaign, theAgent, theLeadid;
+							if (gDebug)
+							{
+								std::cout << "UserEvent - Fax ";
+							}
+
+							if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos)
+							{
+
+								pos = block.find("CallerIDName: ", 0) + 15;
+								end = block.find("\n", pos);
+								theCallerIDName = block.substr(pos, end - pos);
+
+								pos = theCallerIDName.find("~", end) + 1;
+								end = theCallerIDName.find("-", pos + 1);
+
+								pos2 = end + 1;
+								end2 = theCallerIDName.find("-", pos2);
+
+								theCampaign = theCallerIDName.substr(pos, end - pos);
+								if (gDebug)
+								{
+									std::cout << " theCampaign: " << theCampaign;
+								}
+
+								theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
+								if (gDebug)
+								{
+									std::cout << " theLeadid: " << theLeadid;
+								}
+
+								if (gDebug)
+								{
+									std::cout << std::endl;
+								}
+								writeDBString(theCampaign, theLeadid, "disposition='-6',pickups=pickups+1");
+								if (gDebug)
+								{
+									std::cout << theCampaign << ": writeDBString - Fax " << std::endl;
+								}
+							}
 						}
-
-						if (block.find("CallerIDName: ", 0) != std::string::npos && block.find("~", 0) != std::string::npos)
-						{
-
-							pos = block.find("CallerIDName: ", 0) + 15;
-							end = block.find("\n", pos);
-							theCallerIDName = block.substr(pos, end - pos);
-
-							pos = theCallerIDName.find("~", end) + 1;
-							end = theCallerIDName.find("-", pos + 1);
-
-							pos2 = end + 1;
-							end2 = theCallerIDName.find("-", pos2);
-
-							theCampaign = theCallerIDName.substr(pos, end - pos);
-							if (gDebug)
-							{
-								std::cout << " theCampaign: " << theCampaign;
-							}
-
-							theLeadid = theCallerIDName.substr(pos2, end2 - pos2);
-							if (gDebug)
-							{
-								std::cout << " theLeadid: " << theLeadid;
-							}
-
-							if (gDebug)
-							{
-								std::cout << std::endl;
-							}
-							writeDBString(theCampaign, theLeadid, "disposition='-6',pickups=pickups+1");
-							if (gDebug)
-							{
-								std::cout << theCampaign << ": writeDBString - Fax " << std::endl;
-							}
-						}
-					}
 						// END USER_EVENTS
 					}
 
@@ -2182,7 +2350,7 @@ int main(int argc, char **argv)
 							std::cout << theCampaign << ": Parse ERROR! (DISPO)" << std::endl;
 						}
 					}
-					
+
 					//***********************************************************************************
 					//        	                if (block.find("Event: UserEventPickup",0) != std::string::npos) {
 					//                	                std::string theCallerIDName, theCampaign, theAgent, theLeadid;
@@ -2223,7 +2391,6 @@ int main(int argc, char **argv)
 					//				}
 
 					//***********************************************************************************
-					
 
 					//***********************************************************************************
 					// End block analysis

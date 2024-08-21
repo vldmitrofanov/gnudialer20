@@ -73,7 +73,7 @@
         console.error('Failed to fetch user:', error.value)     
         return false
     } else {
-        localStorage.setItem('user', JSON.stringify(data.value))
+        localStorage.setItem('user', JSON.stringify(data.value.data))
         return true
     }
 }

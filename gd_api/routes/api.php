@@ -1,36 +1,28 @@
 <?php
 
-use App\Http\Resources\UserAgentResource;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 
 
-Route::post('/login', function (Request $request) {
-    $credentials = $request->only('email', 'password');
+Route::post('/login', [\App\Http\Controllers\UserController::class, 'login']);
 
-    if (!Auth::attempt($credentials)) {
-        return response()->json(['message' => 'Invalid login credentials'], 401);
-    }
+Route::group(['middleware' => ['auth:sanctum']], function () {
+    Route::get('/me', [\App\Http\Controllers\UserController::class, 'me']);
 
-    $user = Auth::user();
-    $token = $user->createToken('auth_token')->plainTextToken;
-
-    return response()->json([
-        'token' => $token,
-        'user' => $user,
-    ]);
-});
-
-Route::group(['middleware'=>['auth:sanctum']], function () {
-    Route::get('/me', function (Request $request) {
-        $user = $request->user();
-        $user->load('agents');
-        return new UserAgentResource($user);
+    Route::group(['prefix' => 'server'], function () {
+        Route::get('/', [\App\Http\Controllers\ServerController::class, 'index']);
+        Route::get('/{server_id}', [\App\Http\Controllers\ServerController::class, 'show']);
     });
 
-    Route::group(['prefix' => 'server'], function() {
-        Route::get('/',[\App\Http\Controllers\ServerController::class, 'index']);
-        Route::get('/{server_id}',[\App\Http\Controllers\ServerController::class, 'show']);
+    Route::group(['prefix' => 'queue'], function () {
+        Route::get('/', [\App\Http\Controllers\QueueController::class, 'agentIndex']);
+    });
+
+    Route::group(['prefix' => 'asterisk'], function () {
+        Route::post('/agent/pause', [\App\Http\Controllers\AsteriskController::class, 'setAgentPause']);
+        Route::get('/agent/status', [\App\Http\Controllers\AsteriskController::class, 'getAgentStatus']);
+    });
+
+    Route::group(['prefix' => 'leads'], function () {
+        Route::get('/', [\App\Http\Controllers\LeadController::class, 'getLead']);
     });
 });

@@ -169,6 +169,12 @@ public:
 		herCalltime = herStatus;
 		herStatus = -1;
 	}
+	//void SetOnWait()
+	//{
+	//	timeval tv;
+	//	gettimeofday(&tv, NULL);
+	//	herStatus = tv.tv_sec % 1000000;
+	//}
 	void SetOffline()
 	{
 		herStatus = -2;
@@ -233,9 +239,12 @@ public:
 		u_long serverId = std::stoull(getServerId());
 		std::vector<ParsedAgent> agents = dbConn.getAllAgents(serverId);
 
-		if (agents.empty()) {
+		if (agents.empty())
+		{
 			std::cout << "No agents found in the database." << std::endl;
-		} else {
+		}
+		else
+		{
 			std::cout << "Agents found: " << agents.size() << std::endl;
 		}
 
@@ -361,23 +370,28 @@ public:
 			AsteriskManager << "Action: Command\r\nCommand: queue show\r\n\r\n";
 
 			bool readingOutput = false;
-			//while (completeResponse.find("END COMMAND", 0) == std::string::npos)
-			while(true)
+			// while (completeResponse.find("END COMMAND", 0) == std::string::npos)
+			while (true)
 			{
 				AsteriskManager >> response;
-				if (response.empty()) {
+				if (response.empty())
+				{
 					std::cerr << "Empty response, possibly timed out." << std::endl;
 					break;
 				}
 				completeResponse += response + "\n";
 
-				if (response == "\r\n" || response == "\n" || response == "\r") {
-					if (readingOutput) {  // Second empty line indicates end of command output
+				if (response == "\r\n" || response == "\n" || response == "\r")
+				{
+					if (readingOutput)
+					{ // Second empty line indicates end of command output
 						std::cout << "Detected end of response based on empty line." << std::endl;
 						break;
 					}
 					readingOutput = true; // First empty line starts tracking end
-				} else {
+				}
+				else
+				{
 					readingOutput = false; // Reset if the line is not empty
 				}
 			}
@@ -410,17 +424,20 @@ public:
 					else
 					{
 
-						std::regex pattern(R"(PJSIP/(\d+)\s.*\(Not in use\))");
+						std::regex pattern(R"(PJSIP/(\d+)\s.*\(In use\))");
 						std::smatch matches;
 
-						if (std::regex_search(tempLine, matches, pattern))
+						if (tempLine.find("(paused") == std::string::npos)
 						{
-							if (!matches[1].str().empty())
+							if (std::regex_search(tempLine, matches, pattern))
 							{
-								int extension = std::stoi(matches[1].str());
-								std::cout << "GnuDialer: Setting PJSIP/" << extension << " on wait..." << std::endl;
-								// Assuming where() is a function that returns an object with SetLoggedIn() method
-								where(extension).SetLoggedIn();
+								if (!matches[1].str().empty())
+								{
+									int extension = std::stoi(matches[1].str());
+									std::cout << "GnuDialer: Setting PJSIP/" << extension << " on wait..." << std::endl;
+									// Assuming where() is a function that returns an object with SetLoggedIn() method
+									where(extension).SetLoggedIn();
+								}
 							}
 						}
 					}
