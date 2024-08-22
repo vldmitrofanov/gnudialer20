@@ -7,7 +7,8 @@
                     <span>Server: {{ `${connected ? 'Connected' : 'Disconnected'}` }}</span>
                 </a-col>
                 <a-col :span="24">
-                    <span>Agent Status: {{ `${agentStatus?.status?.Paused == 1 ? 'Paused' : agentStatus?.status?.Status >
+                    <span>Agent Status: {{ `${agentStatus?.status?.Paused == 1 ? 'Paused' : agentStatus?.status?.Status
+                        >
                         1 ? 'Active' : 'Inactive'}` }}</span>
                 </a-col>
                 <a-row :gutter="{ xs: 8, sm: 8, md: 8, lg: 8 }">
@@ -17,62 +18,62 @@
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(1)>
                             Fresh <small>1</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(2)>
                             NoAns <small>2</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(3)>
                             AnsMach <small>3</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(4)>
                             Busy <small>4</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(5)>
                             FBusy <small>5</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(6)>
                             Fax <small>6</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(7)>
                             Disco <small>7</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button dnc-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button dnc-button" :disabled="allButtonsDisabled" @click=handleDisposition(8)>
                             DNC <small>8</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(9)>
                             Invalid <small>9</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(10)>
                             Other <small>10</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button sale-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button sale-button" :disabled="allButtonsDisabled" @click=handleDisposition(12)>
                             Sale <small>12</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(11)>
                             NoSale <small>11</small>
                         </a-button>
                     </a-col>
@@ -106,15 +107,25 @@
         <a-col :span="19" class="right-pane">
             <a-tabs default-active-key="1">
                 <a-tab-pane key="1" tab="Main">
-                    <a-form layout="vertical">
-                        <a-row :gutter=24 v-if="lead">
-                            <a-col :span="8" v-for="(value, key) in lead" :key="key">
-                                <a-form-item :label="key">
-                                    <a-input :placeholder="key" v-model="lead[key]"/>
-                                </a-form-item>
-                            </a-col>
-                        </a-row>
-                    </a-form>
+                    <div class="sticky-form">
+                        <a-form layout="inline">
+                            <a-form-item>
+                                <a-input-group compact>
+                                    <a-select v-model:value="searchBy" style="width: 100px;" :disabled="running">
+                                        <a-select-option value="id">ID</a-select-option>
+                                        <a-select-option value="phone">Phone</a-select-option>
+                                    </a-select>
+                                    <a-input v-model:value="searchTerm" :placeholder="`Enter ${searchBy}`"
+                                        style="width: 200px;" @keypress.enter="handleSearch" :disabled="running"/>
+                                    <a-button type="primary" @click="handleSearch" :disabled="running">
+                                        <SearchOutlined /> <!-- Use the imported icon -->
+                                    </a-button>
+                                </a-input-group>
+                            </a-form-item>
+                        </a-form>
+                    </div>
+                    <LeadForm ref="leadFormRef" v-if="lead" :lead="lead" :schema="leadSchema"
+                        @onSave="handleLeadSave" />
                 </a-tab-pane>
                 <a-tab-pane key="2" tab="Script">
                     <!-- Content for the Notes tab -->
@@ -132,6 +143,7 @@
 <script setup>
 import { message } from 'ant-design-vue';
 import { useFetch, useCookie, useRuntimeConfig } from '#app'
+import { SearchOutlined } from '@ant-design/icons-vue';
 const config = useRuntimeConfig()
 const authToken = useCookie('auth_token').value
 const name = 'DialerCRM'
@@ -149,14 +161,62 @@ const queueButtonDisabled = ref(true)
 const loggedIn = ref(false)
 const channel = ref(null)
 const lead = ref(null)
+const leadSchema = ref(null)
 const callerId = ref(null)
+const leadCampaign = ref(null)
+const onCall = ref(false)
+const searchBy = ref('phone')
+const searchTerm = ref('')
+const disposition = ref(10000)
+const leadFormRef = ref(null)
+
+const handleSearch = async () => {
+    if(!queue.value){
+        message.error('No campaign selected')
+        return
+    }
+    if(searchTerm.value == ''){
+        message.error('Please input search data')
+        return
+    }
+    const campaign = queue.value?.campaign?.code
+    let phone='',leadId='';
+    if(searchBy.value=='phone'){
+        phone = searchTerm.value
+    } else if(searchBy.value=='id'){
+        leadId = searchTerm.value
+    }
+    const { data, error } = await useFetch(`/api/leads/search?campaign=${campaign}&lead_id=${leadId}&phone=${phone}`, {
+        baseURL: config.public.apiBaseUrl,
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        }
+    })
+
+    if (error.value) {
+        console.error('Failed to fetch data:', error.value)
+        message.error(error.value);
+        return null
+    } else {
+        //console.log('Fetched data:', data.value)
+        lead.value = data.value?.lead
+        leadSchema.value = data.value?.schema
+        leadCampaign.value = campaign
+    }
+}
 
 const initiateWebsocket = (server) => {
+    console.log(server?.data.ws.proto)
     const proto = server?.data?.ws?.proto
     const host = server?.data?.ws?.host
     const app_name = server?.data?.ws?.app_name
     const user = server?.data?.ws?.user
     const password = server?.data?.ws?.password
+    if(!host){
+        message.error('A critical error occured while connecting to the server')
+        return
+    }
     const ws = new WebSocket(`${proto}://${host}/ari/events?api_key=${user}:${password}&app=${app_name}&subscribeAll=true`);
     ws.onopen = () => {
         console.log('WebSocket connection opened');
@@ -192,8 +252,83 @@ const initiateWebsocket = (server) => {
     };
 }
 
+const handleDisposition = async(dispo) => {
+    disposition.value = dispo
+    if(channel.value) {
+        hangup()
+    }
+    triggerFormSubmit()
+    if(!pauseAfterCall.value){
+        setOnWait()
+    }
+}
+
+const setOnWait = async() => {
+    const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
+        method: 'POST',
+        baseURL: config.public.apiBaseUrl,
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        },
+        body: {
+            server_id: serverData.value?.id,
+            action:"Action: UserEvent\r\nUserEvent: SetOnWait\r\nHeader: Agent: "+agent.value.id+"\r\n\r\n"
+        }
+    })
+    if (error.value) {
+        console.error('Error during hangup: ', error.value)
+        message.error(error.value);
+        return null
+    } 
+}
+
+const hangup = async() => {
+    const { data, error } = await useFetch(`/api/asterisk/hangup`, {
+        method: 'POST',
+        baseURL: config.public.apiBaseUrl,
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        },
+        body: {
+            server_id: serverData.value?.id,
+            channel: channel.value
+        }
+    })
+    if (error.value) {
+        console.error('Error during hangup: ', error.value)
+        message.error(error.value);
+        return null
+    } 
+}
+
+const triggerFormSubmit = () => {
+    if (leadFormRef.value) {
+        leadFormRef.value.handleSubmit();
+    }
+};
+
+const handleLeadSave = async (updatedLead) => {
+    const { data, error } = await useFetch(`/api/leads`, {
+        method: 'POST',
+        baseURL: config.public.apiBaseUrl,
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        },
+        body: {
+            campaign: leadCampaign.value,
+            lead: updatedLead,
+            agent: agent.value.id,
+            disposition:disposition.value,
+            cb_datetime:cb_datetime.value
+        }
+    })
+}
+
 const onBringePeer = (data) => {
-    if(data.channel) {
+    if (data.channel) {
         channel.value = data.channel.name
         const str = data.channel.connected.name
         callerId.value = data.channel.caller
@@ -205,17 +340,18 @@ const onBringePeer = (data) => {
         // Retrieve the values
         const campaign = parts[0];  // "test1"
         const leadId = parts[1]; // "111"
-        getLead(campaign,leadId)
+        getLead(campaign, leadId)
         allButtonsDisabled.value = false
+        onCall.value = true
     }
 }
 
-const getLead = async(campaign,leadId) => {
-    if(!campaign || !leadId) {
-      message.error('No campaign found');
-      return;
+const getLead = async (campaign, leadId) => {
+    if (!campaign || !leadId) {
+        message.error('No campaign found');
+        return;
     }
-    lead.value = null 
+    lead.value = null
     const { data, error } = await useFetch(`/api/leads?campaign=${campaign}&lead_id=${leadId}`, {
         baseURL: config.public.apiBaseUrl,
         headers: {
@@ -230,7 +366,9 @@ const getLead = async(campaign,leadId) => {
         return null
     } else {
         //console.log('Fetched data:', data.value)
-        lead.value = data.value?.lead     
+        lead.value = data.value?.lead
+        leadSchema.value = data.value?.schema
+        leadCampaign.value = campaign
     }
 }
 
@@ -240,28 +378,6 @@ const handleSelectQueue = (ql) => {
     if (queue.value) {
         getAgentStatus()
     }
-}
-
-const parseAsteriskResponse = (response) => {
-    if (typeof response !== 'string') {
-        response = String(response);
-    }
-
-    const events = response.trim().split("\r\n\r\n");
-    const parsedData = {};
-
-    events.forEach(event => {
-        const lines = event.split("\r\n");
-
-        lines.forEach(line => {
-            const [key, value] = line.split(": ");
-            if (key && value !== undefined) {
-                parsedData[key] = value;
-            }
-        });
-    });
-
-    return parsedData;
 }
 
 
@@ -290,7 +406,8 @@ const togglePause = async () => {
         return null
     } else {
         //console.log('Fetched data:', data.value)
-        const resObj = parseAsteriskResponse(data.value?.response)
+        const resObj = data.value?.data?.QueueMemberPause[0]
+        console.log('resObj', resObj)
         if (parseInt(resObj?.Status) === 2) {
             agentStatus.value = {
                 status: {
@@ -300,6 +417,9 @@ const togglePause = async () => {
                 }
             }
         }
+        if(parseInt(resObj?.Paused) === 0){
+            setOnWait()
+        }        
     }
 }
 
@@ -391,7 +511,7 @@ onMounted(async () => {
                 agent.value = user.value.agents[0]
                 const d2 = await fetchServerData(agent.value.server_id)
                 serverData.value = d2
-                initiateWebsocket(serverData.value)
+                initiateWebsocket(d2)
                 await getAgentQueues()
             }
         }
@@ -399,7 +519,7 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .qsb-etytrui {
     width: 100%;
 }
@@ -456,5 +576,21 @@ onMounted(async () => {
     align-items: center;
     gap: 8px;
     color: #777;
+}
+
+.sticky-form {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    background-color: white;
+    padding: 0 0 16px;
+    border-bottom: 1px #ebebeb solid;
+    margin-bottom: 20px;
+    //border-radius: 8px;
+    /*box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);*/
+    .ant-form-item{
+        margin-inline-end: 0!important;
+    }
 }
 </style>

@@ -100,26 +100,79 @@ class AsteriskAMIService
             if ($line === false) {
                 break;
             }
-    
+
             $response .= $line;
-    
+
             // Log each line for debugging purposes
             Log::info("AMI Response Line: {$line}");
-    
+
             // Break if the end of the QueueStatus response is reached
             if (strpos($line, $end) !== false) {
                 break;
             }
-    
+
             // Implement a timeout to avoid infinite loops
             if ((time() - $startTime) > $timeout) {
                 Log::warning("AMI response timed out after {$timeout} seconds");
                 break;
             }
         }
-    
-        return $response;
+
+        return $this->parseResponse($response);
     }
+
+    protected function parseResponse($response)
+    {
+        $parsedResponse = [];
+        $lines = explode("\n", $response); // Split response into lines
+        $currentBlock = []; // To hold the current block of key-value pairs
+        $blockIdentifier = null; // To identify the start of a new block
+
+        foreach ($lines as $line) {
+            $line = trim($line); // Trim any whitespace
+
+            if (empty($line)) {
+                // If the line is empty, it might indicate the end of a block
+                if (!empty($currentBlock)) {
+                    if ($blockIdentifier) {
+                        // Store the current block using the block identifier
+                        $parsedResponse[$blockIdentifier][] = $currentBlock;
+                    } else {
+                        // If there's no block identifier, just append the block
+                        $parsedResponse[] = $currentBlock;
+                    }
+                    $currentBlock = []; // Reset for the next block
+                }
+                continue;
+            }
+
+            if (strpos($line, ':') !== false) {
+                list($key, $value) = explode(':', $line, 2);
+                $key = trim($key);
+                $value = trim($value);
+
+                if (!empty($key)) {
+                    if ($key === 'Event') {
+                        // Assume 'Event' indicates the start of a new block
+                        $blockIdentifier = $value;
+                    }
+                    $currentBlock[$key] = $value;
+                }
+            }
+        }
+
+        // Add the last block if it's not empty
+        if (!empty($currentBlock)) {
+            if ($blockIdentifier) {
+                $parsedResponse[$blockIdentifier][] = $currentBlock;
+            } else {
+                $parsedResponse[] = $currentBlock;
+            }
+        }
+
+        return $parsedResponse;
+    }
+
 
     public function getAgentStatus($queue, $agent)
     {
@@ -129,7 +182,7 @@ class AsteriskAMIService
 
         // Send the command to AMI
         $response = $this->sendCommand($command, "Event: QueueStatusComplete");
-        Log::info("AMI Response: {$response}");
+        Log::info("AMI Response: " . serialize($response));
         // Parse the response to find the specific agent's status
         $agentStatus = $this->parseQueueStatusResponse($response, $agent);
 
@@ -148,47 +201,41 @@ class AsteriskAMIService
 
     protected function parseQueueStatusResponse($response, $agent)
     {
-        $lines = explode("\n", $response);
         $agentStatus = [];
-        $inAgentBlock = false;
-    
-        foreach ($lines as $line) {
-            $line = trim($line);  // Remove any extra whitespace
-    
-            // Look for the start of the agent's block
-            if (strpos($line, "Name: PJSIP/{$agent}") !== false) {
-                $inAgentBlock = true;
-            }
-    
-            // If we're in the agent's block, capture relevant information
-            if ($inAgentBlock) {
-                if (strpos($line, 'Paused:') !== false) {
-                    $agentStatus['Paused'] = trim(explode(':', $line)[1]);
+        $isFlat = false;
+        foreach ($response as $key => $val) {
+            if (is_array($val)) {
+                if ($key == 'QueueMember') {
+                    foreach ($val as $block) {
+                        $this->parseAgentStatusBlock($agentStatus, $block, $agent);
+                    }
                 }
-                if (strpos($line, 'Status:') !== false) {
-                    $agentStatus['Status'] = trim(explode(':', $line)[1]);
-                }
-    
-                // Add other fields as needed
-                if (strpos($line, 'InCall:') !== false) {
-                    $agentStatus['InCall'] = trim(explode(':', $line)[1]);
-                }
-    
-                // Exit the block after processing all relevant information
-                if (empty($line)) {
-                    break;
-                }
+            } else {
+                $isFlat = true;
             }
         }
-    
+        if ($isFlat) {
+            $this->parseAgentStatusBlock($agentStatus, $response, $agent);
+        }
+
         if (empty($agentStatus)) {
             return "Agent not found in the queue or no status available.";
         }
-    
+
         return $agentStatus;
     }
 
-    public function sendCustomEvent($eventName, $variables = [])
+    private function parseAgentStatusBlock(&$agentStatus, $block, $agent)
+    {
+
+        if ($block['Name'] == "PJSIP/{$agent}") {
+            $agentStatus['Paused'] = $block['Paused'];
+            $agentStatus['Status'] = $block['Status'];
+            $agentStatus['InCall'] = $block['InCall'];
+        }
+    }
+
+    public function sendCustomEvent($eventName, $variables = [], $end = "\r\n\r\n")
     {
         $command = "Action: UserEvent\r\n";
         $command .= "UserEvent: {$eventName}\r\n";
@@ -199,7 +246,14 @@ class AsteriskAMIService
 
         $command .= "\r\n";
 
-        return $this->sendCommand($command);
+        return $this->sendCommand($command, $end);
+    }
+
+    public function channelHangup($channel)
+    {
+        $command = "Action: Hangup\r\n";
+        $command .= "Channel: {$channel}\r\n\r\n";
+        return $this->sendCommand($command, "\r\n");
     }
 
     public function logout()
