@@ -31,8 +31,6 @@
 #ifndef QUEUE
 #define QUEUE
 
-bool debugQueueH = true;
-
 class Setting
 {
 
@@ -737,37 +735,33 @@ public:
 		int availAgents = 0;
 
 		int theAgent, theAgentStatus;
-		if (debugQueueH)
-		{
+#ifdef DEBUG
 			std::cout << "Members: ";
-		}
+#endif
 		for (int i = 0; i < TheAgents.size(); i++)
 		{
-			if (debugQueueH)
-			{
+#ifdef DEBUG
 				theAgent = TheAgents.at(i).GetNumber();
 				theAgentStatus = TheAgents.at(i).GetStatus();
 				if (HasMemberNumber(theAgent))
 				{
 					std::cout << "(" << theAgent << ":" << theAgentStatus << ":" << (tv.tv_sec % 1000000 - theAgentStatus) << ")";
 				}
-			}
+#endif
 			if (TheAgents.at(i).GetStatus() > 0 && tv.tv_sec % 1000000 - TheAgents.at(i).GetStatus() > 5)
 			{
 				if (HasMemberNumber(TheAgents.at(i).GetNumber()))
 				{
-					if (debugQueueH)
-					{
+#ifdef DEBUG
 						std::cout << "(AVAIL:" << theAgent << ")";
-					}
+#endif
 					availAgents++;
 				}
 			}
 		}
-		if (debugQueueH)
-		{
+#ifdef DEBUG
 			std::cout << std::endl;
-		}
+#endif
 		return availAgents;
 	}
 

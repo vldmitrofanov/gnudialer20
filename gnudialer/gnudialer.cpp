@@ -136,90 +136,133 @@ void doAriRedirect(const std::string &channel,
 				   const std::string &agent,
 				   const std::string &campaign,
 				   const std::string &leadid,
-				   const bool &doChangeCallerId)
+				   const bool &doChangeCallerId,
+				   AgentList &TheAgents)
 {
 	std::string ariHost = getMainHost();
 	std::string ariUser = getAriUser();
 	std::string ariPass = getAriPass();
+	std::string managerUser = getManagerUser();
+	std::string managerPass = getManagerPass();
 
 	HttpClient client(ariHost, 8088, ariUser, ariPass); // You need to implement or use an existing HTTP client library
 	std::string response;
 
 	if (atoi(agent.c_str()) || agent == "699" && doChangeCallerId)
 	{
+#ifdef DEBUG
 		if (doColorize)
 		{
-			std::cout << campaign << fg_magenta << ": Transferring - " << channel << " to Agent: " << agent << normal << std::endl;
+			std::cout << "[DEBUG]" << campaign << fg_magenta << ": Transferring - " << channel << " to Agent: " << agent << normal << std::endl;
 		}
 		else
 		{
-			std::cout << campaign << ": Transferring - " << channel << " to Agent: " << agent << std::endl;
+			std::cout << "[DEBUG]" << campaign << ": Transferring - " << channel << " to Agent: " << agent << std::endl;
 		}
+#endif
 		writeGnudialerLog(campaign + ": Transferring - " + channel + " to Agent: " + agent + "");
 
 		// Find the agent's channel using ARI
-		std::string agentChannelId;
-		std::string collabeChannelId;
+		// std::string agentChannelId;
+		// std::string collabeChannelId;
+		std::string agentChannel = TheAgents.where(atoi(agent.c_str())).GetConnectedChannel();
+
+		// if (agentChannel.isEmpty())
+		//{
 		response = client.get("/ari/channels");
 		std::istringstream responseStream(response);
 		json jsonArray;
 		responseStream >> jsonArray;
-		int found = 0;
+		// int found = 0;
 		for (const auto &item : jsonArray)
 		{
 			std::string channelName = item["name"];
 			if (channelName.find("PJSIP/" + agent + "-") != std::string::npos)
 			{
-				agentChannelId = item["id"]; // Get the channel ID
-				found++;
-			} else if(channelName.find(channel) != std::string::npos) {
-				collabeChannelId = item["id"];
-				found++;
-			}
-			if(found > 1) {
-				break;
-			}
+				// agentChannelId = item["id"]; // Get the channel ID
+				agentChannel = channelName;
+				// found++;
+			} // else if(channelName.find(channel) != std::string::npos) {
+			  // collabeChannelId = item["id"];
+			  // found++;
+			//}
+			// if(found > 1) {
+			//	break;
+			//}
 		}
+		//} else {
+		//	std::cout << "Found agen't channel within her properties" << agentChannel  << std::endl;
+		//}
 
-		if (!agentChannelId.empty() && !collabeChannelId.empty())
+		// if (!agentChannelId.empty() && !collabeChannelId.empty())
+		if (!agentChannel.empty())
 		{
 			if (doColorize)
 			{
-				std::cout << campaign << fg_magenta << ": Bridging - " << channel << "(" << collabeChannelId << ") to Agent's channel: " << agentChannelId << normal << std::endl;
+				// std::cout << campaign << fg_magenta << ": Bridging - " << channel << "(" << collabeChannelId << ") to Agent's channel: " << agentChannelId << normal << std::endl;
+				std::cout << campaign << fg_magenta << ": Bridging - " << channel << " to Agent's channel: " << agentChannel << normal << std::endl;
 			}
 			else
 			{
-				std::cout << campaign << ": Bridging - " << channel << " to Agent's channel: " << agentChannelId << std::endl;
+				std::cout << campaign << ": Bridging - " << channel << " to Agent's channel: " << agentChannel << std::endl;
 			}
 
-			// Create a bridge and add both channels to it
-			std::string bridgeName = "bridge-" + campaign + "-" + agent;
-			std::string bridgeResponse = client.post("/ari/bridges", "{\"type\":\"mixing\",\"name\":\"" + bridgeName + "\"}");
-			json bridgeJson = json::parse(bridgeResponse);
-			std::string bridgeId = bridgeJson["id"];
+			ClientSocket AsteriskRedir(getMainHost(), 5038);
+			AsteriskRedir >> response;
+			AsteriskRedir << "Action: Login\r\nUserName: " + managerUser + "\r\nSecret: " + managerPass + "\r\nEvents:off\r\n\r\n";
+			AsteriskRedir >> response;
 
-			if (!bridgeId.empty())
+			AsteriskRedir << "Action: Bridge\r\n";
+			AsteriskRedir << "Channel1: " + channel + "\r\n";
+			AsteriskRedir << "Channel2: " + agentChannel + "\r\n";
+			AsteriskRedir << "Tone: yes\r\n\r\n";
+			AsteriskRedir >> response;
+			std::cout << "Bridge Response: " << response << std::endl;
+
+			if (TheAgents.exists(atoi(agent.c_str())))
 			{
-				response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + collabeChannelId + "\"}");
-				response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + agentChannelId + "\"}");
-				// Optionally, you can play a tone when the bridge is created
-				response = client.post("/ari/bridges/" + bridgeId + "/play", "{\"media\":\"tone_stream://%(400,200,400,450);%(400,200,400,450);%(400,200,400,450)\"}");
-
-				std::cout << "Bridge Response: " << response << std::endl;
-
-				// Send a custom UserEvent to notify the agent is on call
-				response = client.post("/ari/channels/" + agentChannelId + "/userEvent", "{\"eventName\":\"SetOnCall\",\"variables\":{\"Agent\":\"" + agent + "\"}}");
+				TheAgents.where(atoi(agent.c_str())).SetOnCall();
+				TheAgents.where(atoi(agent.c_str())).SetConnectedChannel(agentChannel);
+#ifdef DEBUG
+				std::cout << "[DEBUG] Updating agent - " << agent << " set status = " << TheAgents.where(atoi(agent.c_str())).GetStatus() << std::endl;
+#endif
 			}
-			else
-			{
-				std::cerr << "Failed to create bridge: " << response << std::endl;
-			}
+
+			AsteriskRedir << "Action: Logoff\r\n\r\n";
+			AsteriskRedir >> response;
+			usleep(10000000);
+			/*
+			// This is disable due requirments that channel need to be in Stasis app
+			// TODO: fix it tp use ARI completely
+						// Create a bridge and add both channels to it
+						std::string bridgeName = "bridge-" + campaign + "-" + agent;
+						std::string bridgeResponse = client.post("/ari/bridges", "{\"type\":\"mixing\",\"name\":\"" + bridgeName + "\"}");
+						json bridgeJson = json::parse(bridgeResponse);
+						std::string bridgeId = bridgeJson["id"];
+
+						if (!bridgeId.empty())
+						{
+							response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + collabeChannelId + "\"}");
+							response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + agentChannelId + "\"}");
+							// Optionally, you can play a tone when the bridge is created
+							response = client.post("/ari/bridges/" + bridgeId + "/play", "{\"media\":\"tone_stream://%(400,200,400,450);%(400,200,400,450);%(400,200,400,450)\"}");
+
+							std::cout << "Bridge Response: " << response << std::endl;
+
+							// Send a custom UserEvent to notify the agent is on call
+							response = client.post("/ari/channels/" + agentChannelId + "/userEvent", "{\"eventName\":\"SetOnCall\",\"variables\":{\"Agent\":\"" + agent + "\"}}");
+						}
+						else
+						{
+							std::cerr << "Failed to create bridge: " << response << std::endl;
+						}
+						*/
 		}
 		else
 		{
 			if (doColorize)
 			{
-				std::cout << campaign << fg_red << ": ERROR - " << channel << " to Agent's channel NOT FOUND: " << agent << normal << std::endl;
+				std::cout << campaign << fg_red << ": ERROR - " << channel << " to Agent's channel NOT FOUND! Agent: " << agent << normal << std::endl;
 			}
 			else
 			{
@@ -1324,6 +1367,303 @@ int main(int argc, char **argv)
 					//***********************************************************************************
 					if (block.find("Event: UserEvent", 0) != std::string::npos)
 					{
+						//***********************************************************************************
+						// if (block.find("Event: ManagerUserEvent", 0) != std::string::npos &&
+						//		block.find("Event: CRM_DispoRecord", 0) != std::string::npos ||
+						if (block.find("UserEvent: UserEventDispo", 0) != std::string::npos)
+						{
+
+							std::string theEvent, theAgent, theDispo, theChannel, theCampaign, theLeadid;
+							std::string theTransfer, theAgentCloser, theDispoColumn, theCloserCam;
+							bool tempUseCloser, tempPrintAgentSales, tempPrintCloserSales, tempPrintCloserNoSales;
+							std::string tempCloserCam, theTempCampaign;
+
+							theEvent = "DispoRecord";
+
+							std::string tempStringAgent;
+							int tempIntAgent;
+
+#ifdef DEBUG
+							std::cout << "Manager/UserEvent - DispoRecord ";
+#endif
+
+							if (block.find("Agent: ") != std::string::npos)
+							{
+								pos = block.find("Agent: ") + 7;
+								// end = block.find("|", pos);
+								//  theAgent = block.substr(pos, end - pos);
+								theAgent = block.substr(pos);
+								if (gLog)
+								{
+									writeGnudialerLog("Asterisk: ManagerUserEvent - " + theEvent + " - " + theAgent + "");
+								}
+#ifdef DEBUG
+								std::cout << " Agent: " << theAgent;
+#endif
+							}
+
+							if (block.find("Dispo: ") != std::string::npos)
+							{
+								pos = block.find("Dispo: ") + 7;
+								// end = block.find("|", pos);
+								theDispo = block.substr(pos);
+#ifdef DEBUG
+								std::cout << " Dispo: " << theDispo;
+#endif
+							}
+
+							if (block.find("Transfer: ") != std::string::npos)
+							{
+								pos = block.find("Transfer: ") + 10;
+								// end = block.find("|", pos);
+								theTransfer = block.substr(pos);
+#ifdef DEBUG
+								std::cout << " Transfer: " << theTransfer;
+#endif
+							}
+
+							if (block.find("Campaign: ") != std::string::npos)
+							{
+								pos = block.find("Campaign: ") + 10;
+								// end = block.find("|", pos);
+								theCampaign = block.substr(pos);
+								// this is due to crm adding -isclosercam to campaign name
+								if (theCampaign.find("-isclosercam", 0) != std::string::npos)
+								{
+									end2 = theCampaign.find("-", 0);
+									theTempCampaign = theCampaign.substr(0, end2);
+									theCampaign = theTempCampaign;
+								}
+#ifdef DEBUG
+								std::cout << " Campaign: " << theCampaign;
+#endif
+							}
+
+							if (block.find("Leadid: ") != std::string::npos)
+							{
+								pos = block.find("Leadid: ", 0) + 8;
+								end = block.find("|", pos);
+								theLeadid = block.substr(pos, end - pos);
+#ifdef DEBUG
+								std::cout << " Leadid: " << theLeadid;
+#endif
+							}
+
+							if (block.find("Channel: ", 0) != std::string::npos)
+							{
+								pos = block.find("Channel: ", 0) + 9;
+								end = block.find("\n", pos);
+								theChannel = block.substr(pos, end - pos);
+#ifdef DEBUG
+								std::cout << " Channel: " << theChannel;
+#endif
+							}
+
+							if (TheQueues.exists(theCampaign))
+							{
+
+								if (theTransfer == "TRANSFER")
+								{
+									try
+									{
+										tempUseCloser = TheQueues.rWhere(theCampaign).GetSetting("usecloser").GetBool();
+									}
+									catch (xLoopEnd e)
+									{
+										std::cout << "Caught xLoopEnd while trying to get usecloser variable" << std::endl;
+										std::cout << e.what();
+										std::cout << std::endl
+												  << std::endl;
+									}
+
+#ifdef DEBUG
+									std::cout << " tempUseCloser: " << tempUseCloser;
+#endif
+									tempCloserCam = TheQueues.rWhere(theCampaign).GetSetting("closercam").Get();
+#ifdef DEBUG
+									std::cout << " tempCloserCam: " << tempCloserCam;
+#endif
+								}
+#ifdef DEBUG
+								std::cout << std::endl;
+#endif
+
+								if (TheAgents.exists(atoi(theAgent.c_str())))
+								{
+									tempIntAgent = atoi(theAgent.c_str());
+									int tempAgentStatus = TheAgents.where(atoi(theAgent.c_str())).GetStatus();
+
+									if (tempAgentStatus != -4 && tempAgentStatus != -3)
+									{
+										// TheQueues.where(TheAgents.where(atoi(theAgent.c_str())).GetCampaign()).AddTalkTime(TheAgents.where(atoi(theAgent.c_str())).SetOnWait(false,false,TheAgents));
+										// theCampaign is passed by the call, do NOT use GetCampaign
+										TheQueues.where(theCampaign).AddTalkTime(tempIntAgent);
+										TheAgents.where(tempIntAgent).writeAgentLog(TheAgents);
+									}
+									TheAgents.where(tempIntAgent).SetOnWait(false, false, TheAgents);
+#ifdef DEBUG
+									std::cout << "GnuDialer: SetOnWait - " << theAgent << std::endl;
+#endif
+									if (gLog)
+									{
+										writeGnudialerLog("GnuDialer: SetOnWait - " + theAgent + "");
+									}
+								}
+								else
+								{
+									std::cerr << "DispoRecord: Error parsing agent number!" << std::endl;
+								}
+
+								// do not IGNore, we want the core
+								// signal(SIGCLD, SIG_IGN);
+
+								if (theTransfer == "TRANSFER")
+								{
+									theDispoColumn = "disposition";
+									theAgentCloser = "agent";
+								}
+								else
+								{
+									theDispoColumn = "closerdispo";
+									theAgentCloser = "closer";
+								}
+
+								writeDBString(theCampaign, theLeadid, "" + theDispoColumn + "='" + theDispo + "'," + theAgentCloser + "='" + theAgent + "'");
+#ifdef DEBUG
+								std::cout << theCampaign << ": writeDBString - DispoRecord - " << theAgentCloser + ": " << theAgent << " theDispo: " << theDispo << std::endl;
+#endif
+								writeDispo(theAgent, theCampaign, theDispo);
+#ifdef DEBUG
+								std::cout << theCampaign << ": writeDispo - DispoRecord - theAgent: " << theAgent << " theDispo: " << theDispo << std::endl;
+#endif
+
+								tempPrintAgentSales = TheQueues.rWhere(theCampaign).GetSetting("prn_agent_sales").GetBool();
+								tempPrintCloserSales = TheQueues.rWhere(theCampaign).GetSetting("prn_closer_sales").GetBool();
+								tempPrintCloserNoSales = TheQueues.rWhere(theCampaign).GetSetting("prn_closer_nosales").GetBool();
+
+								if (theTransfer == "TRANSFER" && theDispo == "12" && tempPrintAgentSales)
+								{
+									pid = fork();
+									if (pid == 0)
+									{
+										doPrintSale("Agent SALE NON-Verified", theCampaign, theLeadid);
+										exit(0);
+									}
+									if (pid == -1)
+									{
+										throw xForkError();
+									}
+								}
+
+								if (theTransfer == "TRANSFER" && theDispo == "12" && tempUseCloser)
+								{
+									tempStringAgent = TheQueues.LeastRecent(tempCloserCam, TheAgents);
+
+									if (atoi(tempStringAgent.c_str()))
+									{
+#ifdef DEBUG
+										std::cout << theCampaign << ": Transfer - tempStringAgent: " << tempStringAgent << std::endl;
+#endif
+										if (TheAgents.exists(atoi(tempStringAgent.c_str())))
+										{
+											TheAgents.where(atoi(tempStringAgent.c_str())).SetConnectedChannel(theChannel);
+											// testing here								TheAgents.where(atoi(tempStringAgent.c_str())).SetCampaign(TheQueues.rWhere(theCampaign).GetSetting("closercam").Get());
+											TheAgents.where(atoi(tempStringAgent.c_str())).SetCampaign(theCampaign);
+
+											TheAgents.where(atoi(tempStringAgent.c_str())).SetLeadId(theLeadid);
+											TheAgents.where(atoi(tempStringAgent.c_str())).SetOnWait(false, true, TheAgents);
+#ifdef DEBUG
+											std::cout << theCampaign << ": theLeadid - " << theLeadid << std::endl;
+#endif
+
+											pid = fork();
+											if (pid == 0)
+											{
+												doAriRedirect(theChannel, tempStringAgent, tempCloserCam, theLeadid, true, TheAgents);
+												exit(0);
+											}
+											if (pid == -1)
+											{
+												throw xForkError();
+											}
+										}
+										else
+										{
+											std::cerr << "DispoRecord: Closer no longer Exists (DISPO)!" << std::endl;
+										}
+									}
+									else
+									{
+										std::cout << theCampaign << ": No available Closers! (DISPO)" << std::endl;
+
+										pid = fork();
+										if (pid == 0)
+										{
+											doAriRedirect(theChannel, "699", tempCloserCam, theLeadid, true, TheAgents);
+											exit(0);
+										}
+										if (pid == -1)
+										{
+											throw xForkError();
+										}
+									}
+								}
+								else
+								{
+
+									if (theTransfer == "" && theDispo == "11" && tempPrintCloserNoSales)
+									{
+										pid = fork();
+										if (pid == 0)
+										{
+											doPrintSale("SALE Verification FAILED (for some reason)", theCampaign, theLeadid);
+											exit(0);
+										}
+										if (pid == -1)
+										{
+											throw xForkError();
+										}
+									}
+
+									if (theDispo == "12" && tempPrintCloserSales)
+									{
+										pid = fork();
+										if (pid == 0)
+										{
+											doPrintSale("Agent SALE (Verified/or not Required)", theCampaign, theLeadid);
+											exit(0);
+										}
+										if (pid == -1)
+										{
+											throw xForkError();
+										}
+									}
+
+									if (!theChannel.empty())
+									{
+										pid = fork();
+										if (pid == 0)
+										{
+											doHangupCall(theChannel, theAgent, managerUser, managerPass);
+											exit(0);
+										}
+										if (pid == -1)
+										{
+											throw xForkError();
+										}
+									}
+									else
+									{
+										std::cerr << "DispoRecord: Channel Empty (HANGUP)!" << std::endl;
+									}
+								}
+							}
+							else
+							{
+								std::cout << theCampaign << ": Parse ERROR! (DISPO)" << std::endl;
+							}
+						}
+
 						if (block.find("UserEvent: SetOnCall") != std::string::npos)
 						{
 							size_t agentPos = block.find("Agent: ");
@@ -1460,7 +1800,7 @@ int main(int argc, char **argv)
 										{
 											if (isNone == false)
 											{
-												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, true);
+												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, true, TheAgents);
 												exit(0);
 											}
 										}
@@ -1478,7 +1818,7 @@ int main(int argc, char **argv)
 										pid = fork();
 										if (pid == 0)
 										{
-											doAriRedirect(theChannel, "699", theCampaign, theLeadid, true);
+											doAriRedirect(theChannel, "699", theCampaign, theLeadid, true, TheAgents);
 											// doHangupCall(theChannel,theAgent,managerUser,managerPass);
 											exit(0);
 										}
@@ -1527,7 +1867,7 @@ int main(int argc, char **argv)
 										{
 											if (isNone == false)
 											{
-												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, false);
+												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, false, TheAgents);
 												exit(0);
 											}
 										}
@@ -2142,317 +2482,6 @@ int main(int argc, char **argv)
 					}
 
 					//***********************************************************************************
-					if (block.find("Event: ManagerUserEvent", 0) != std::string::npos &&
-							block.find("Event: CRM_DispoRecord", 0) != std::string::npos ||
-						(block.find("Event: UserEventDispo", 0) != std::string::npos))
-					{
-
-						std::string theEvent, theAgent, theDispo, theChannel, theCampaign, theLeadid;
-						std::string theTransfer, theAgentCloser, theDispoColumn, theCloserCam;
-						bool tempUseCloser, tempPrintAgentSales, tempPrintCloserSales, tempPrintCloserNoSales;
-						std::string tempCloserCam, theTempCampaign;
-
-						theEvent = "DispoRecord";
-
-						std::string tempStringAgent;
-						int tempIntAgent;
-
-						if (gDebug)
-						{
-							std::cout << "Manager/UserEvent - DispoRecord ";
-						}
-
-						if (block.find("Agent: ", 0) != std::string::npos)
-						{
-							pos = block.find("Agent: ", 0) + 7;
-							end = block.find("|", pos);
-							theAgent = block.substr(pos, end - pos);
-							if (gLog)
-							{
-								writeGnudialerLog("Asterisk: ManagerUserEvent - " + theEvent + " - " + theAgent + "");
-							}
-							if (gDebug)
-							{
-								std::cout << " Agent: " << theAgent;
-							}
-						}
-
-						if (block.find("Dispo: ", 0) != std::string::npos)
-						{
-							pos = block.find("Dispo: ", 0) + 7;
-							end = block.find("|", pos);
-							theDispo = block.substr(pos, end - pos);
-							if (gDebug)
-							{
-								std::cout << " Dispo: " << theDispo;
-							}
-						}
-
-						if (block.find("Transfer: ", 0) != std::string::npos)
-						{
-							pos = block.find("Transfer: ", 0) + 10;
-							end = block.find("|", pos);
-							theTransfer = block.substr(pos, end - pos);
-							if (gDebug)
-							{
-								std::cout << " Transfer: " << theTransfer;
-							}
-						}
-
-						if (block.find("Campaign: ", 0) != std::string::npos)
-						{
-							pos = block.find("Campaign: ", 0) + 10;
-							end = block.find("|", pos);
-							theCampaign = block.substr(pos, end - pos);
-							// this is due to crm adding -isclosercam to campaign name
-							if (theCampaign.find("-isclosercam", 0) != std::string::npos)
-							{
-								end2 = theCampaign.find("-", 0);
-								theTempCampaign = theCampaign.substr(0, end2);
-								theCampaign = theTempCampaign;
-							}
-							if (gDebug)
-							{
-								std::cout << " Campaign: " << theCampaign;
-							}
-						}
-
-						if (block.find("Leadid: ", 0) != std::string::npos)
-						{
-							pos = block.find("Leadid: ", 0) + 8;
-							end = block.find("|", pos);
-							theLeadid = block.substr(pos, end - pos);
-							if (gDebug)
-							{
-								std::cout << " Leadid: " << theLeadid;
-							}
-						}
-
-						if (block.find("Channel: ", 0) != std::string::npos)
-						{
-							pos = block.find("Channel: ", 0) + 9;
-							end = block.find("\n", pos);
-							theChannel = block.substr(pos, end - pos);
-							if (gDebug)
-							{
-								std::cout << " Channel: " << theChannel;
-							}
-						}
-
-						if (TheQueues.exists(theCampaign))
-						{
-
-							if (theTransfer == "TRANSFER")
-							{
-								try
-								{
-									tempUseCloser = TheQueues.rWhere(theCampaign).GetSetting("usecloser").GetBool();
-								}
-								catch (xLoopEnd e)
-								{
-									std::cout << "Caught xLoopEnd while trying to get usecloser variable" << std::endl;
-									std::cout << e.what();
-									std::cout << std::endl
-											  << std::endl;
-								}
-
-								if (gDebug)
-								{
-									std::cout << " tempUseCloser: " << tempUseCloser;
-								}
-								tempCloserCam = TheQueues.rWhere(theCampaign).GetSetting("closercam").Get();
-								if (gDebug)
-								{
-									std::cout << " tempCloserCam: " << tempCloserCam;
-								}
-							}
-							if (gDebug)
-							{
-								std::cout << std::endl;
-							}
-
-							if (TheAgents.exists(atoi(theAgent.c_str())))
-							{
-								tempIntAgent = atoi(theAgent.c_str());
-								int tempAgentStatus = TheAgents.where(atoi(theAgent.c_str())).GetStatus();
-
-								if (tempAgentStatus != -4 && tempAgentStatus != -3)
-								{
-									// TheQueues.where(TheAgents.where(atoi(theAgent.c_str())).GetCampaign()).AddTalkTime(TheAgents.where(atoi(theAgent.c_str())).SetOnWait(false,false,TheAgents));
-									// theCampaign is passed by the call, do NOT use GetCampaign
-									TheQueues.where(theCampaign).AddTalkTime(tempIntAgent);
-									TheAgents.where(tempIntAgent).writeAgentLog(TheAgents);
-								}
-								TheAgents.where(tempIntAgent).SetOnWait(false, false, TheAgents);
-								if (gDebug)
-								{
-									std::cout << "GnuDialer: SetOnWait - " << theAgent << std::endl;
-								}
-								if (gLog)
-								{
-									writeGnudialerLog("GnuDialer: SetOnWait - " + theAgent + "");
-								}
-							}
-							else
-							{
-								std::cerr << "DispoRecord: Error parsing agent number!" << std::endl;
-							}
-
-							// do not IGNore, we want the core
-							// signal(SIGCLD, SIG_IGN);
-
-							if (theTransfer == "TRANSFER")
-							{
-								theDispoColumn = "disposition";
-								theAgentCloser = "agent";
-							}
-							else
-							{
-								theDispoColumn = "closerdispo";
-								theAgentCloser = "closer";
-							}
-
-							writeDBString(theCampaign, theLeadid, "" + theDispoColumn + "='" + theDispo + "'," + theAgentCloser + "='" + theAgent + "'");
-							if (gDebug)
-							{
-								std::cout << theCampaign << ": writeDBString - DispoRecord - " << theAgentCloser + ": " << theAgent << " theDispo: " << theDispo << std::endl;
-							}
-							writeDispo(theAgent, theCampaign, theDispo);
-							if (gDebug)
-							{
-								std::cout << theCampaign << ": writeDispo - DispoRecord - theAgent: " << theAgent << " theDispo: " << theDispo << std::endl;
-							}
-
-							tempPrintAgentSales = TheQueues.rWhere(theCampaign).GetSetting("prn_agent_sales").GetBool();
-							tempPrintCloserSales = TheQueues.rWhere(theCampaign).GetSetting("prn_closer_sales").GetBool();
-							tempPrintCloserNoSales = TheQueues.rWhere(theCampaign).GetSetting("prn_closer_nosales").GetBool();
-
-							if (theTransfer == "TRANSFER" && theDispo == "12" && tempPrintAgentSales)
-							{
-								pid = fork();
-								if (pid == 0)
-								{
-									doPrintSale("Agent SALE NON-Verified", theCampaign, theLeadid);
-									exit(0);
-								}
-								if (pid == -1)
-								{
-									throw xForkError();
-								}
-							}
-
-							if (theTransfer == "TRANSFER" && theDispo == "12" && tempUseCloser)
-							{
-								tempStringAgent = TheQueues.LeastRecent(tempCloserCam, TheAgents);
-
-								if (atoi(tempStringAgent.c_str()))
-								{
-									if (gDebug)
-									{
-										std::cout << theCampaign << ": Transfer - tempStringAgent: " << tempStringAgent << std::endl;
-									}
-									if (TheAgents.exists(atoi(tempStringAgent.c_str())))
-									{
-										TheAgents.where(atoi(tempStringAgent.c_str())).SetConnectedChannel(theChannel);
-										// testing here								TheAgents.where(atoi(tempStringAgent.c_str())).SetCampaign(TheQueues.rWhere(theCampaign).GetSetting("closercam").Get());
-										TheAgents.where(atoi(tempStringAgent.c_str())).SetCampaign(theCampaign);
-
-										TheAgents.where(atoi(tempStringAgent.c_str())).SetLeadId(theLeadid);
-										TheAgents.where(atoi(tempStringAgent.c_str())).SetOnWait(false, true, TheAgents);
-										if (gDebug)
-										{
-											std::cout << theCampaign << ": theLeadid - " << theLeadid << std::endl;
-										}
-
-										pid = fork();
-										if (pid == 0)
-										{
-											doAriRedirect(theChannel, tempStringAgent, tempCloserCam, theLeadid, true);
-											exit(0);
-										}
-										if (pid == -1)
-										{
-											throw xForkError();
-										}
-									}
-									else
-									{
-										std::cerr << "DispoRecord: Closer no longer Exists (DISPO)!" << std::endl;
-									}
-								}
-								else
-								{
-									std::cout << theCampaign << ": No available Closers! (DISPO)" << std::endl;
-
-									pid = fork();
-									if (pid == 0)
-									{
-										doAriRedirect(theChannel, "699", tempCloserCam, theLeadid, true);
-										exit(0);
-									}
-									if (pid == -1)
-									{
-										throw xForkError();
-									}
-								}
-							}
-							else
-							{
-
-								if (theTransfer == "" && theDispo == "11" && tempPrintCloserNoSales)
-								{
-									pid = fork();
-									if (pid == 0)
-									{
-										doPrintSale("SALE Verification FAILED (for some reason)", theCampaign, theLeadid);
-										exit(0);
-									}
-									if (pid == -1)
-									{
-										throw xForkError();
-									}
-								}
-
-								if (theDispo == "12" && tempPrintCloserSales)
-								{
-									pid = fork();
-									if (pid == 0)
-									{
-										doPrintSale("Agent SALE (Verified/or not Required)", theCampaign, theLeadid);
-										exit(0);
-									}
-									if (pid == -1)
-									{
-										throw xForkError();
-									}
-								}
-
-								if (!theChannel.empty())
-								{
-									pid = fork();
-									if (pid == 0)
-									{
-										doHangupCall(theChannel, theAgent, managerUser, managerPass);
-										exit(0);
-									}
-									if (pid == -1)
-									{
-										throw xForkError();
-									}
-								}
-								else
-								{
-									std::cerr << "DispoRecord: Channel Empty (HANGUP)!" << std::endl;
-								}
-							}
-						}
-						else
-						{
-							std::cout << theCampaign << ": Parse ERROR! (DISPO)" << std::endl;
-						}
-					}
-
-					//***********************************************************************************
 					//        	                if (block.find("Event: UserEventPickup",0) != std::string::npos) {
 					//                	                std::string theCallerIDName, theCampaign, theAgent, theLeadid;
 					//                        	        if (gDebug) {
@@ -2548,11 +2577,9 @@ int main(int argc, char **argv)
 						std::cout << queue << ": linestodial or remaininglines are greater than 5000, something is WRONG!" << std::endl;
 						std::cout << queue << ": ldg: " << linesdialing << " aa: " << availagents << " mr: " << maxratio << " ml: " << maxlines << " ma: " << maxabandons << " mode: " << mode << " calls: " << calls << " abs: " << abandons << " l2d: " << linestodial << " rls: " << remaininglines << std::endl;
 					}
-					if (debugCampaignSettings)
-					{
-						std::cout << queue << ": ldg: " << linesdialing << " aa: " << availagents << " mr: " << maxratio << " ml: " << maxlines << " ma: " << maxabandons << " mode: " << mode << " calls: " << calls << " abs: " << abandons << " l2d: " << linestodial << " rls: " << remaininglines << std::endl;
-					}
-
+#ifdef DEBUG
+					std::cout << "[DEBUG]" << queue << ": ldg: " << linesdialing << " aa: " << availagents << " mr: " << maxratio << " ml: " << maxlines << " ma: " << maxabandons << " mode: " << mode << " calls: " << calls << " abs: " << abandons << " l2d: " << linestodial << " rls: " << remaininglines << std::endl;
+#endif
 					// std::cout << queue << ": processing this campaign" << std::endl;
 
 					// main dial loop for each campaign
@@ -2811,36 +2838,35 @@ int main(int argc, char **argv)
 
 						int availclosers = TheQueues.rWhere(closercam).GetAvailAgents(TheAgents);
 
-						if (debugCampaignSettings)
+#ifdef DEBUG
+						std::cout << "[DEBUG]" << currentTime << ":" << queue << ": availclosers: " << availclosers << " - remaininglines: " << remaininglines << std::endl;
+
+						query = "SELECT count(*) FROM campaign_" + queue + " WHERE ";
+						query += " disposition = 12 AND closerdispo = 0 ";
+
+						if (mysql_query(mysql, query.c_str()) != 0)
 						{
-							std::cout << currentTime << ":" << queue << ": availclosers: " << availclosers << " - remaininglines: " << remaininglines << std::endl;
+							std::cout << "Error selecting records !" << std::endl;
+						}
+						else
+						{
 
-							query = "SELECT count(*) FROM campaign_" + queue + " WHERE ";
-							query += " disposition = 12 AND closerdispo = 0 ";
-
-							if (mysql_query(mysql, query.c_str()) != 0)
+							queryResult = mysql_use_result(mysql);
+							queryRow = mysql_fetch_row(queryResult);
+							if (queryRow && queryRow[0])
 							{
-								std::cout << "Error selecting records !" << std::endl;
-							}
-							else
-							{
-
-								queryResult = mysql_use_result(mysql);
-								queryRow = mysql_fetch_row(queryResult);
-								if (queryRow && queryRow[0])
+								int ccb_counter = std::stoi(std::string(queryRow[0]));
+								if (debug)
 								{
-									int ccb_counter = std::stoi(std::string(queryRow[0]));
-									if (debug)
+									if (ccb_counter)
 									{
-										if (ccb_counter)
-										{
-											std::cout << queue << ": Total Closer Callbacks Remaining: " << ccb_counter << std::endl;
-										}
+										std::cout << queue << ": Total Closer Callbacks Remaining: " << ccb_counter << std::endl;
 									}
 								}
-								mysql_free_result(queryResult);
 							}
+							mysql_free_result(queryResult);
 						}
+#endif
 
 						// std::cout << queue << ": Testing - got here " << std::endl;
 

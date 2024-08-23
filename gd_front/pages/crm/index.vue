@@ -18,62 +18,74 @@
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(1)>
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(1)>
                             Fresh <small>1</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(2)>
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(2)>
                             NoAns <small>2</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(3)>
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(3)>
                             AnsMach <small>3</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(4)>
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(4)>
                             Busy <small>4</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(5)>
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(5)>
                             FBusy <small>5</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(6)>
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(6)>
                             Fax <small>6</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(7)>
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(7)>
                             Disco <small>7</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button dnc-button" :disabled="allButtonsDisabled" @click=handleDisposition(8)>
+                        <a-button block class="disposition-button dnc-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(8)>
                             DNC <small>8</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(9)>
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(9)>
                             Invalid <small>9</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(10)>
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(10)>
                             Other <small>10</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button sale-button" :disabled="allButtonsDisabled" @click=handleDisposition(12)>
+                        <a-button block class="disposition-button sale-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(12)>
                             Sale <small>12</small>
                         </a-button>
                     </a-col>
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled" @click=handleDisposition(11)>
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled"
+                            @click=handleDisposition(11)>
                             NoSale <small>11</small>
                         </a-button>
                     </a-col>
@@ -116,7 +128,7 @@
                                         <a-select-option value="phone">Phone</a-select-option>
                                     </a-select>
                                     <a-input v-model:value="searchTerm" :placeholder="`Enter ${searchBy}`"
-                                        style="width: 200px;" @keypress.enter="handleSearch" :disabled="running"/>
+                                        style="width: 200px;" @keypress.enter="handleSearch" :disabled="running" />
                                     <a-button type="primary" @click="handleSearch" :disabled="running">
                                         <SearchOutlined /> <!-- Use the imported icon -->
                                     </a-button>
@@ -173,19 +185,19 @@ const pauseAfterCall = ref(false)
 const cb_datetime = ref('')
 
 const handleSearch = async () => {
-    if(!queue.value){
+    if (!queue.value) {
         message.error('No campaign selected')
         return
     }
-    if(searchTerm.value == ''){
+    if (searchTerm.value == '') {
         message.error('Please input search data')
         return
     }
     const campaign = queue.value?.campaign?.code
-    let phone='',leadId='';
-    if(searchBy.value=='phone'){
+    let phone = '', leadId = '';
+    if (searchBy.value == 'phone') {
         phone = searchTerm.value
-    } else if(searchBy.value=='id'){
+    } else if (searchBy.value == 'id') {
         leadId = searchTerm.value
     }
     const { data, error } = await useFetch(`/api/leads/search?campaign=${campaign}&lead_id=${leadId}&phone=${phone}`, {
@@ -215,7 +227,7 @@ const initiateWebsocket = (server) => {
     const app_name = server?.data?.ws?.app_name
     const user = server?.data?.ws?.user
     const password = server?.data?.ws?.password
-    if(!host){
+    if (!host) {
         message.error('A critical error occured while connecting to the server')
         return
     }
@@ -254,18 +266,27 @@ const initiateWebsocket = (server) => {
     };
 }
 
-const handleDisposition = async(dispo) => {
+const handleDisposition = async (dispo) => {
     disposition.value = dispo
-    if(channel.value) {
+    if (channel.value) {
         hangup()
     }
     triggerFormSubmit()
-    if(!pauseAfterCall.value){
+    gdialDispo(dispo)
+    if (!pauseAfterCall.value) {
         setOnWait()
     }
 }
 
-const setOnWait = async() => {
+const gdialDispo = async (dispo) => {
+    const transf = 'TRANSFER'
+    let actionCommand = "Action: UserEvent\r\nUserEvent: UserEventDispo\r\n"
+    actionCommand += `Header1: Agent: ${agent.value}\r\n`
+    actionCommand += `Header2: Dispo: ${dispo}\r\n`
+    actionCommand += `Header3: Transfer: ${transf}\r\n`
+    actionCommand += `Header4: Campaign: ${queue.value?.campaign?.code}\r\n`
+    actionCommand += `Header5: Leadid: ${lead.value?.id}\r\n`
+    actionCommand += `Header6: Channel: ${channel.value}\r\n`
     const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
@@ -275,17 +296,37 @@ const setOnWait = async() => {
         },
         body: {
             server_id: serverData.value?.id,
-            action:"Action: UserEvent\r\nUserEvent: SetOnWait\r\nHeader: Agent: "+agent.value.id
+            action: actionCommand
         }
     })
     if (error.value) {
         console.error('Error during hangup: ', error.value)
         message.error(error.value);
         return null
-    } 
+    }
 }
 
-const hangup = async() => {
+const setOnWait = async () => {
+    const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
+        method: 'POST',
+        baseURL: config.public.apiBaseUrl,
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        },
+        body: {
+            server_id: serverData.value?.id,
+            action: "Action: UserEvent\r\nUserEvent: SetOnWait\r\nHeader: Agent: " + agent.value.id
+        }
+    })
+    if (error.value) {
+        console.error('Error during hangup: ', error.value)
+        message.error(error.value);
+        return null
+    }
+}
+
+const hangup = async () => {
     const { data, error } = await useFetch(`/api/asterisk/call/hangup`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
@@ -302,7 +343,7 @@ const hangup = async() => {
         console.error('Error during hangup: ', error.value)
         message.error(error.value);
         return null
-    } 
+    }
 }
 
 const triggerFormSubmit = () => {
@@ -323,8 +364,8 @@ const handleLeadSave = async (updatedLead) => {
             campaign: leadCampaign.value,
             lead: updatedLead,
             agent: agent.value.id,
-            disposition:disposition.value,
-            cb_datetime:cb_datetime.value
+            disposition: disposition.value,
+            cb_datetime: cb_datetime.value
         }
     })
 }
@@ -419,9 +460,9 @@ const togglePause = async () => {
                 }
             }
         }
-        if(parseInt(resObj?.Paused) === 0){
+        if (parseInt(resObj?.Paused) === 0) {
             setOnWait()
-        }        
+        }
     }
 }
 
@@ -589,10 +630,11 @@ onMounted(async () => {
     padding: 0 0 16px;
     border-bottom: 1px #ebebeb solid;
     margin-bottom: 20px;
+
     //border-radius: 8px;
     /*box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);*/
-    .ant-form-item{
-        margin-inline-end: 0!important;
+    .ant-form-item {
+        margin-inline-end: 0 !important;
     }
 }
 </style>
