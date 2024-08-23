@@ -169,6 +169,8 @@ const searchBy = ref('phone')
 const searchTerm = ref('')
 const disposition = ref(10000)
 const leadFormRef = ref(null)
+const pauseAfterCall = ref(false)
+const cb_datetime = ref('')
 
 const handleSearch = async () => {
     if(!queue.value){
@@ -273,7 +275,7 @@ const setOnWait = async() => {
         },
         body: {
             server_id: serverData.value?.id,
-            action:"Action: UserEvent\r\nUserEvent: SetOnWait\r\nHeader: Agent: "+agent.value.id+"\r\n\r\n"
+            action:"Action: UserEvent\r\nUserEvent: SetOnWait\r\nHeader: Agent: "+agent.value.id
         }
     })
     if (error.value) {
@@ -284,7 +286,7 @@ const setOnWait = async() => {
 }
 
 const hangup = async() => {
-    const { data, error } = await useFetch(`/api/asterisk/hangup`, {
+    const { data, error } = await useFetch(`/api/asterisk/call/hangup`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
         headers: {
@@ -311,7 +313,7 @@ const triggerFormSubmit = () => {
 
 const handleLeadSave = async (updatedLead) => {
     const { data, error } = await useFetch(`/api/leads`, {
-        method: 'POST',
+        method: 'PUT',
         baseURL: config.public.apiBaseUrl,
         headers: {
             Accept: `application/json`,

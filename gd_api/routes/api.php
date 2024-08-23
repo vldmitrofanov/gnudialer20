@@ -26,6 +26,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::group(['prefix' => 'leads'], function () {
         Route::get('/', [\App\Http\Controllers\LeadController::class, 'getLead']);
+        Route::put('/', [\App\Http\Controllers\LeadController::class, 'updateLead']);
         Route::get('/search', [\App\Http\Controllers\LeadController::class, 'searchLead']);
     });
 });

@@ -54,8 +54,7 @@ class LeadController extends Controller
         if(!empty($request->cb_datetime)){
             $data['cb_datetime'] = \Carbon\Carbon::parse($request->cb_datetime)->toDateTimeString();
         }
-        $lead = DB::table($table_name)->where('id', $leadId)->first();;
-        $lead->update($data);
+        DB::table($table_name)->where('id', $leadId)->update($data);
         return response()->json([
             'message' => 'Resource updated successfully',
         ], 201);

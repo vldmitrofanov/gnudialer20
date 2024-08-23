@@ -85,7 +85,7 @@ class AsteriskController extends Controller
 
         $serverId = $request->input('server_id');
         $this->amiService->setServer($serverId);
-        $status = $this->amiService->sendCommand($request->action,"\r\n");
+        $status = $this->amiService->sendCommand($request->action."\r\n\r\n","\r\n");
         return response()->json(['status' => $status], 200);
     }
 }

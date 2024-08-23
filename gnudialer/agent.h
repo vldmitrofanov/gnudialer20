@@ -169,12 +169,12 @@ public:
 		herCalltime = herStatus;
 		herStatus = -1;
 	}
-	//void SetOnWait()
+	// void SetOnWait()
 	//{
 	//	timeval tv;
 	//	gettimeofday(&tv, NULL);
 	//	herStatus = tv.tv_sec % 1000000;
-	//}
+	// }
 	void SetOffline()
 	{
 		herStatus = -2;
@@ -245,14 +245,18 @@ public:
 		}
 		else
 		{
-			std::cout << "Agents found: " << agents.size() << std::endl;
+			std::cout << "agent.h Agents found: " << agents.size() << " ServerID: " << serverId << std::endl;
 		}
 
 		for (const auto &agent : agents)
 		{
 			Agent TempAgent = ReturnAgent(agent);
 			std::cout << " - Agent ID: " << TempAgent.GetNumber() << std::endl;
-			ItsAgents.push_back(TempAgent);
+			int tempAgentNum = TempAgent.GetNumber();
+			if (!this->exists(tempAgentNum))
+			{
+				ItsAgents.push_back(TempAgent);
+			}
 		}
 
 		//	ItsAgents.clear();

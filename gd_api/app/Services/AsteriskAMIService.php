@@ -89,6 +89,7 @@ class AsteriskAMIService
 
     public function sendCommand($command, $end)
     {
+        Log::info("AMI Command Line: {$command}");
         fwrite($this->socket, $command);
 
         $response = '';

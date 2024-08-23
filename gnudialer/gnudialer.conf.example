@@ -1,8 +1,21 @@
-gnudialerpassword
-mysqlusername
-mysqlpassword
-mysqlhost
-mysqldbname
-managerusername
-managerpassword
-masterhostname
+[gnudialer]
+gnudpass = gnudpass123
+
+[database]
+mysql_username = root
+mysql_password = secret
+mysql_host = 127.0.0.1
+mysql_dbname = gnudialer
+mysql_port = 3306
+
+[manager]
+manager_username = manager
+manager_password = mysecret123
+
+[asterisk]
+master_hostname = 127.0.0.1
+server_id = 1
+
+[ari]
+ari_username = apiuser
+ari_password = secret123

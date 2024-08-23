@@ -31,7 +31,7 @@
 #ifndef QUEUE
 #define QUEUE
 
-bool debugQueueH = false;
+bool debugQueueH = true;
 
 class Setting
 {
@@ -327,6 +327,7 @@ public:
 		for (const auto& agent : agents) {
 			// std::cout << "queue.h::Added agent for campaign " << name << " agent: " << agent << std::endl;
 			itsMembersNumbers.push_back(agent);
+			std::cout << name << ": itsMembersNumbers size - " << itsMembersNumbers.size() << std::endl;
 		}
 
 		/*

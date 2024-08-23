@@ -51,7 +51,7 @@ endif
 CC=g++ -Wall -Wshadow
 #CC=g++ -Weffc++
 
-all: printdistinfo printrunasinfo printcgibin printdocroot printasteriskv printmysqlver printmysqlinc thegnudialer dialeradmin agenthours stats newstats allstats up
+all: printdistinfo printrunasinfo printcgibin printdocroot printasteriskv printmysqlver printmysqlinc thegnudialer #dialeradmin agenthours stats newstats allstats up
 	@echo
 	@echo "Done! Now type \"make install\" to install."
 	@echo
@@ -123,7 +123,7 @@ printasteriskv:
 	@echo
 
 thegnudialer:
-	$(CC) gnudialer.cpp DBConnection.cpp -g -o gnudialer `mysql_config --include` `mysql_config --libs` $(CXXFLAGS) $(LDFLAGS)
+	$(CC) gnudialer.cpp DBConnection.cpp HttpClient.h -g -o gnudialer `mysql_config --include` `mysql_config --libs` $(CXXFLAGS) $(LDFLAGS)
 
 #dialeradmin:
 #	$(CC) ${MYSQLINC} ${MYSQLLIBLOC} ${LMYSQLCLIENT} dialeradmin.cpp -o dialeradmin.cgi

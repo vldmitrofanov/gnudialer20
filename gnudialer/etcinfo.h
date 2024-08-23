@@ -14,10 +14,12 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "ConfigSingleton.h"
 
 #ifndef ETCINFO
 #define ETCINFO
 
+/*
 inline std::string getEtcLine(int line) {
 	std::string etcLine;
 	std::ifstream EtcInfoIn;
@@ -29,20 +31,25 @@ inline std::string getEtcLine(int line) {
 	EtcInfoIn.close();
 	return etcLine;
 }
+*/
 
-inline std::string getGnuDialerPassword() { return getEtcLine(1); }
-inline std::string getMySqlUser() { return getEtcLine(2); }
-inline std::string getMySqlPass() { return getEtcLine(3); }
-inline std::string getMySqlPassword() { return getMySqlPass(); }
-inline std::string getMySqlHost() { return getEtcLine(4); }
-inline std::string getMySqlHostname() { return getEtcLine(4); }
-inline std::string getDbName() { return getEtcLine(5); }
-inline std::string getMysqlPort() { return getEtcLine(6); }
-inline std::string getManagerUser() { return getEtcLine(7); }
-inline std::string getManagerUsername() { return getEtcLine(7); }
-inline std::string getManagerPassword() { return getEtcLine(8); }
-inline std::string getManagerPass() { return getEtcLine(8); }
-inline std::string getMainHost() { return getEtcLine(9); }
-inline std::string getServerId() { return getEtcLine(10); }
+inline std::string getGnuDialerPassword() { return ConfigSingleton::getInstance().get("gnudialer.gnudpass"); }
+inline std::string getMySqlUser() { return ConfigSingleton::getInstance().get("database.mysql_username"); }
+inline std::string getMySqlPass() { return ConfigSingleton::getInstance().get("database.mysql_password"); }
+inline std::string getMySqlPassword() { return ConfigSingleton::getInstance().get("database.mysql_password"); }
+inline std::string getMySqlHost() { return ConfigSingleton::getInstance().get("database.mysql_host"); }
+inline std::string getMySqlHostname() { return ConfigSingleton::getInstance().get("database.mysql_host"); }
+inline std::string getDbName() { return ConfigSingleton::getInstance().get("database.mysql_dbname"); }
+inline std::string getMysqlPort() { return ConfigSingleton::getInstance().get("database.mysql_port"); }
+inline std::string getManagerUser() { return ConfigSingleton::getInstance().get("manager.manager_username"); }
+inline std::string getManagerUsername() { return ConfigSingleton::getInstance().get("manager.manager_username"); }
+inline std::string getManagerPassword() { return ConfigSingleton::getInstance().get("manager.manager_password"); }
+inline std::string getManagerPass() { return ConfigSingleton::getInstance().get("manager.manager_password"); }
+inline std::string getMainHost() { return ConfigSingleton::getInstance().get("asterisk.master_hostname"); }
+inline std::string getServerId() { return ConfigSingleton::getInstance().get("asterisk.server_id"); }
+inline std::string getAriUser() { return ConfigSingleton::getInstance().get("ari.ari_username"); }
+inline std::string getAriPass() { return ConfigSingleton::getInstance().get("ari.ari_password"); }
+inline std::string getAriProto() { return ConfigSingleton::getInstance().get("ari.ari_proto"); }
+
 
 #endif

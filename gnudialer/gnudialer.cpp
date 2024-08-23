@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <mysql.h>
 #include <cstdlib>
+#include <nlohmann/json.hpp>
 #include "queue.h"
 #include "Socket.h"
 #include "tzfilter.h"
@@ -46,6 +47,8 @@
 #include "adminwork.h"
 #include "abnhelper.h"
 #include "color.h"
+#include "HttpClient.h"
+#include "ConfigSingleton.h"
 
 #define CRASH                                                          \
 	do                                                                 \
@@ -61,7 +64,8 @@ const bool debugPos = false;
 		std::cout << "Here:" << #x << std::endl; \
 	}
 
-const bool debugCampaignSettings = false;
+const bool debugCampaignSettings = true; // dont forget to set to false
+using json = nlohmann::json;
 
 const int &selectLessorOf(const int &lhs, const int &rhs)
 {
@@ -128,15 +132,111 @@ void sig_handler(int sig)
 	}
 	return;
 }
+void doAriRedirect(const std::string &channel,
+				   const std::string &agent,
+				   const std::string &campaign,
+				   const std::string &leadid,
+				   const bool &doChangeCallerId)
+{
+	std::string ariHost = getMainHost();
+	std::string ariUser = getAriUser();
+	std::string ariPass = getAriPass();
+
+	HttpClient client(ariHost, 8088, ariUser, ariPass); // You need to implement or use an existing HTTP client library
+	std::string response;
+
+	if (atoi(agent.c_str()) || agent == "699" && doChangeCallerId)
+	{
+		if (doColorize)
+		{
+			std::cout << campaign << fg_magenta << ": Transferring - " << channel << " to Agent: " << agent << normal << std::endl;
+		}
+		else
+		{
+			std::cout << campaign << ": Transferring - " << channel << " to Agent: " << agent << std::endl;
+		}
+		writeGnudialerLog(campaign + ": Transferring - " + channel + " to Agent: " + agent + "");
+
+		// Find the agent's channel using ARI
+		std::string agentChannelId;
+		std::string collabeChannelId;
+		response = client.get("/ari/channels");
+		std::istringstream responseStream(response);
+		json jsonArray;
+		responseStream >> jsonArray;
+		int found = 0;
+		for (const auto &item : jsonArray)
+		{
+			std::string channelName = item["name"];
+			if (channelName.find("PJSIP/" + agent + "-") != std::string::npos)
+			{
+				agentChannelId = item["id"]; // Get the channel ID
+				found++;
+			} else if(channelName.find(channel) != std::string::npos) {
+				collabeChannelId = item["id"];
+				found++;
+			}
+			if(found > 1) {
+				break;
+			}
+		}
+
+		if (!agentChannelId.empty() && !collabeChannelId.empty())
+		{
+			if (doColorize)
+			{
+				std::cout << campaign << fg_magenta << ": Bridging - " << channel << "(" << collabeChannelId << ") to Agent's channel: " << agentChannelId << normal << std::endl;
+			}
+			else
+			{
+				std::cout << campaign << ": Bridging - " << channel << " to Agent's channel: " << agentChannelId << std::endl;
+			}
+
+			// Create a bridge and add both channels to it
+			std::string bridgeName = "bridge-" + campaign + "-" + agent;
+			std::string bridgeResponse = client.post("/ari/bridges", "{\"type\":\"mixing\",\"name\":\"" + bridgeName + "\"}");
+			json bridgeJson = json::parse(bridgeResponse);
+			std::string bridgeId = bridgeJson["id"];
+
+			if (!bridgeId.empty())
+			{
+				response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + collabeChannelId + "\"}");
+				response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + agentChannelId + "\"}");
+				// Optionally, you can play a tone when the bridge is created
+				response = client.post("/ari/bridges/" + bridgeId + "/play", "{\"media\":\"tone_stream://%(400,200,400,450);%(400,200,400,450);%(400,200,400,450)\"}");
+
+				std::cout << "Bridge Response: " << response << std::endl;
+
+				// Send a custom UserEvent to notify the agent is on call
+				response = client.post("/ari/channels/" + agentChannelId + "/userEvent", "{\"eventName\":\"SetOnCall\",\"variables\":{\"Agent\":\"" + agent + "\"}}");
+			}
+			else
+			{
+				std::cerr << "Failed to create bridge: " << response << std::endl;
+			}
+		}
+		else
+		{
+			if (doColorize)
+			{
+				std::cout << campaign << fg_red << ": ERROR - " << channel << " to Agent's channel NOT FOUND: " << agent << normal << std::endl;
+			}
+			else
+			{
+				std::cout << campaign << ": ERROR - " << channel << " to Agent's channel NOT FOUND: " << agent << std::endl;
+			}
+		}
+	}
+}
 
 void doRedirect(const std::string &channel,
 				const std::string &agent,
 				const std::string &campaign,
 				const std::string &leadid,
-				const std::string &managerUser,
-				const std::string &managerPass,
 				const bool &doChangeCallerId)
 {
+	std::string managerUser = getManagerUser();
+	std::string managerPass = getManagerPass();
 	std::string response;
 	if (atoi(agent.c_str()) || agent == "699" && doChangeCallerId)
 	{
@@ -1236,7 +1336,8 @@ int main(int argc, char **argv)
 							}
 						}
 
-						if(block.find("UserEvent: SetOnWait") != std::string::npos){
+						if (block.find("UserEvent: SetOnWait") != std::string::npos)
+						{
 							size_t agentPos = block.find("Agent: ");
 							std::string agentID;
 							if (agentPos != std::string::npos)
@@ -1244,7 +1345,7 @@ int main(int argc, char **argv)
 								agentID = block.substr(agentPos + 7); // "Agent: " is 7 characters long
 								std::cout << "Agent on Wait: " << agentID << std::endl;
 								TheQueues.where(TheAgents.where(atoi(agentID.c_str())).GetCampaign()).AddTalkTime(TheAgents.where(atoi(agentID.c_str())).SetOnWait(false, false, TheAgents));
-							}						
+							}
 						}
 						if ((block.find("UserEvent: Queue|", 0) != std::string::npos && block.find("~", 0) != std::string::npos) ||
 							(block.find("UserEvent: QueueTRANSFER", 0) != std::string::npos && block.find("~", 0) != std::string::npos))
@@ -1359,7 +1460,7 @@ int main(int argc, char **argv)
 										{
 											if (isNone == false)
 											{
-												doRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, managerUser, managerPass, true);
+												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, true);
 												exit(0);
 											}
 										}
@@ -1377,7 +1478,7 @@ int main(int argc, char **argv)
 										pid = fork();
 										if (pid == 0)
 										{
-											doRedirect(theChannel, "699", theCampaign, theLeadid, managerUser, managerPass, true);
+											doAriRedirect(theChannel, "699", theCampaign, theLeadid, true);
 											// doHangupCall(theChannel,theAgent,managerUser,managerPass);
 											exit(0);
 										}
@@ -1426,7 +1527,7 @@ int main(int argc, char **argv)
 										{
 											if (isNone == false)
 											{
-												doRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, managerUser, managerPass, false);
+												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, false);
 												exit(0);
 											}
 										}
@@ -2266,7 +2367,7 @@ int main(int argc, char **argv)
 										pid = fork();
 										if (pid == 0)
 										{
-											doRedirect(theChannel, tempStringAgent, tempCloserCam, theLeadid, managerUser, managerPass, true);
+											doAriRedirect(theChannel, tempStringAgent, tempCloserCam, theLeadid, true);
 											exit(0);
 										}
 										if (pid == -1)
@@ -2286,7 +2387,7 @@ int main(int argc, char **argv)
 									pid = fork();
 									if (pid == 0)
 									{
-										doRedirect(theChannel, "699", tempCloserCam, theLeadid, managerUser, managerPass, true);
+										doAriRedirect(theChannel, "699", tempCloserCam, theLeadid, true);
 										exit(0);
 									}
 									if (pid == -1)
