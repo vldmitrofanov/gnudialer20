@@ -8,6 +8,15 @@ Route::post('/login', [\App\Http\Controllers\UserController::class, 'login']);
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/me', [\App\Http\Controllers\UserController::class, 'me']);
 
+    Route::group(['middleware' => ['auth.admin']], function () {
+        Route::group(['prefix' => 'admin'], function () {
+            Route::group(['prefix' => 'campaigns'], function () {
+                Route::get('/', [\App\Http\Controllers\Admin\CampaignController::class, 'index']);
+                Route::get('/{campaign_id}', [\App\Http\Controllers\Admin\CampaignController::class, 'show']);
+            });
+        });
+    });
+
     Route::group(['prefix' => 'server'], function () {
         Route::get('/', [\App\Http\Controllers\ServerController::class, 'index']);
         Route::get('/{server_id}', [\App\Http\Controllers\ServerController::class, 'show']);
@@ -29,4 +38,6 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::put('/', [\App\Http\Controllers\LeadController::class, 'updateLead']);
         Route::get('/search', [\App\Http\Controllers\LeadController::class, 'searchLead']);
     });
+
+    
 });

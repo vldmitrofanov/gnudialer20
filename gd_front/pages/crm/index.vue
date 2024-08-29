@@ -3,17 +3,22 @@
         <!-- Left Pane: Dial Pad and Disposition Buttons -->
         <a-col :span="5" class="left-pane">
             <a-card title="Disposition" class="disposition">
-                <a-col :span="24">
-                    <span>Server: {{ `${connected ? 'Connected' : 'Disconnected'}` }}</span>
-                </a-col>
-                <a-col :span="24">
-                    <span>Agent Status: {{ `${agentStatus?.status?.Paused == 1 ? 'Paused' : agentStatus?.status?.Status
-                        >
-                        1 ? 'Active' : 'Inactive'}` }}</span>
-                </a-col>
+                <div class="agent-status-wrapper">
+                    <DatabaseOutlined :style="{ color: connected ? 'green' : 'lightgray' }" />
+
+                    <span class="agent-status-text">Agent Status: <span :style="{
+                        color: agentStatus?.status?.Status
+                            >
+                            1 ? 'green' : '#999'
+                    }">{{ `${agentStatus?.status?.Paused == 1 ? 'Paused' :
+                            agentStatus?.status?.Status
+                                >
+                            1 ? 'Active' : 'Inactive'}` }}</span></span>
+                </div>
                 <a-row :gutter="{ xs: 8, sm: 8, md: 8, lg: 8 }">
                     <a-col :span="12">
-                        <a-button block class="disposition-button" :disabled="allButtonsDisabled">
+                        <a-button block class="disposition-button" :disabled="allButtonsDisabled"
+                        @click=handleDisposition(0)>
                             Callback <small>0</small>
                         </a-button>
                     </a-col>
@@ -150,6 +155,21 @@
             </a-tabs>
         </a-col>
     </a-row>
+    <a-modal
+      :open="isCBModalVisible"
+      title="Select Date and Time"
+      @ok="handleCBDateSelected"
+      @cancel="isCBModalVisible=false"
+    >
+    <h3>Pleas select CB date</h3>
+      <a-date-picker
+        v-model:value="cb_datetime"
+        show-time
+        :default-value="defaultDate"
+        format="YYYY-MM-DD hh:mm A"
+        style="width: 100%;"
+      />
+    </a-modal>
 </template>
 
 <script setup>
@@ -158,7 +178,7 @@ import { useFetch, useCookie, useRuntimeConfig } from '#app'
 import { SearchOutlined } from '@ant-design/icons-vue';
 const config = useRuntimeConfig()
 const authToken = useCookie('auth_token').value
-const name = 'DialerCRM'
+const isCBModalVisible = ref(false)
 const serverData = ref(null)
 const allButtonsDisabled = ref(true)
 const running = computed(() => parseInt(agentStatus.value?.status?.Status) > 1 && parseInt(agentStatus.value?.status?.Paused) === 0)
@@ -182,7 +202,34 @@ const searchTerm = ref('')
 const disposition = ref(10000)
 const leadFormRef = ref(null)
 const pauseAfterCall = ref(false)
-const cb_datetime = ref('')
+const cb_datetime = ref(null)
+const defaultDate = ref(new Date());
+
+defaultDate.value.setDate(defaultDate.value.getDate() + 1);
+defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
+
+const handleCBDateSelected = () => {
+    if((!cb_datetime.value || cb_datetime.value == '')){
+        message.error("Please select CB date")
+        return
+    }
+    triggerFormSubmit()
+    isCBModalVisible.value = false
+}
+const formatDateToSQL = (date) => {
+      if (!date) return null;
+
+      const padZero = (num) => (num < 10 ? '0' + num : num);
+
+      const year = date.getFullYear();
+      const month = padZero(date.getMonth() + 1); // Months are zero-based
+      const day = padZero(date.getDate());
+      const hours = padZero(date.getHours());
+      const minutes = padZero(date.getMinutes());
+      const seconds = padZero(date.getSeconds());
+
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
 
 const handleSearch = async () => {
     if (!queue.value) {
@@ -251,6 +298,27 @@ const initiateWebsocket = (server) => {
                 }
                 break;
         }
+        switch (data.dialplan_app) {
+            case 'AddQueueMember':
+                console.log('AddQueueMember event:', data);
+                if (data.channel?.name?.includes(`PJSIP/${agent.value?.id}-`)) {
+                    const res = data.dialplan_app_data?.split(",");
+                    if (res && res.length > 0) {
+                        const queueCode = res[0]
+                        queue.value = queues.value.find(v => v?.campaign?.code == queueCode)
+                        getAgentStatus()
+                    }
+                }
+                break;
+        }
+        switch (data.type) {
+            case "ChannelDestroyed":
+                if (data.channel?.name?.includes(`PJSIP/${agent.value?.id}-`)) {
+                    queue.value = null;
+                    agentStatus.value = null;
+                }
+                break;
+        }
     };
 
     // Handle WebSocket errors
@@ -268,6 +336,11 @@ const initiateWebsocket = (server) => {
 
 const handleDisposition = async (dispo) => {
     disposition.value = dispo
+    console.log(dispo)
+    if(parseInt(dispo) === 0 && (!cb_datetime.value || cb_datetime.value == '')) {
+        isCBModalVisible.value = true 
+        return
+    }
     if (channel.value) {
         hangup()
     }
@@ -281,7 +354,7 @@ const handleDisposition = async (dispo) => {
 const gdialDispo = async (dispo) => {
     const transf = 'TRANSFER'
     let actionCommand = "Action: UserEvent\r\nUserEvent: UserEventDispo\r\n"
-    actionCommand += `Header1: Agent: ${agent.value}\r\n`
+    actionCommand += `Header1: Agent: ${agent.value.id}\r\n`
     actionCommand += `Header2: Dispo: ${dispo}\r\n`
     actionCommand += `Header3: Transfer: ${transf}\r\n`
     actionCommand += `Header4: Campaign: ${queue.value?.campaign?.code}\r\n`
@@ -365,9 +438,19 @@ const handleLeadSave = async (updatedLead) => {
             lead: updatedLead,
             agent: agent.value.id,
             disposition: disposition.value,
-            cb_datetime: cb_datetime.value
+            cb_datetime: cb_datetime.value?formatDateToSQL(cb_datetime.value):''
         }
     })
+    cb_datetime.value = null
+    if (error.value) {
+        console.error('Failed to fetch data:', error.value)
+        message.error(error.value);
+        return null
+    } else {
+        //console.log('Fetched data:', data.value)
+        lead.value = null
+        allButtonsDisabled.value = true
+    }
 }
 
 const onBringePeer = (data) => {
@@ -563,6 +646,19 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.agent-status-wrapper {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    justify-items: start;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+    .agent-status-text {
+        font-size: 12px;
+        color: #999;
+    }
+}
+
 .qsb-etytrui {
     width: 100%;
 }

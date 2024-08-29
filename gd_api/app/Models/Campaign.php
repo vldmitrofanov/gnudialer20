@@ -22,5 +22,4 @@ class Campaign extends Model
         return $this->hasMany(Queue::class);
     }
 
-
 }
