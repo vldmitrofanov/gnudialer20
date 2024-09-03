@@ -21,6 +21,8 @@
 #include <sys/time.h>
 #include <time.h>
 #include <regex>
+#include <nlohmann/json.hpp>
+#include <set>
 #include "itos.h"
 #include "Socket.h"
 #include "exceptions.h"
@@ -28,10 +30,12 @@
 #include "DBConnection.h"
 #include "Campaign.h"
 #include "ParsedAgent.h"
+#include "HttpClient.h"
 
 #ifndef AGENT
 #define AGENT
 
+using json = nlohmann::json;
 class AgentList;
 
 class Agent
@@ -83,6 +87,8 @@ public:
 	const std::string &GetCampaign() const { return itsCampaign; }
 	void SetConnectedChannel(const std::string &channel) { itsConnectedChannel = channel; }
 	const std::string &GetConnectedChannel() const { return itsConnectedChannel; }
+	void SetChannel(const std::string &channel) { herChannel = channel; }
+	const std::string &GetChannel() const { return herChannel; }
 
 	void SetLoggedIn()
 	{
@@ -203,6 +209,7 @@ private:
 	int herNumber;
 	std::string herName;
 	std::string herPass;
+	std::string herChannel;
 	std::string itsLeadId;
 	std::string itsCampaign;
 	std::string itsConnectedChannel;
@@ -259,28 +266,8 @@ public:
 			}
 		}
 
-		//	ItsAgents.clear();
-		// std::ifstream AgentFileIn;
-		// AgentFileIn.open("/etc/asterisk/agents.conf");
-		/*
-		for (std::string tempLine; std::getline(AgentFileIn,tempLine,'\n');) {
-			if (tempLine.find("agent => ") != std::string::npos) {
-				if (tempLine[0] == 'a') {
-					Agent TempAgent = ReturnAgent(tempLine);
-					int tempAgentNum = TempAgent.GetNumber();
-					if (!this->exists(tempAgentNum)) {
-	//                                        ItsAgents.push_back(ReturnAgent(tempLine));
-						ItsAgents.push_back(TempAgent);
-					}
-	//			        std::cout << "ItsAgents size: " << ItsAgents.size() << std::endl;
-	//        			std::cout << tempLine << std::endl;
-				}
-			}
-		}
-		*/
-		// AgentFileIn.close();
-
 		std::stable_sort(ItsAgents.begin(), ItsAgents.end());
+		ParseAgentChannelStatus();
 		//	std::cout << "Got to end of ParseAgentList" << std::endl;
 	}
 
@@ -354,9 +341,10 @@ public:
 			"1234"}));
 	}
 
-	void Initialize(const std::string &managerUsername, const std::string &managerPassword)
+	void ParseAgentQueueStatus()
 	{
-
+		std::string managerUsername = getManagerUsername();
+		std::string managerPassword = getManagerPassword();
 		std::string response, completeResponse;
 		ClientSocket AsteriskManager(getMainHost(), 5038);
 		AsteriskManager.setRecvTimeout(5000);
@@ -367,10 +355,9 @@ public:
 		}
 		else
 		{
-
 			AsteriskManager << "Action: Login\r\nUserName: " + managerUsername + "\r\nSecret: " + managerPassword + "\r\nEvents:off\r\n\r\n";
 			AsteriskManager >> response;
-			std::cout << "agent.h Login response: " << response << std::endl;
+			std::cout << "[DEBUG](agent.h) Login response: " << response << std::endl;
 			AsteriskManager << "Action: Command\r\nCommand: queue show\r\n\r\n";
 
 			bool readingOutput = false;
@@ -408,46 +395,152 @@ public:
 
 			for (std::string tempLine; std::getline(AgentStream, tempLine, '\n');)
 			{
-				// std::cout << "agent.h AGENT PARSING:" + tempLine << std::endl;
-				if (tempLine.find("talking", 0) != std::string::npos)
+				// std::cout << "[DEBUG](agent.h) AGENT PARSING:" + tempLine << std::endl;
+
+				// where(atoi(tempLine.substr(0, tempLine.find("(", 0) - 1).c_str())).SetOnCall();
+
+				// where(atoi(tempLine.substr(0, tempLine.find("(", 0) - 1).c_str())).SetLoggedIn();
+
+				std::regex pattern(R"(PJSIP/(\d+))");
+				std::smatch matches;
+				if (std::regex_search(tempLine, matches, pattern))
 				{
-
-					// tempLine = tempLine.substr(0,tempLine.find("\t",0));
-					std::cout << "GnuDialer: Setting PJSIP/" << atoi(tempLine.substr(0, tempLine.find("(", 0) - 1).c_str()) << " on call..." << std::endl;
-					where(atoi(tempLine.substr(0, tempLine.find("(", 0) - 1).c_str())).SetOnCall();
-				}
-				else
-				{
-
-					if (tempLine.find("idle", 0) != std::string::npos)
+					if (!matches[1].str().empty())
 					{
-						// tempLine = tempLine.substr(0,tempLine.find("\t",0));
-						std::cout << "GnuDialer: Setting PJSIP/" << atoi(tempLine.substr(0, tempLine.find("(", 0) - 1).c_str()) << " on wait..." << std::endl;
-						where(atoi(tempLine.substr(0, tempLine.find("(", 0) - 1).c_str())).SetLoggedIn();
-					}
-					else
-					{
+						int extension = std::stoi(matches[1].str());
 
-						std::regex pattern(R"(PJSIP/(\d+)\s.*\(In use\))");
-						std::smatch matches;
-
-						if (tempLine.find("(paused") == std::string::npos)
+						if (tempLine.find("(In use)") != std::string::npos)
 						{
-							if (std::regex_search(tempLine, matches, pattern))
+							if (tempLine.find("(paused") != std::string::npos)
 							{
-								if (!matches[1].str().empty())
-								{
-									int extension = std::stoi(matches[1].str());
-									std::cout << "GnuDialer: Setting PJSIP/" << extension << " on wait..." << std::endl;
-									// Assuming where() is a function that returns an object with SetLoggedIn() method
-									where(extension).SetLoggedIn();
-								}
+								std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << extension << " on pause..." << std::endl;
+								where(extension).SetOnPause();
 							}
+							else
+							{
+								std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << extension << " on wait..." << std::endl;
+								where(extension).SetLoggedIn();
+							}
+						}
+						else if (tempLine.find("(Unavailable)") != std::string::npos)
+						{
+							std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << extension << " offline..." << std::endl;
+							where(extension).SetOffline();
 						}
 					}
 				}
 			}
 		}
+	}
+
+	void ParseAgentChannelStatus()
+	{
+		std::string ariHost = getMainHost();
+		std::string ariUser = getAriUser();
+		std::string ariPass = getAriPass();
+		HttpClient client(ariHost, 8088, ariUser, ariPass);
+		std::string ariResponse;
+		ariResponse = client.get("/ari/channels");
+		std::istringstream responseStream(ariResponse);
+		json jsonArray;
+		responseStream >> jsonArray;
+		std::regex regexPattern(R"~(\~([a-zA-Z0-9]+)-(\d+)-)~");
+		std::set<int> parsedAgentNumbers;
+		// int found = 0;
+		for (const auto &item : jsonArray)
+		{
+			std::string channelName = item["name"];
+			std::size_t startPos = channelName.find("PJSIP/");
+			if (startPos == std::string::npos)
+			{
+				continue;
+			}
+
+			// Adjust to the position where the agent number starts
+			startPos += 6; // Length of "PJSIP/"
+
+			// Find the position of the next "-"
+			std::size_t endPos = channelName.find("-", startPos);
+			if (endPos == std::string::npos)
+			{
+				std::cout << "[DEBUG](agent.h) Error: '-' not found after 'PJSIP/' in the input string." << std::endl;
+				continue;
+			}
+
+			// Extract the agent number substring
+			int agentNumber = atoi(channelName.substr(startPos, endPos - startPos).c_str());
+
+			std::cout << "[DEBUG](agent.h) Found: " << channelName << ", possible agent Name: " << agentNumber << std::endl;
+			if (!exists(agentNumber))
+			{
+				continue;
+			}
+			parsedAgentNumbers.insert(agentNumber);
+			where(agentNumber).SetChannel(channelName);
+
+			if (item.contains("connected") && item["connected"].is_object() && item.contains("dialplan") && item["dialplan"].is_object())
+			{
+				int currentStatus = where(agentNumber).GetStatus();
+				// Check if "name" key exists within "connected" and if it is a string and not empty
+				if (item["connected"].contains("name") &&
+					item["connected"]["name"].is_string() &&
+					!item["connected"]["name"].get<std::string>().empty() &&
+					item["dialplan"].contains("app_name") &&
+					item["dialplan"]["app_name"].get<std::string>().empty())
+				{
+					std::string connectedName = item["connected"]["name"];
+					std::cout << "[DEBUG](agent.h) Channel: " << channelName << ", Connected Name: " << connectedName << std::endl;
+					if (currentStatus != -1)
+					{
+						where(agentNumber).SetOnCall();
+						std::smatch matches;
+						if (std::regex_search(connectedName, matches, regexPattern) && matches.size() > 2)
+						{
+							std::string queueName = matches[1].str(); // Extract the queue name
+							std::string leadId = matches[2].str();	  // Extract the lead ID
+							std::cout << "[DEBUG](agent.h) Channel: " << channelName << ", Queue Name: " << queueName << ", LeadId: " << leadId << std::endl;
+							where(agentNumber).SetLeadId(leadId);
+							if (!queueName.empty())
+							{
+								where(agentNumber).SetCampaign(queueName);
+							}
+						}
+					}
+				}
+				else
+				{
+
+					if (currentStatus == -2 || currentStatus == -1)
+					{
+						where(agentNumber).SetLoggedIn();
+						where(agentNumber).SetLeadId("");
+					}
+					std::cout << "[DEBUG](agent.h) Channel: " << channelName << " has no valid connected name." << std::endl;
+				}
+			}
+			else
+			{
+				std::cout << "[DEBUG](agent.h) Channel: " << channelName << " has no connected information." << std::endl;
+			}
+		}
+
+		for (const auto &agent : ItsAgents)
+		{
+			int agentNumber = agent.GetNumber(); // Assuming GetNumber() returns an int
+			if (parsedAgentNumbers.find(agentNumber) == parsedAgentNumbers.end())
+			{
+				// Agent number not found in parsedAgentNumbers
+				std::cout << "[DEBUG](agent.h) Agent " << agentNumber << " not found, setting offline." << std::endl;
+				where(agentNumber).SetOffline(); // Mark the agent as offline
+			}
+		}
+	}
+
+	void Initialize()
+	{
+		ParseAgentQueueStatus();
+		// Since "show queue" doesn't show us current call status of the agent we'll get info via ARI
+		ParseAgentChannelStatus();
 	}
 
 private:

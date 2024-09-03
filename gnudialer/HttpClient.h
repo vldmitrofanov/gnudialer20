@@ -1,7 +1,8 @@
 #include <iostream>
 #include <string>
 #include <curl/curl.h>
-
+#ifndef HTTPCLIENT_H   // Start of the header guard
+#define HTTPCLIENT_H
 class HttpClient {
 public:
     HttpClient(const std::string &host, int port, const std::string &user, const std::string &pass)
@@ -42,7 +43,7 @@ private:
         CURL *curl;
         CURLcode res;
         std::string response;
-        std::cout << url << std::endl;
+        std::cout << "[DEBUG](HttpClient.h) URL: " << url << std::endl;
 
         curl = curl_easy_init();
         if(curl) {
@@ -72,3 +73,4 @@ private:
         return response;
     }
 };
+#endif

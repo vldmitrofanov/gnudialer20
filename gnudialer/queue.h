@@ -432,7 +432,8 @@ public:
 			}
 		}
 
-		throw(xLoopEnd("Exception thrown: Didn't find a setting at " + itos(whichSetting)));
+		//throw(xLoopEnd("Exception thrown: Didn't find a setting at " + itos(whichSetting)));
+		throw std::runtime_error("Exception thrown: Didn't find a setting at index " + std::to_string(whichSetting) + " for type " + type);
 	}
 
 	const bool DelSetting(const int &whichSetting, const std::string &type)

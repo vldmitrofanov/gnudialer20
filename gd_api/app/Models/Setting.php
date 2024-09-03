@@ -48,9 +48,11 @@ class Setting extends Model
         28 => ['parameter' => 'f_areacode_prefix', 'value' => 0],
         29 => ['parameter' => 'f_zipcode', 'value' => 0],
         30 => ['parameter' => 'calltoday', 'value' => 0, 'type' => 'int'],
-        31 => ['parameter' => 'usednc','value' => 'true' ],
-        32 => ['parameter' => 'orderby','value' => 'id' ]
+        31 => ['parameter' => 'usednc', 'value' => 'true'],
+        32 => ['parameter' => 'orderby', 'value' => 'id']
     ];
+
+    static protected $nonEditable = ['calltoday', 'calls', 'filter', 'totalabandons', 'abandons', 'totalcalls', 'totaltalktime', 'talktime'];
 
     public function queue()
     {

@@ -57,7 +57,14 @@
 		*((int *)0) = 0;                                               \
 	} while (0)
 
+#ifdef DEBUG
+bool gDebug = true;
+const bool debugPos = true;
+#else
+bool gDebug = false;
 const bool debugPos = false;
+#endif
+
 #define HERE(x)                                  \
 	if (debugPos)                                \
 	{                                            \
@@ -132,6 +139,18 @@ void sig_handler(int sig)
 	}
 	return;
 }
+
+std::string trim(const std::string &str)
+{
+	size_t first = str.find_first_not_of(" \n\r\t");
+	size_t last = str.find_last_not_of(" \n\r\t");
+	if (first == std::string::npos || last == std::string::npos)
+	{
+		return ""; // Return empty string if no valid characters
+	}
+	return str.substr(first, (last - first + 1));
+}
+
 void doAriRedirect(const std::string &channel,
 				   const std::string &agent,
 				   const std::string &campaign,
@@ -150,7 +169,7 @@ void doAriRedirect(const std::string &channel,
 
 	if (atoi(agent.c_str()) || agent == "699" && doChangeCallerId)
 	{
-#ifdef DEBUG
+
 		if (doColorize)
 		{
 			std::cout << "[DEBUG]" << campaign << fg_magenta << ": Transferring - " << channel << " to Agent: " << agent << normal << std::endl;
@@ -159,15 +178,17 @@ void doAriRedirect(const std::string &channel,
 		{
 			std::cout << "[DEBUG]" << campaign << ": Transferring - " << channel << " to Agent: " << agent << std::endl;
 		}
-#endif
+
 		writeGnudialerLog(campaign + ": Transferring - " + channel + " to Agent: " + agent + "");
 
 		// Find the agent's channel using ARI
 		// std::string agentChannelId;
 		// std::string collabeChannelId;
-		std::string agentChannel = TheAgents.where(atoi(agent.c_str())).GetConnectedChannel();
+		std::string agentChannel = TheAgents.where(atoi(agent.c_str())).GetChannel();
 
-		// if (agentChannel.isEmpty())
+		// This check disabled as agent always juping
+		// from one channel to another
+		// if (agentChannel.empty())
 		//{
 		response = client.get("/ari/channels");
 		std::istringstream responseStream(response);
@@ -181,6 +202,7 @@ void doAriRedirect(const std::string &channel,
 			{
 				// agentChannelId = item["id"]; // Get the channel ID
 				agentChannel = channelName;
+				break;
 				// found++;
 			} // else if(channelName.find(channel) != std::string::npos) {
 			  // collabeChannelId = item["id"];
@@ -219,44 +241,41 @@ void doAriRedirect(const std::string &channel,
 			AsteriskRedir >> response;
 			std::cout << "Bridge Response: " << response << std::endl;
 
-			if (TheAgents.exists(atoi(agent.c_str())))
-			{
-				TheAgents.where(atoi(agent.c_str())).SetOnCall();
-				TheAgents.where(atoi(agent.c_str())).SetConnectedChannel(agentChannel);
-#ifdef DEBUG
-				std::cout << "[DEBUG] Updating agent - " << agent << " set status = " << TheAgents.where(atoi(agent.c_str())).GetStatus() << std::endl;
-#endif
-			}
+			AsteriskRedir << "Action: UserEvent\r\n";
+			AsteriskRedir << "UserEvent: SetOnCall\r\n";
+			AsteriskRedir << "Header1: Agent: " + agent + "\r\n";
+			AsteriskRedir << "Header2: ConnectedChannel: " + channel + "\r\n\r\n";
+			AsteriskRedir >> response;
 
 			AsteriskRedir << "Action: Logoff\r\n\r\n";
 			AsteriskRedir >> response;
 			usleep(10000000);
 			/*
-			// This is disable due requirments that channel need to be in Stasis app
+			// This was disabled due to requirments that channel needs to be in Stasis app
 			// TODO: fix it tp use ARI completely
-						// Create a bridge and add both channels to it
-						std::string bridgeName = "bridge-" + campaign + "-" + agent;
-						std::string bridgeResponse = client.post("/ari/bridges", "{\"type\":\"mixing\",\"name\":\"" + bridgeName + "\"}");
-						json bridgeJson = json::parse(bridgeResponse);
-						std::string bridgeId = bridgeJson["id"];
+			// Create a bridge and add both channels to it
+			std::string bridgeName = "bridge-" + campaign + "-" + agent;
+			std::string bridgeResponse = client.post("/ari/bridges", "{\"type\":\"mixing\",\"name\":\"" + bridgeName + "\"}");
+			json bridgeJson = json::parse(bridgeResponse);
+			std::string bridgeId = bridgeJson["id"];
 
-						if (!bridgeId.empty())
-						{
-							response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + collabeChannelId + "\"}");
-							response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + agentChannelId + "\"}");
-							// Optionally, you can play a tone when the bridge is created
-							response = client.post("/ari/bridges/" + bridgeId + "/play", "{\"media\":\"tone_stream://%(400,200,400,450);%(400,200,400,450);%(400,200,400,450)\"}");
+			if (!bridgeId.empty())
+			{
+				response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + collabeChannelId + "\"}");
+				response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + agentChannelId + "\"}");
+				// Optionally, you can play a tone when the bridge is created
+				response = client.post("/ari/bridges/" + bridgeId + "/play", "{\"media\":\"tone_stream://%(400,200,400,450);%(400,200,400,450);%(400,200,400,450)\"}");
 
-							std::cout << "Bridge Response: " << response << std::endl;
+				std::cout << "Bridge Response: " << response << std::endl;
 
-							// Send a custom UserEvent to notify the agent is on call
-							response = client.post("/ari/channels/" + agentChannelId + "/userEvent", "{\"eventName\":\"SetOnCall\",\"variables\":{\"Agent\":\"" + agent + "\"}}");
-						}
-						else
-						{
-							std::cerr << "Failed to create bridge: " << response << std::endl;
-						}
-						*/
+				// Send a custom UserEvent to notify the agent is on call
+				response = client.post("/ari/channels/" + agentChannelId + "/userEvent", "{\"eventName\":\"SetOnCall\",\"variables\":{\"Agent\":\"" + agent + "\"}}");
+			}
+			else
+			{
+				std::cerr << "Failed to create bridge: " << response << std::endl;
+			}
+			*/
 		}
 		else
 		{
@@ -647,7 +666,7 @@ int main(int argc, char **argv)
 	// if (!existsQueue("CLOSER")) { createQueue("CLOSER"); }
 
 	HERE(ABOUT TO INITIALIZE GLOBAL SETTINGS)
-	bool gDebug, gLog;
+	bool gLog;
 	addGlobalSettings("general");
 	Queue TheQueueGlobals;
 	u_long serverId = 1;
@@ -774,7 +793,7 @@ int main(int argc, char **argv)
 			std::cout << "GnuDialer: Querying Asterisk Agents" << std::endl;
 		}
 
-		TheAgents.Initialize(managerUser, managerPass);
+		TheAgents.Initialize();
 
 		if (gDebug)
 		{
@@ -829,7 +848,7 @@ int main(int argc, char **argv)
 				//			Queue TheQueueGlobals;
 				u_long serverId = 1;
 				TheQueueGlobals.ParseQueue("general", serverId);
-
+				/*
 				try
 				{
 					gDebug = TheQueueGlobals.GetSetting("debug").GetBool();
@@ -842,6 +861,7 @@ int main(int argc, char **argv)
 					std::cout << std::endl
 							  << std::endl;
 				}
+				*/
 
 				timeSinceLastQueueUpdate = currentTime;
 			}
@@ -899,52 +919,63 @@ int main(int argc, char **argv)
 						std::system("killall gnudialer");
 					}
 
-					if (block.find("Event: QueueMemberPaused", 0) != std::string::npos)
+					if (block.find("Event: QueueMemberPause", 0) != std::string::npos)
 					{
+						std::istringstream blockStream(block); // Convert the string to an input stream
+						std::string line;
 						std::string interface;
 						std::string agentIDQP;
 						std::string pausedString;
 						bool isPaused = false;
-
-						// Find and extract the "Interface" line
-						size_t interfacePos = block.find("Interface: ", 0);
-						if (interfacePos != std::string::npos)
+						if (doColorize)
 						{
-							interface = block.substr(interfacePos + 11); // 11 is the length of "Interface: "
-							// std::cout << "Interface: " << interface << std::endl;
-
-							// Extract agent ID from the Interface
-							size_t pos = interface.find('/');
-							if (pos != std::string::npos && pos + 1 < interface.size())
-							{
-								agentIDQP = interface.substr(pos + 1);
-								// std::cout << "Agent ID: " << agentIDQP << std::endl;
-							}
+							std::cout << fg_light_blue << "QueueMemberPause EVENT" << normal << std::endl;
 						}
-
-						// Find and extract the "Paused" line
-						size_t pausedPos = block.find("Paused: ", 0);
-						if (pausedPos != std::string::npos)
+						for (std::string line; std::getline(blockStream, line);)
 						{
-							pausedString = block.substr(pausedPos + 8); // 8 is the length of "Paused: "
-							if (pausedString == "1")
+							// Find and extract the "Interface" line
+							size_t interfacePos = line.find("Interface: ", 0);
+							size_t pausedPos = line.find("Paused: 1", 0);
+							if (interfacePos != std::string::npos)
+							{
+								interface = line.substr(interfacePos + 11); // 11 is the length of "Interface: "
+								// std::cout << "Interface: " << interface << std::endl;
+
+								// Extract agent ID from the Interface
+								size_t pos = interface.find('/');
+								if (pos != std::string::npos && pos + 1 < interface.size())
+								{
+									agentIDQP = interface.substr(pos + 1);
+									if (doColorize)
+									{
+										std::cout << fg_light_blue << "Agent ID:(" << agentIDQP << ")" << normal << std::endl;
+									}
+								}
+							}
+							else if (pausedPos != std::string::npos)
 							{
 								isPaused = true;
 							}
 						}
-
-						// Set the agent's state based on the pause status
 						if (!agentIDQP.empty())
 						{
 							if (isPaused)
 							{
 								TheAgents.where(atoi(agentIDQP.c_str())).SetOnPause();
-								std::cout << "Agent ID: " << agentIDQP << " is PAUSED" << std::endl;
+								std::cout << fg_light_blue << "[DEBUG] Agent ID: " << agentIDQP << " is PAUSED" << normal << std::endl;
 							}
 							else
 							{
-								// TheAgents.where(atoi(agentIDQP.c_str())).SetOnWait();
-								std::cout << "Agent ID: " << agentIDQP << " on WAIT" << std::endl;
+								int currStatus = TheAgents.where(atoi(agentIDQP.c_str())).GetStatus();
+								if (currStatus == -3)
+								{
+									TheAgents.where(atoi(agentIDQP.c_str())).SetLoggedIn();
+									std::cout << "[DEBUG] Agent ID: " << agentIDQP << " on WAIT" << std::endl;
+								}
+								else
+								{
+									std::cout << "[DEBUG] Agent ID: " << agentIDQP << " status was not changed" << std::endl;
+								}
 							}
 						}
 					}
@@ -1383,50 +1414,46 @@ int main(int argc, char **argv)
 							std::string tempStringAgent;
 							int tempIntAgent;
 
-#ifdef DEBUG
 							std::cout << "Manager/UserEvent - DispoRecord ";
-#endif
 
 							if (block.find("Agent: ") != std::string::npos)
 							{
 								pos = block.find("Agent: ") + 7;
-								// end = block.find("|", pos);
-								//  theAgent = block.substr(pos, end - pos);
-								theAgent = block.substr(pos);
+								end = block.find("\n", pos);
+								theAgent = block.substr(pos, end - pos);
+								theAgent = trim(theAgent);
 								if (gLog)
 								{
 									writeGnudialerLog("Asterisk: ManagerUserEvent - " + theEvent + " - " + theAgent + "");
 								}
-#ifdef DEBUG
+
 								std::cout << " Agent: " << theAgent;
-#endif
 							}
 
 							if (block.find("Dispo: ") != std::string::npos)
 							{
 								pos = block.find("Dispo: ") + 7;
-								// end = block.find("|", pos);
-								theDispo = block.substr(pos);
-#ifdef DEBUG
+								end = block.find("\n", pos);
+								theDispo = block.substr(pos, end - pos);
+
 								std::cout << " Dispo: " << theDispo;
-#endif
 							}
 
 							if (block.find("Transfer: ") != std::string::npos)
 							{
 								pos = block.find("Transfer: ") + 10;
-								// end = block.find("|", pos);
-								theTransfer = block.substr(pos);
-#ifdef DEBUG
+								end = block.find("\n", pos);
+								theTransfer = block.substr(pos, end - pos);
+
 								std::cout << " Transfer: " << theTransfer;
-#endif
 							}
 
 							if (block.find("Campaign: ") != std::string::npos)
 							{
 								pos = block.find("Campaign: ") + 10;
-								// end = block.find("|", pos);
-								theCampaign = block.substr(pos);
+								end = block.find("\n", pos);
+								theCampaign = block.substr(pos, end - pos);
+								theCampaign = trim(theCampaign);
 								// this is due to crm adding -isclosercam to campaign name
 								if (theCampaign.find("-isclosercam", 0) != std::string::npos)
 								{
@@ -1434,19 +1461,17 @@ int main(int argc, char **argv)
 									theTempCampaign = theCampaign.substr(0, end2);
 									theCampaign = theTempCampaign;
 								}
-#ifdef DEBUG
-								std::cout << " Campaign: " << theCampaign;
-#endif
+
+								std::cout << " Campaign: ~" << theCampaign << "~";
 							}
 
 							if (block.find("Leadid: ") != std::string::npos)
 							{
 								pos = block.find("Leadid: ", 0) + 8;
-								end = block.find("|", pos);
+								end = block.find("\n", pos);
 								theLeadid = block.substr(pos, end - pos);
-#ifdef DEBUG
+
 								std::cout << " Leadid: " << theLeadid;
-#endif
 							}
 
 							if (block.find("Channel: ", 0) != std::string::npos)
@@ -1454,9 +1479,8 @@ int main(int argc, char **argv)
 								pos = block.find("Channel: ", 0) + 9;
 								end = block.find("\n", pos);
 								theChannel = block.substr(pos, end - pos);
-#ifdef DEBUG
-								std::cout << " Channel: " << theChannel;
-#endif
+
+								std::cout << " Channel: " << theChannel << std::endl;
 							}
 
 							if (TheQueues.exists(theCampaign))
@@ -1476,17 +1500,14 @@ int main(int argc, char **argv)
 												  << std::endl;
 									}
 
-#ifdef DEBUG
 									std::cout << " tempUseCloser: " << tempUseCloser;
-#endif
+
 									tempCloserCam = TheQueues.rWhere(theCampaign).GetSetting("closercam").Get();
-#ifdef DEBUG
+
 									std::cout << " tempCloserCam: " << tempCloserCam;
-#endif
 								}
-#ifdef DEBUG
+
 								std::cout << std::endl;
-#endif
 
 								if (TheAgents.exists(atoi(theAgent.c_str())))
 								{
@@ -1501,9 +1522,9 @@ int main(int argc, char **argv)
 										TheAgents.where(tempIntAgent).writeAgentLog(TheAgents);
 									}
 									TheAgents.where(tempIntAgent).SetOnWait(false, false, TheAgents);
-#ifdef DEBUG
+
 									std::cout << "GnuDialer: SetOnWait - " << theAgent << std::endl;
-#endif
+
 									if (gLog)
 									{
 										writeGnudialerLog("GnuDialer: SetOnWait - " + theAgent + "");
@@ -1529,17 +1550,23 @@ int main(int argc, char **argv)
 								}
 
 								writeDBString(theCampaign, theLeadid, "" + theDispoColumn + "='" + theDispo + "'," + theAgentCloser + "='" + theAgent + "'");
-#ifdef DEBUG
-								std::cout << theCampaign << ": writeDBString - DispoRecord - " << theAgentCloser + ": " << theAgent << " theDispo: " << theDispo << std::endl;
-#endif
-								writeDispo(theAgent, theCampaign, theDispo);
-#ifdef DEBUG
-								std::cout << theCampaign << ": writeDispo - DispoRecord - theAgent: " << theAgent << " theDispo: " << theDispo << std::endl;
-#endif
 
-								tempPrintAgentSales = TheQueues.rWhere(theCampaign).GetSetting("prn_agent_sales").GetBool();
-								tempPrintCloserSales = TheQueues.rWhere(theCampaign).GetSetting("prn_closer_sales").GetBool();
-								tempPrintCloserNoSales = TheQueues.rWhere(theCampaign).GetSetting("prn_closer_nosales").GetBool();
+								std::cout << theCampaign << ": writeDBString - DispoRecord - " << theAgentCloser + ": " << theAgent << " theDispo: " << theDispo << std::endl;
+								writeDispo(theAgent, theCampaign, theDispo);
+
+								std::cout << theCampaign << ": writeDispo - DispoRecord - theAgent: " << theAgent << " theDispo: " << theDispo << std::endl;
+								try
+								{
+									tempPrintAgentSales = TheQueues.rWhere(theCampaign).GetSetting("prn_agent_sales").GetBool();
+									tempPrintCloserSales = TheQueues.rWhere(theCampaign).GetSetting("prn_closer_sales").GetBool();
+									tempPrintCloserNoSales = TheQueues.rWhere(theCampaign).GetSetting("prn_closer_nosales").GetBool();
+								}
+								catch (const std::runtime_error &e)
+								{
+									tempPrintAgentSales = false;
+									tempPrintCloserSales = false;
+									tempPrintCloserNoSales = false;
+								}
 
 								if (theTransfer == "TRANSFER" && theDispo == "12" && tempPrintAgentSales)
 								{
@@ -1561,9 +1588,9 @@ int main(int argc, char **argv)
 
 									if (atoi(tempStringAgent.c_str()))
 									{
-#ifdef DEBUG
+
 										std::cout << theCampaign << ": Transfer - tempStringAgent: " << tempStringAgent << std::endl;
-#endif
+
 										if (TheAgents.exists(atoi(tempStringAgent.c_str())))
 										{
 											TheAgents.where(atoi(tempStringAgent.c_str())).SetConnectedChannel(theChannel);
@@ -1572,9 +1599,8 @@ int main(int argc, char **argv)
 
 											TheAgents.where(atoi(tempStringAgent.c_str())).SetLeadId(theLeadid);
 											TheAgents.where(atoi(tempStringAgent.c_str())).SetOnWait(false, true, TheAgents);
-#ifdef DEBUG
+
 											std::cout << theCampaign << ": theLeadid - " << theLeadid << std::endl;
-#endif
 
 											pid = fork();
 											if (pid == 0)
@@ -1683,8 +1709,9 @@ int main(int argc, char **argv)
 							if (agentPos != std::string::npos)
 							{
 								agentID = block.substr(agentPos + 7); // "Agent: " is 7 characters long
-								std::cout << "Agent on Wait: " << agentID << std::endl;
-								TheQueues.where(TheAgents.where(atoi(agentID.c_str())).GetCampaign()).AddTalkTime(TheAgents.where(atoi(agentID.c_str())).SetOnWait(false, false, TheAgents));
+								agentID.erase(agentID.find_last_not_of(" \n\r\t") + 1);
+								std::cout << "Agent on Wait: ~" << agentID << "~" << std::endl;
+								TheAgents.where(atoi(agentID.c_str())).SetLoggedIn();
 							}
 						}
 						if ((block.find("UserEvent: Queue|", 0) != std::string::npos && block.find("~", 0) != std::string::npos) ||
@@ -2838,7 +2865,6 @@ int main(int argc, char **argv)
 
 						int availclosers = TheQueues.rWhere(closercam).GetAvailAgents(TheAgents);
 
-#ifdef DEBUG
 						std::cout << "[DEBUG]" << currentTime << ":" << queue << ": availclosers: " << availclosers << " - remaininglines: " << remaininglines << std::endl;
 
 						query = "SELECT count(*) FROM campaign_" + queue + " WHERE ";
@@ -2866,7 +2892,6 @@ int main(int argc, char **argv)
 							}
 							mysql_free_result(queryResult);
 						}
-#endif
 
 						// std::cout << queue << ": Testing - got here " << std::endl;
 

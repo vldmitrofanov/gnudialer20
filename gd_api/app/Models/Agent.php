@@ -29,4 +29,9 @@ class Agent extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function server()
+    {
+        return $this->belongsTo(Server::class);
+    }
 }

@@ -44,6 +44,6 @@ class Queue extends Model
 
     public function filters()
     {
-        return $this->hasMany(Filter::class);
+        return $this->hasMany(Filter::class)->orderBy('position', 'asc');
     }
 }

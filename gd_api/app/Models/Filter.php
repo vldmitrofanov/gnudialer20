@@ -12,7 +12,7 @@ class Filter extends Model
     protected $fillable = [
         'enabled',
         'position',
-        'campaign_id',
+        'queue_id',
         'filter'
     ];
 

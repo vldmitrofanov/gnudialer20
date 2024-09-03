@@ -8,3 +8,9 @@ body {
 .ant-btn-primary {
   background-color: #1890ff;
 }
+
+.ant-form-item-control-input-content {
+  select{
+    min-height: 32px;
+  }
+}

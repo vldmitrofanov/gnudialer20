@@ -14,6 +14,25 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
                 Route::get('/', [\App\Http\Controllers\Admin\CampaignController::class, 'index']);
                 Route::get('/{campaign_id}', [\App\Http\Controllers\Admin\CampaignController::class, 'show']);
             });
+
+            Route::group(['prefix' => 'filters'], function () {
+                Route::post('/', [\App\Http\Controllers\Admin\FilterController::class, 'create']);
+                Route::put('/{filter_id}', [\App\Http\Controllers\Admin\FilterController::class, 'update']);
+                Route::delete('/{filter_id}', [\App\Http\Controllers\Admin\FilterController::class, 'delete']);
+            });
+
+            Route::group(['prefix' => 'settings'], function () {
+                Route::post('/', [\App\Http\Controllers\Admin\SettingsController::class, 'create']);
+                Route::put('/{filter_id}', [\App\Http\Controllers\Admin\SettingsController::class, 'update']);
+                Route::delete('/{filter_id}', [\App\Http\Controllers\Admin\SettingsController::class, 'delete']);
+            });
+
+            Route::group(['prefix' => 'agents'], function () {
+                Route::get('/', [\App\Http\Controllers\Admin\AgentController::class, 'index']);
+                Route::post('/', [\App\Http\Controllers\Admin\AgentController::class, 'create']);
+                Route::put('/{agent_id}', [\App\Http\Controllers\Admin\AgentController::class, 'update']);
+                Route::delete('/{agent_id}', [\App\Http\Controllers\Admin\AgentController::class, 'delete']);
+            });
         });
     });
 

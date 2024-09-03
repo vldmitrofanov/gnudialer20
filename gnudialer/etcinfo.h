@@ -45,7 +45,7 @@ inline std::string getManagerUser() { return ConfigSingleton::getInstance().get(
 inline std::string getManagerUsername() { return ConfigSingleton::getInstance().get("manager.manager_username"); }
 inline std::string getManagerPassword() { return ConfigSingleton::getInstance().get("manager.manager_password"); }
 inline std::string getManagerPass() { return ConfigSingleton::getInstance().get("manager.manager_password"); }
-inline std::string getMainHost() { return ConfigSingleton::getInstance().get("asterisk.master_hostname"); }
+inline std::string getMainHost() { return ConfigSingleton::getInstance().get("asterisk.master_host"); }
 inline std::string getServerId() { return ConfigSingleton::getInstance().get("asterisk.server_id"); }
 inline std::string getAriUser() { return ConfigSingleton::getInstance().get("ari.ari_username"); }
 inline std::string getAriPass() { return ConfigSingleton::getInstance().get("ari.ari_password"); }
