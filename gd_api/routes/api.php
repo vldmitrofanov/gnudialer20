@@ -33,6 +33,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
                 Route::put('/{agent_id}', [\App\Http\Controllers\Admin\AgentController::class, 'update']);
                 Route::delete('/{agent_id}', [\App\Http\Controllers\Admin\AgentController::class, 'delete']);
             });
+
+            Route::group(['prefix' => 'queues'], function () {
+                Route::post('/', [\App\Http\Controllers\Admin\QueueController::class, 'create']);
+                Route::put('/{queue_id}/agents', [\App\Http\Controllers\Admin\QueueController::class, 'updateAgents']);
+                Route::delete('/{queue_id}', [\App\Http\Controllers\Admin\QueueController::class, 'delete']);
+            });
         });
     });
 

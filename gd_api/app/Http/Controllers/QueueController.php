@@ -22,4 +22,5 @@ class QueueController extends Controller
         ->get();
         return QueueResource::collection($results);
     }
+
 }

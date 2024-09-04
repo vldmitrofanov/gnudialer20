@@ -145,22 +145,31 @@
                             <option :value="server.id" v-for="server in servers">{{ server.label }}</option>
                         </select>
                     </label>
-                    <a-transfer 
-                        v-model:target-keys="agentTargetKeys" 
-                        v-model:selected-keys="agentSelectedKeys"
-                        show-search
-                        :data-source="allAgents" :titles="['Source', 'Target']" :render="item => item.name"
+                    <a-transfer v-model:target-keys="agentTargetKeys" v-model:selected-keys="agentSelectedKeys"
+                        show-search :data-source="allAgents" :titles="['Source', 'Target']" :render="item => item.name"
                         :disabled="agentTransferDisabled" @change="handleAgentListChange"
-                        @selectChange="handleAgentListSelectChange" @scroll="handleAgentListScroll" />
+                        @selectChange="handleAgentListSelectChange" />
                     <a-switch v-model:checked="agentTransferDisabled" un-checked-children="enabled"
                         checked-children="disabled" style="margin-top: 16px" />
+
+                    <a-button type="primary" @click="showAgentModal = !showAgentModal">
+                        <SaveOutlined /> Add New Agent
+                    </a-button>
                 </a-tab-pane>
             </a-tabs>
         </div>
+        <a-modal :footer="null" title="Add New Agent" :visible="showAgentModal" @cancel="showAgentModal = !showAgentModal">
+            <NewAgentForm 
+                :servers=servers 
+                :agents=allAgents 
+                @updated="() => { showAgentModal = false; fetchCampaign() }"
+                :serverId="selectedServerId" />
+        </a-modal>
     </div>
     <div v-else>
         <a-skeleton active />
     </div>
+
 </template>
 
 <script setup>
@@ -195,6 +204,7 @@ const agentTargetKeys = ref([])
 const agentSelectedKeys = ref([])
 const selectedServerId = ref(null)
 const servers = ref([])
+const showAgentModal = ref(false)
 
 definePageMeta({
     layout: 'admin', // Specify the layout here
@@ -204,16 +214,53 @@ const handleAgentListChange = async (nextTargetKeys, direction, moveKeys) => {
     console.log('targetKeys: ', nextTargetKeys);
     console.log('direction: ', direction);
     console.log('moveKeys: ', moveKeys);
+    let id;
+    campaign.value?.queues?.forEach(q => {
+        if (q && q.server_id) {
+            if (q.server && selectedServerId.value == q.server_id) {
+                id = q.id
+            }
+        }
+    })
+    if (!id) {
+        message.error('Please select a server');
+    }
+    const url = `/api/admin/queues/${id}/agents`;
+    const { data, error } = await useFetch(url, {
+        method: 'PUT',
+        baseURL: config.public.apiBaseUrl,
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        },
+        body: {
+            agent_ids: moveKeys,
+            action: direction === 'left' ? 'remove' : 'add'
+        },
+        onResponseError: ({ response }) => {
+            // Access response data and handle error
+            if (response && response._data && response._data.message) {
+                message.error(response._data.message);
+            } else {
+                message.error('An unknown error occurred');
+            }
+        }
+    })
+
+    if (error.value) {
+        console.error('Failed to update agent list:', error.value)
+        return null
+    } else {
+        message.success("Updated")
+    }
+
 }
 
 const handleAgentListSelectChange = (sourceSelectedKeys, targetSelectedKeys) => {
     console.log('sourceSelectedKeys: ', sourceSelectedKeys);
     console.log('targetSelectedKeys: ', targetSelectedKeys);
 };
-const handleAgentListScroll = (direction, e) => {
-    console.log('direction:', direction);
-    console.log('target:', e.target);
-};
+
 
 const handleFilterDelete = async (e, id) => {
     const url = `/api/admin/filters/${id}`;
