@@ -149,21 +149,20 @@
                         show-search :data-source="allAgents" :titles="['Source', 'Target']" :render="item => item.name"
                         :disabled="agentTransferDisabled" @change="handleAgentListChange"
                         @selectChange="handleAgentListSelectChange" />
-                    <a-switch v-model:checked="agentTransferDisabled" un-checked-children="enabled"
-                        checked-children="disabled" style="margin-top: 16px" />
-
-                    <a-button type="primary" @click="showAgentModal = !showAgentModal">
-                        <SaveOutlined /> Add New Agent
-                    </a-button>
+                    <a-col class="ghi6">
+                        <a-switch v-model:checked="agentTransferDisabled" un-checked-children="enabled"
+                            checked-children="disabled" style="margin-top: 16px" />
+                        <a-button type="primary" @click="showAgentModal = !showAgentModal">
+                            <SaveOutlined /> Add New Agent
+                        </a-button>
+                    </a-col>
                 </a-tab-pane>
             </a-tabs>
         </div>
-        <a-modal :footer="null" title="Add New Agent" :visible="showAgentModal" @cancel="showAgentModal = !showAgentModal">
-            <NewAgentForm 
-                :servers=servers 
-                :agents=allAgents 
-                @updated="() => { showAgentModal = false; fetchCampaign() }"
-                :serverId="selectedServerId" />
+        <a-modal :footer="null" title="Add New Agent" :visible="showAgentModal"
+            @cancel="showAgentModal = !showAgentModal">
+            <NewAgentForm :servers=servers :agents=allAgents
+                @updated="() => { showAgentModal = false; fetchCampaign() }" :serverId="selectedServerId" />
         </a-modal>
     </div>
     <div v-else>
@@ -493,6 +492,7 @@ const fetchAgents = async (serverId) => {
         data.value?.data?.forEach(a => allAgents.value.push({ key: String(a.id), name: a.name }))
     }
 }
+
 onMounted(async () => {
     await fetchCampaign()
 })
@@ -534,7 +534,7 @@ watch(selectedServerId, (newVal) => {
     padding: 20px 20px;
 
     &:nth-of-type(odd) {
-        background-color: #f4f4f4;
+        background-color: #f2f7fe;
     }
 }
 
@@ -574,7 +574,12 @@ watch(selectedServerId, (newVal) => {
     padding: 10px 20px;
 
     &:nth-of-type(odd) {
-        background-color: #f4f4f4;
+        background-color: #f2f7fe;
     }
+}
+.ghi6{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 </style>

@@ -1,5 +1,13 @@
 <template>
-    <h3>Campaigns here</h3>
+    <div>
+        <a-breadcrumb>
+            <a-breadcrumb-item>
+                <NuxtLink to="/admin">Admin</NuxtLink>
+            </a-breadcrumb-item>
+            <a-breadcrumb-item>Campaigns</a-breadcrumb-item>
+        </a-breadcrumb>
+    
+    <h3 style="margin: 10px 0 20px;">Campaign list</h3>
     <a-table :dataSource="dataSource?.data" :columns="columns">
         <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'name'">
@@ -24,6 +32,7 @@
         </template>
     </a-table>
     <a-modal :open="isModalOpen"></a-modal>
+</div>
 </template>
 <script setup>
 import { message } from 'ant-design-vue';
