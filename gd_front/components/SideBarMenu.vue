@@ -24,7 +24,8 @@
 
         <!-- Leads Menu -->
         <a-sub-menu key="sub4" :title="collapsed ? '' : 'Leads'" :icon="h(ProfileOutlined)">
-            <a-menu-item key="7">Lead List</a-menu-item>
+            <a-menu-item key="7">
+                <NuxtLink to="/admin/leads">Lead List</NuxtLink></a-menu-item>
             <a-menu-item key="8">Lead Import</a-menu-item>
         </a-sub-menu>
 
