@@ -9,15 +9,59 @@
             </a-breadcrumb-item>
             <a-breadcrumb-item>Leads in "{{ campaignName }}"</a-breadcrumb-item>
         </a-breadcrumb>
+        <div class="yhn76">
+            <div class="yhn76__custom-dd" ref="dropdownContainer">
+                <!-- Button to toggle dropdown -->
+                <a-button @click="toggleDropdown">
+                    Show/Hide fields
+                    <DownOutlined />
+                </a-button>
+
+                <!-- Dropdown -->
+                <div v-if="fieldSelectVisible" class="dropdown">
+                    <div v-for="field in fieldNamesAll" :key="field" class="dropdown-item">
+                        <label>
+                            <input type="checkbox" :value="field" @change="toggleSelection(field)"
+                                :checked="fieldNames.includes(field)" />
+                            {{ field }}</label>
+                    </div>
+                </div>
+            </div>
+            <div class="yhn76__search">
+                <select v-model="requestProps.filterBy">
+                    <option v-for="nf in fieldNamesAll" :key="`${nf}g4`">{{ nf }}</option>
+                </select>
+                <select v-model="requestProps.filterCondition">
+                    <option value="=">=</option>
+                    <option value=">">></option>
+                    <option value="<">&lt;</option>
+                    <option value=">=">>=</option>
+                    <option value="<="><=</option>
+                    <option  value="like_%t%">LIKE %&lt;Query String&gt;%</option>
+                    <option  value="like_t%">LIKE &lt;Query String&gt;%</option>
+                    <option  value="like_%t">LIKE %&lt;Query String&gt;</option>
+                    <option value="!=">!=</option>
+                </select>
+                <input type="text" v-model="requestProps.filter" />
+                <a-button type="dashed" :icon="h(SearchOutlined)" @click="fetchLeads">Search</a-button>
+            </div>
+        </div>
         <div class="ant-table-wrapper">
             <div class="ant-table">
                 <div class="ant-table-container">
                     <div class="ant-table-content">
-                        <table style="table-layout: auto;">
+                        <table style="table-layout: auto;" class="lead-table">
                             <thead>
                                 <tr>
                                     <th v-for="nf in fieldNames" class="ant-table-cell mft6__th">
-                                        {{ nf }}
+                                        <span @click="toggleSort(nf)" class="sortable-header">{{ nf }}
+                                            <UpOutlined class="sort-icon sort-icon-up"
+                                                :class="{ active: isActiveSort(nf, 'asc') }"
+                                                @click.stop="toggleSort(nf, 'asc')" />
+                                            <DownOutlined class="sort-icon sort-icon-down"
+                                                :class="{ active: isActiveSort(nf, 'desc') }"
+                                                @click.stop="toggleSort(nf, 'desc')" />
+                                        </span>
                                     </th>
                                 </tr>
                             </thead>
@@ -36,6 +80,7 @@
     </div>
 </template>
 <script setup>
+import { SearchOutlined } from '@ant-design/icons-vue';
 import { useRoute } from '#app';
 definePageMeta({
     layout: 'admin', // Specify the layout here
@@ -44,17 +89,36 @@ const config = useRuntimeConfig()
 const authToken = useCookie('auth_token').value
 const route = useRoute();
 const campaignName = route.params.name; // Access the dynamic route parameter
-const fieldsToRemove = ['tzl', 'tzh', 'wdayl', 'wdayh', 'satl', 'sath', 'sunl', 'sunh', 'holl', 'holh'];
+const fieldsToRemove = ['subdispo', 'tzl', 'tzh', 'wdayl', 'wdayh', 'satl', 'sath', 'sunl', 'sunh', 'holl', 'holh'];
 const fieldNames = ref([])
+const fieldNamesAll = ref([])
+const fieldSelectVisible = ref(false)
+const dropdownContainer = ref(null);
 const dataSource = ref({
     data: []
 })
 const requestProps = ref({
     perPage: 30,
-    orderBy: 'name',
-    order: 'asc'
+    orderBy: 'id',
+    order: 'desc',
+    filterBy: 'id',
+    filter: '',
+    filterCondition: '='
 })
 const pagination = computed(() => dataSource.value)
+const isActiveSort = (field, direction) => {
+    return requestProps.value.orderBy === field && requestProps.value.order === direction;
+};
+const toggleSort = (field, direction) => {
+    if (requestProps.value.orderBy === field) {
+        // If already sorting by this field, toggle between asc/desc
+        requestProps.value.order = requestProps.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        requestProps.value.orderBy = field;
+        requestProps.value.order = 'asc';
+    }
+    fetchLeads(1)
+};
 const fetchLeads = async (page = 1) => {
     const params = new URLSearchParams({
         campaign: campaignName,
@@ -76,14 +140,42 @@ const fetchLeads = async (page = 1) => {
         return null
     } else {
         dataSource.value = data.value.leads
-        fieldNames.value = Object.keys(data.value?.leads?.data[0]);
-        fieldNames.value = fieldNames.value.filter(field => !fieldsToRemove.includes(field));
+        fieldNamesAll.value = Object.keys(data.value?.leads?.data[0]);
+        fieldNames.value = fieldNamesAll.value.filter(field => !fieldsToRemove.includes(field));
         return
     }
 }
+const toggleDropdown = () => {
+    fieldSelectVisible.value = !fieldSelectVisible.value;
+    if (fieldSelectVisible.value) {
+        document.addEventListener('click', handleOutsideClick);
+    } else {
+        document.removeEventListener('click', handleOutsideClick);
+    }
+};
+
+// Toggle selection of a field
+const toggleSelection = (field) => {
+    if (fieldNames.value.includes(field)) {
+        fieldNames.value = fieldNames.value.filter(f => f !== field);
+    } else {
+        fieldNames.value.push(field);
+    }
+};
+
+// Close dropdown on outside click
+const handleOutsideClick = (event) => {
+    const dropdown = dropdownContainer.value.querySelector('.dropdown');
+    if (dropdown && !dropdown.contains(event.target)) {
+        //fieldSelectVisible.value = false;
+    }
+};
 onMounted(async () => {
     await fetchLeads(1)
 })
+onBeforeUnmount(() => {
+    document.removeEventListener('click', handleOutsideClick);
+});
 </script>
 
 <style lang="scss">
@@ -97,5 +189,92 @@ onMounted(async () => {
     transition: background 0.2s ease;
     padding: 16px 16px;
     overflow-wrap: break-word;
+
+    .sortable-header {
+        cursor: pointer;
+        width: 100%;
+        display: block;
+        text-align: center;
+        padding-right: 20px;
+        position: relative;
+    }
+
+    .sort-icon {
+        position: absolute;
+        font-size: 12px;
+        color: #bfbfbf;
+        /* Grayed out when not active */
+        transition: color 0.3s;
+        right: 0;
+        top:30%;
+    }
+    .sort-icon-up{
+        transform: translateY(-51%);
+    }
+
+    .sort-icon.active {
+        color: #1890ff;
+        /* Highlighted when active */
+    }
+}
+
+.lead-table {
+
+    td,
+    th {
+        text-align: center;
+        padding: 4px;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f2f7fe;
+
+    }
+
+    td:not(:last-child),
+    th:not(:last-child) {
+        border-right: solid #d3deee 1px;
+    }
+}
+
+.yhn76{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    .yhn76__search{
+        display: flex;
+        gap: 3px;
+        align-items: center;
+        input,select{
+            height: 30px;
+        }
+    }
+}
+
+.yhn76__custom-dd {
+    position: relative;
+
+    .dropdown {
+        position: absolute;
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 10px;
+        min-width: 600px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        top: 34px;
+        z-index: 10;
+        left: 0;
+    }
+
+    .dropdown-item {
+        margin: 5px 0;
+    }
+
+    .dropdown-item input {
+        margin-right: 8px;
+    }
 }
 </style>

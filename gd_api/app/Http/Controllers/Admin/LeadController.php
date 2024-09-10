@@ -15,9 +15,28 @@ class LeadController extends Controller
             'campaign' => 'required',
         ]);
         $campaign = $request->campaign;
-        $order = 'desc';
+        $order = $request->order? $request->order :'desc';
         $table_name = 'campaign_' . $campaign;
-        $leads = DB::table($table_name)->orderBy('id', $order)->paginate(30);
+        $perPage = $request->perPage?$request->perPage:30;
+        $orderBy = $request->orderBy?$request->orderBy:'id';
+        $leads = DB::table($table_name);
+        $qFieldName = $request->filterBy;
+        $q = $request->filter;
+        $qCondition = $request->filterCondition;
+        if(!empty($qFieldName) && !empty($q)) {
+        switch($qCondition) {
+            case "=":
+            case ">=":
+            case "<=":  
+            case "<":
+            case ">":       
+            case "!=":
+                $leads = $leads->where($qFieldName, $qCondition, $q);
+                break;
+        }
+    }
+        $leads = $leads->orderBy($orderBy, $order)->paginate($perPage);
+
         $schema = CampaignFormSchema::where('table_name', $table_name)->first();
         return response()->json([
             'leads' => $leads,
