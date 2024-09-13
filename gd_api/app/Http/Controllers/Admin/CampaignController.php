@@ -25,4 +25,8 @@ class CampaignController extends Controller
 
         return new AdminCampaignResource($campaign);
     }
+
+    public function create(Request $request) {
+        //DB::statement('ALTER TABLE campaign_{{your_campaign_name}} ADD UNIQUE (phone)');
+    }
 }

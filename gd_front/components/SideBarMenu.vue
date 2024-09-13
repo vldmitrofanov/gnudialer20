@@ -14,19 +14,27 @@
             <a-menu-item key="3">
                 <NuxtLink to="/admin/campaigns">Campaign List</NuxtLink>
             </a-menu-item>
+            <a-menu-item key="13">
+                <NuxtLink to="/admin/campaigns/create">CreateCampaign</NuxtLink>
+            </a-menu-item>
         </a-sub-menu>
 
         <!-- Agents Menu -->
         <a-sub-menu key="sub3" :title="collapsed ? '' : 'Agents'" :icon="h(TeamOutlined)">
-            <a-menu-item key="5"><NuxtLink to="/admin/agents">Agent List</NuxtLink></a-menu-item>
+            <a-menu-item key="5">
+                <NuxtLink to="/admin/agents">Agent List</NuxtLink>
+            </a-menu-item>
             <a-menu-item key="6">Agent Stats</a-menu-item>
         </a-sub-menu>
 
         <!-- Leads Menu -->
         <a-sub-menu key="sub4" :title="collapsed ? '' : 'Leads'" :icon="h(ProfileOutlined)">
             <a-menu-item key="7">
-                <NuxtLink to="/admin/leads">Lead List</NuxtLink></a-menu-item>
-            <a-menu-item key="8">Lead Import</a-menu-item>
+                <NuxtLink to="/admin/leads">Lead List</NuxtLink>
+            </a-menu-item>
+            <a-menu-item key="8">
+                <NuxtLink to="/admin/leads/import">Lead Import</NuxtLink>
+            </a-menu-item>
         </a-sub-menu>
 
         <!-- Reports Menu -->

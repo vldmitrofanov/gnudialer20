@@ -33,18 +33,48 @@
                 </select>
                 <select v-model="requestProps.filterCondition">
                     <option value="=">=</option>
-                    <option value=">">></option>
+                    <option value=">">&gt;</option>
                     <option value="<">&lt;</option>
-                    <option value=">=">>=</option>
-                    <option value="<="><=</option>
-                    <option  value="like_%t%">LIKE %&lt;Query String&gt;%</option>
-                    <option  value="like_t%">LIKE &lt;Query String&gt;%</option>
-                    <option  value="like_%t">LIKE %&lt;Query String&gt;</option>
+                    <option value=">=">&gt;=</option>
+                    <option value="<=">&lt;=</option>
+                    <option value="like_%t%">LIKE %&lt;Query String&gt;%</option>
+                    <option value="like_t%">LIKE &lt;Query String&gt;%</option>
+                    <option value="like_%t">LIKE %&lt;Query String&gt;</option>
                     <option value="!=">!=</option>
                 </select>
                 <input type="text" v-model="requestProps.filter" />
                 <a-button type="dashed" :icon="h(SearchOutlined)" @click="fetchLeads">Search</a-button>
             </div>
+        </div>
+        <div class="yhn76">
+            <div class="yhn76_1">
+                <a-button size="30" :loading="leadsDownloading" @click="exportLeads">
+                    <template #icon>
+                        <DownloadOutlined />
+                    </template>
+                    Export
+                </a-button>
+                <NuxtLink :to="`/admin/leads/upload/${campaignName}`">
+                    <a-button size="30">
+                        <template #icon>
+                            <UploadOutlined />
+                        </template>
+                        Import
+                    </a-button>
+                </NuxtLink>
+                <a-button size="30">
+                    <template #icon>
+                        <PlusCircleOutlined />
+                    </template>
+                    Add
+                </a-button>
+            </div>
+            <div class="yhn76__search has-sql"><input type="text" v-model="requestProps.sqlFilter" />
+                <a-button type="dashed" :icon="h(SearchOutlined)" @click="fetchLeads">SQL Query</a-button>
+            </div>
+        </div>
+        <div class="yhn76" v-if="leadDownloadLink">
+            <div>Download CSV file: <a href="#" @click.stop.prevent="downloadFile" target="_blank">{{ leadDownloadLink }}</a></div>
         </div>
         <div class="ant-table-wrapper">
             <div class="ant-table">
@@ -74,7 +104,7 @@
                     </div>
                 </div>
             </div>
-            <a-pagination :current="pagination.current" :pageSize="pagination.per_page" :total="pagination.total"
+            <a-pagination :current="pagination.current" :pageSize="pagination.per_page" :total="pagination.total" @showSizeChange="handlePageSizeChange"
                 @change="fetchLeads" />
         </div>
     </div>
@@ -103,12 +133,29 @@ const requestProps = ref({
     order: 'desc',
     filterBy: 'id',
     filter: '',
-    filterCondition: '='
+    filterCondition: '=',
+    sqlFilter: '',
+    export: 0
 })
+const leadsDownloading = ref(false)
+const leadDownloadLink = ref(null)
 const pagination = computed(() => dataSource.value)
 const isActiveSort = (field, direction) => {
     return requestProps.value.orderBy === field && requestProps.value.order === direction;
 };
+const exportLeads = async () => {
+    leadsDownloading.value = true
+    requestProps.value.export = 1
+    await fetchLeads()
+    leadsDownloading.value = false
+    requestProps.value.export = 0
+}
+
+const handlePageSizeChange = (currentPage, newPageSize) => {
+  requestProps.value.perPage = newPageSize; // Update perPage in requestProps
+  fetchLeads(); // Fetch leads with new page size
+};
+
 const toggleSort = (field, direction) => {
     if (requestProps.value.orderBy === field) {
         // If already sorting by this field, toggle between asc/desc
@@ -120,6 +167,7 @@ const toggleSort = (field, direction) => {
     fetchLeads(1)
 };
 const fetchLeads = async (page = 1) => {
+    leadDownloadLink.value = null
     const params = new URLSearchParams({
         campaign: campaignName,
         page: page,
@@ -139,12 +187,46 @@ const fetchLeads = async (page = 1) => {
         message.error(error.value?.message);
         return null
     } else {
-        dataSource.value = data.value.leads
-        fieldNamesAll.value = Object.keys(data.value?.leads?.data[0]);
-        fieldNames.value = fieldNamesAll.value.filter(field => !fieldsToRemove.includes(field));
+        if (requestProps.value.export > 0) {
+            console.log(data.value)
+            leadDownloadLink.value = data.value.download_url
+            message.success(data.value.message)
+        } else {
+            dataSource.value = data.value.leads
+            fieldNamesAll.value = Object.keys(data.value?.leads?.data[0]);
+            fieldNames.value = fieldNamesAll.value.filter(field => !fieldsToRemove.includes(field));
+        }
         return
     }
 }
+
+const downloadFile = async () => {
+    if(!leadDownloadLink.value) {
+        message.error('No download lead found')
+        return
+    }
+    const fileName = leadDownloadLink.value.split('/').pop();
+    const response = await fetch(leadDownloadLink.value, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${authToken}`, // Attach the Bearer token
+        },
+    });
+
+    if (response.status === 200) {
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName); // Set file name
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    message.error('Error downloading file:', response.statusText);
+  }
+};
+
 const toggleDropdown = () => {
     fieldSelectVisible.value = !fieldSelectVisible.value;
     if (fieldSelectVisible.value) {
@@ -206,9 +288,10 @@ onBeforeUnmount(() => {
         /* Grayed out when not active */
         transition: color 0.3s;
         right: 0;
-        top:30%;
+        top: 30%;
     }
-    .sort-icon-up{
+
+    .sort-icon-up {
         transform: translateY(-51%);
     }
 
@@ -237,16 +320,51 @@ onBeforeUnmount(() => {
     }
 }
 
-.yhn76{
+.yhn76 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 0;
-    .yhn76__search{
+    padding: 0;
+    gap: 40px;
+
+    &:first-of-type {
+        padding-top: 20px !important;
+    }
+
+    &:not(:first-of-type) {
+        padding-top: 0 !important;
+    }
+
+    &:not(:last-of-type) {
+        padding-bottom: 6px !important;
+    }
+
+    &:last-of-type {
+        margin-bottom: 20px !important;
+    }
+
+    .has-sql {
+        flex: 1;
+
+        input[type=text] {
+            width: 100%;
+        }
+    }
+
+    .yhn76_1 {
         display: flex;
         gap: 3px;
         align-items: center;
-        input,select{
+
+    }
+
+    .yhn76__search {
+        display: flex;
+        gap: 3px;
+        align-items: center;
+
+        input,
+        select {
             height: 30px;
         }
     }

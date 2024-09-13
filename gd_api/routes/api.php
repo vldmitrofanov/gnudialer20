@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use Illuminate\Support\Facades\Storage;
 
 Route::post('/login', [\App\Http\Controllers\UserController::class, 'login']);
 
@@ -10,9 +10,14 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::group(['middleware' => ['auth.admin']], function () {
         Route::group(['prefix' => 'admin'], function () {
+            Route::group(['prefix' => 'servers'], function () {
+                Route::get('/', [\App\Http\Controllers\Admin\ServerController::class, 'index']);
+            });
+
             Route::group(['prefix' => 'campaigns'], function () {
                 Route::get('/', [\App\Http\Controllers\Admin\CampaignController::class, 'index']);
                 Route::get('/{campaign_id}', [\App\Http\Controllers\Admin\CampaignController::class, 'show']);
+                Route::post('/', [\App\Http\Controllers\Admin\CampaignController::class, 'create']);
             });
 
             Route::group(['prefix' => 'filters'], function () {
@@ -42,7 +47,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
             Route::group(['prefix' => 'leads'], function () {
                 Route::get('/', [\App\Http\Controllers\Admin\LeadController::class, 'index']);
+                Route::post('/upload', [\App\Http\Controllers\Admin\LeadController::class, 'upload']);
+                Route::post('/import-uploaded', [\App\Http\Controllers\Admin\LeadController::class, 'importUploaded']);
             });
+
+            Route::get('/export/{fileName}', [\App\Http\Controllers\Admin\ExportController::class, 'download'])->name('download.export');
         });
     });
 
