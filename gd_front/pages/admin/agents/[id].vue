@@ -17,6 +17,10 @@
 </template>
 <script setup>
 import { useRoute } from '#app';
+definePageMeta({
+  layout: 'admin', 
+  middleware: 'auth-admin',
+})
 const config = useRuntimeConfig()
 const authToken = useCookie('auth_token').value
 const route = useRoute();

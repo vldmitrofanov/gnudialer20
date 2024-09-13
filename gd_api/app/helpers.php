@@ -60,7 +60,8 @@ if (!function_exists('createTzpopulateFile')) {
 
         // Ensure there is no duplicate
         if (File::exists($filePath)) {
-            throw new \Exception('File for this table already exists.');
+            return;
+            //throw new \Exception('File for this table already exists.');
         }
 
         // Create the file

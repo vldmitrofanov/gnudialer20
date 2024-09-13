@@ -29,6 +29,11 @@
                     </a-tag>
                 </span>
             </template>
+            <template v-else-if="column.key === 'action'">
+                <a-button :disabled="record.code == 'CLOSER'" @click.prevent="removeCampaign(record.id)">
+                    <DeleteOutlined />
+                </a-button>
+            </template>
         </template>
     </a-table>
     <a-modal :open="isModalOpen"></a-modal>
@@ -40,7 +45,8 @@ const config = useRuntimeConfig()
 const authToken = useCookie('auth_token').value
 const isModalOpen = ref(false)
 definePageMeta({
-    layout: 'admin', // Specify the layout here
+    layout: 'admin', 
+    middleware: 'auth-admin',
 })
 const columns = [
     {
@@ -75,6 +81,29 @@ const requestProps = ref({
     orderBy: 'name',
     order: 'asc'
 })
+const removeCampaign = async (id) => {
+    if(!confirm('DeleteCampaign?')) {
+        return
+    }
+    const url = `/api/admin/campaigns/${id}`;
+    const { data, error } = await useFetch(url, {
+        baseURL: config.public.apiBaseUrl,
+        method: 'DELETE',
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        }
+    })
+
+    if (error.value) {
+        console.error('Failed to delete campaign:', error.value)
+        message.error(error.value?.message);
+        return null
+    } else {
+        fetchCampaigns()
+    }
+}
+
 const fetchCampaigns = async (page = 1) => {
     const params = new URLSearchParams({
         page: page,

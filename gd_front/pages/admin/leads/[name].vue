@@ -113,7 +113,8 @@
 import { SearchOutlined } from '@ant-design/icons-vue';
 import { useRoute } from '#app';
 definePageMeta({
-    layout: 'admin', // Specify the layout here
+    layout: 'admin',
+    middleware: 'auth-admin',
 })
 const config = useRuntimeConfig()
 const authToken = useCookie('auth_token').value

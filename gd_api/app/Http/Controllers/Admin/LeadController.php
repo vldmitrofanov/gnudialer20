@@ -78,6 +78,14 @@ class LeadController extends Controller
         $campaignName = $request->campaign_name;
         $file = $request->file('file');
 
+        $importPath = storage_path('app/imports');
+        if (!file_exists($importPath)) {
+            mkdir($importPath, 0755, true);
+        }
+
+        // Store the file in the 'storage/app/import' directory with its original name
+        $file->storeAs('imports', $file->getClientOriginalName());
+
         // Get field names from the uploaded file (CSV or Excel)
         $uploadedFields = $this->getUploadedFileFields($file);
 
@@ -105,8 +113,8 @@ class LeadController extends Controller
             'campaign_name' => 'required|string'
         ]);
 
-        $filePath = storage_path('app/exports/' . $request->file_name);
-        if (!Storage::exists('exports/' . $request->file_name)) {
+        $filePath = storage_path('app/imports/' . $request->file_name);
+        if (!Storage::exists('imports/' . $request->file_name)) {
             return response()->json(['error' => 'File not found'], 422);
         }
 
@@ -126,6 +134,9 @@ class LeadController extends Controller
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);
         $header = [];
         $rows = [];
+        $totalCount = 0;
+
+        $initialCount = DB::table($tableName)->count();
 
         if ($extension === 'csv') {
             if (($handle = fopen($filePath, 'r')) !== false) {
@@ -137,21 +148,21 @@ class LeadController extends Controller
 
                     if (!empty($mappedData)) {
                         $batchData[] = $mappedData;
-                        $imported++;
-                    } else {
-                        $skipped++;
                     }
 
                     // Insert batch when batch size is reached
-                    if (count($batchData) === $batchSize) {
-                        DB::table($tableName)->insert($batchData); // Insert batch into the table
+                    $cnt = count($batchData);
+                    if ($cnt === $batchSize) {
+                        DB::table($tableName)->insertOrIgnore($batchData); // Insert batch into the table
                         $batchData = []; // Reset batch
                     }
+                    $totalCount += $cnt;
                 }
 
                 // Insert remaining rows
                 if (!empty($batchData)) {
-                    DB::table($tableName)->insert($batchData);
+                    DB::table($tableName)->insertOrIgnore($batchData);
+                    $totalCount += count($batchData);
                 }
 
                 fclose($handle);
@@ -166,23 +177,25 @@ class LeadController extends Controller
 
                 if (!empty($mappedData)) {
                     $batchData[] = $mappedData;
-                    $imported++;
-                } else {
-                    $skipped++;
                 }
 
                 // Insert batch when batch size is reached
                 if (count($batchData) === $batchSize) {
-                    DB::table($tableName)->insert($batchData);
+                    DB::table($tableName)->insertOrIgnore($batchData);
                     $batchData = [];
                 }
             }
 
             // Insert remaining rows
             if (!empty($batchData)) {
-                DB::table($tableName)->insert($batchData);
+                DB::table($tableName)->insertOrIgnore($batchData);
             }
         }
+
+        $finalCount = DB::table($tableName)->count();
+
+        $imported = $finalCount - $initialCount;
+        $skipped = $totalCount - $imported;
         createTzpopulateFile($tableName);
         // Return import statistics
         return response()->json([
@@ -190,7 +203,7 @@ class LeadController extends Controller
             'stats' => [
                 'imported' => $imported,
                 'skipped' => $skipped,
-                'total' => $imported + $skipped,
+                'total' => $totalCount
             ]
         ]);
     }
@@ -211,7 +224,7 @@ class LeadController extends Controller
                 // Map the CSV/excel row to the table field
                 $index = array_search($uploadedField, $header);
                 if ($index !== false && isset($row[$index])) {
-                    $data[$tableField] = $row[$index];
+                    $data[$tableField] = !empty($row[$index]) ? $row[$index] : null;
                 }
             }
         }

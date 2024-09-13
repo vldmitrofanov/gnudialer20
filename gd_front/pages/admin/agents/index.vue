@@ -53,7 +53,8 @@ const isModalOpen = ref(false)
 const loaded = ref(false)
 const showSip = ref(0)
 definePageMeta({
-  layout: 'admin', // Specify the layout here
+  layout: 'admin', 
+  middleware: 'auth-admin',
 })
 
 const columns = [

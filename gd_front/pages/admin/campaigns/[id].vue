@@ -206,7 +206,8 @@ const servers = ref([])
 const showAgentModal = ref(false)
 
 definePageMeta({
-    layout: 'admin', // Specify the layout here
+    layout: 'admin',
+    middleware: 'auth-admin',
 })
 
 const handleAgentListChange = async (nextTargetKeys, direction, moveKeys) => {

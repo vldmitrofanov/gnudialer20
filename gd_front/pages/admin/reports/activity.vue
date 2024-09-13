@@ -3,6 +3,7 @@
     </template>
     <script setup>
     definePageMeta({
-      layout: 'admin', // Specify the layout here
+      layout: 'admin', 
+      middleware: 'auth-admin',
     })
     </script>

@@ -18,6 +18,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
                 Route::get('/', [\App\Http\Controllers\Admin\CampaignController::class, 'index']);
                 Route::get('/{campaign_id}', [\App\Http\Controllers\Admin\CampaignController::class, 'show']);
                 Route::post('/', [\App\Http\Controllers\Admin\CampaignController::class, 'create']);
+                Route::delete('/{campaign_id}', [\App\Http\Controllers\Admin\CampaignController::class, 'delete']);
             });
 
             Route::group(['prefix' => 'filters'], function () {

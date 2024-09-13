@@ -85,7 +85,8 @@ const config = useRuntimeConfig()
 const authToken = useCookie('auth_token').value
 
 definePageMeta({
-    layout: 'admin', // Specify the layout here
+    layout: 'admin',
+    middleware: 'auth-admin',
 })
 const route = useRoute();
 const router = useRouter()
@@ -198,16 +199,24 @@ const submitFields = async () => {
         message.error('Phone field is not present in dataset');
         return
     }
-    const {response,error} = await useFetch(`/api/admin/leads/import-uploaded`, {
+    const { data, error } = await useFetch(`/api/admin/leads/import-uploaded`, {
         baseURL: config.public.apiBaseUrl,
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${authToken}`, 
+            'Authorization': `Bearer ${authToken}`,
         },
         body: {
             mapping: matchedFields.value,
             file_name: uploadedFileName.value,
-            campaign_name: campaignName 
+            campaign_name: campaignName
+        },
+        onResponseError: ({ response }) => {
+            // Access response data and handle error
+            if (response && response._data && response._data.message) {
+                message.error(response._data.message);
+            } else {
+                message.error('An unknown error occurred');
+            }
         }
     });
     if (error.value) {
@@ -215,8 +224,8 @@ const submitFields = async () => {
         message.error(error.value?.message);
         return null
     } else {
-        message.success(response.value?.message)
-        stats.value = response.value?.stats
+        message.success(data.value?.message)
+        stats.value = data.value?.stats
     }
 }
 </script>

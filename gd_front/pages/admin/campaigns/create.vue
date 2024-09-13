@@ -15,7 +15,8 @@
                 <input v-model="newCampaignName" type='text' placeholder="Enter new Campaign name" />
             </label>
             <label class="t67">Campaign Code (only lowercase latin letters an numbers)
-                <input v-model="newCampaignCode" type='text' placeholder="Enter new Campaign Code" @input="validateInput"/>
+                <input v-model="newCampaignCode" type='text' placeholder="Enter new Campaign Code"
+                    @input="validateInput" />
                 <p v-if="inputError" style="color: red;margin-bottom: 0;">{{ inputError }}</p>
             </label>
             <a-checkbox v-for="s in servers" :key="s.id" :value="s.id" :checked="serversSelected.includes(s.id)"
@@ -24,37 +25,37 @@
             </a-checkbox>
         </div>
         <h2>Design Table Structure</h2>
-        <form @submit.prevent="submitForm">
-            <!-- Display existing fields -->
-            <div v-for="(type, name) in fieldSet" :key="name" class="field-row-p8nre">
-                <label>{{ name }}</label>
-                <select v-model="fieldSet[name]" :disabled="name === 'phone'">
-                    <option value="string">String</option>
-                    <option value="text">Text</option>
-                    <option value="int">Integer</option>
-                    <option value="date-time">Date-Time</option>
-                </select>
-                <!-- Delete button for fields (except for phone) -->
-                <a-button v-if="name !== 'phone'" @click.prevent="removeField(name)">
-                    <DeleteOutlined />
-                </a-button>
-            </div>
 
-            <!-- Add new field -->
-            <div class="new-field-l8nfr">
-                <input v-model="newFieldName" type='text' placeholder="Enter new field name" />
-                <select v-model="newFieldType">
-                    <option value="string">String</option>
-                    <option value="text">Text</option>
-                    <option value="int">Integer</option>
-                    <option value="date-time">Date-Time</option>
-                </select>
-                <a-button @click.prevent="addField">Add Field</a-button>
-            </div>
+        <!-- Display existing fields -->
+        <div v-for="(type, name) in fieldSet" :key="name" class="field-row-p8nre">
+            <label>{{ name }}</label>
+            <select v-model="fieldSet[name]" :disabled="name === 'phone'">
+                <option value="string">String</option>
+                <option value="text">Text</option>
+                <option value="int">Integer</option>
+                <option value="date-time">Date-Time</option>
+            </select>
+            <!-- Delete button for fields (except for phone) -->
+            <a-button :disabled="name == 'phone'" @click.prevent="removeField(name)">
+                <DeleteOutlined />
+            </a-button>
+        </div>
 
-            <!-- Submit button -->
-            <a-button type="primary" htmlType="submit">Submit</a-button>
-        </form>
+        <!-- Add new field -->
+        <div class="new-field-l8nfr">
+            <input v-model="newFieldName" type='text' placeholder="Enter new field name" @keydown.enter="addField" />
+            <select v-model="newFieldType">
+                <option value="string">String</option>
+                <option value="text">Text</option>
+                <option value="int">Integer</option>
+                <option value="date-time">Date-Time</option>
+            </select>
+            <a-button @click.prevent="addField">Add Field</a-button>
+        </div>
+
+        <!-- Submit button -->
+        <a-button type="primary" @click="submitForm">Submit</a-button>
+
 
         <!-- Modal for confirmation (optional) -->
         <a-modal v-model:open="isModalOpen" title="Form Submitted">
@@ -65,11 +66,13 @@
 <script setup>
 const config = useRuntimeConfig()
 const authToken = useCookie('auth_token').value
+const router = useRouter()
 const isModalOpen = ref(false)
 const servers = ref([])
 const serversSelected = ref([])
 definePageMeta({
-    layout: 'admin', // Specify the layout here
+    layout: 'admin',
+    middleware: 'auth-admin',
 })
 const fieldSet = ref({
     phone: 'string'
@@ -86,27 +89,27 @@ const removeField = (fieldName) => {
 }
 const inputError = ref('')
 const validateInput = () => {
-  // Allow only lowercase a-z, 0-9, and ensure it starts with a letter
-  const regex = /^[a-z][a-z0-9]*$/
+    // Allow only lowercase a-z, 0-9, and ensure it starts with a letter
+    const regex = /^[a-z][a-z0-9]*$/
 
-  if (!regex.test(newCampaignCode.value)) {
-    // Remove invalid characters by replacing anything not matching the regex
-    newCampaignCode.value = newCampaignCode.value.replace(/[^a-z0-9]/g, '').replace(/^[^a-z]*/, '')
+    if (!regex.test(newCampaignCode.value)) {
+        // Remove invalid characters by replacing anything not matching the regex
+        newCampaignCode.value = newCampaignCode.value.replace(/[^a-z0-9]/g, '').replace(/^[^a-z]*/, '')
 
-    // Show error if it does not match the full regex
-    inputError.value = 'The input must start with a letter and can only contain lowercase letters and numbers.'
-  } else {
-    inputError.value = ''
-  }
+        // Show error if it does not match the full regex
+        inputError.value = 'The input must start with a letter and can only contain lowercase letters and numbers.'
+    } else {
+        inputError.value = ''
+    }
 }
 const toggleSelection = (id) => {
-  if (serversSelected.value.includes(id)) {
-    // If the server ID is already selected, remove it from the array
-    serversSelected.value = serversSelected.value.filter(serverId => serverId !== id)
-  } else {
-    // If the server ID is not selected, add it to the array
-    serversSelected.value.push(id)
-  }
+    if (serversSelected.value.includes(id)) {
+        // If the server ID is already selected, remove it from the array
+        serversSelected.value = serversSelected.value.filter(serverId => serverId !== id)
+    } else {
+        // If the server ID is not selected, add it to the array
+        serversSelected.value.push(id)
+    }
 }
 
 // Function to add a new field
@@ -120,15 +123,15 @@ const addField = () => {
 
 // Function to submit the form to the server
 const submitForm = async () => {
-    if(!newCampaignName.value || newCampaignName.value==''){
+    if (!newCampaignName.value || newCampaignName.value == '') {
         message.error('Please give it a name')
         return
     }
-    if(!newCampaignCode.value || newCampaignCode.value==''){
+    if (!newCampaignCode.value || newCampaignCode.value == '') {
         message.error('Campaign code is required')
         return
     }
-    if(!serversSelected.value.length==0){
+    if (serversSelected.value.length == 0) {
         message.error('Please select at least one server')
         return
     }
@@ -146,6 +149,14 @@ const submitForm = async () => {
                 table: fieldSet.value,
                 servers: serversSelected.value
             },
+            onResponseError: ({ response }) => {
+                // Access response data and handle error
+                if (response && response._data && response._data.message) {
+                    message.error(response._data.message);
+                } else {
+                    message.error('An unknown error occurred');
+                }
+            }
         })
 
         if (error.value) {
@@ -153,7 +164,8 @@ const submitForm = async () => {
             message.error(error.value?.message);
             return null
         } else {
-            dataSource.value = data.value
+            message.success('New campaign has been created!');
+            router.push('/admin/campaigns')
         }
     } catch (error) {
         console.error('Error submitting the form:', error)
@@ -195,6 +207,10 @@ onMounted(async () => {
         border-radius: 4px;
         background-color: #f2f7fe;
     }
+
+    button.ant-btn {
+        padding: 4px;
+    }
 }
 
 .new-field-l8nfr {
@@ -208,6 +224,7 @@ onMounted(async () => {
 .mc567f {
     max-width: 400px;
     padding-top: 20px;
+
     .mc567f_1 {
         display: grid;
         grid-gap: 10px;

@@ -45,7 +45,8 @@ const config = useRuntimeConfig()
 const authToken = useCookie('auth_token').value
 const isModalOpen = ref(false)
 definePageMeta({
-  layout: 'admin', // Specify the layout here
+  layout: 'admin', 
+  middleware: 'auth-admin',
 })
 const columns = [
   {
