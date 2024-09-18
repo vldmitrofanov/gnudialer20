@@ -78,5 +78,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::get('/search', [\App\Http\Controllers\LeadController::class, 'searchLead']);
     });
 
+    Route::group(['prefix' => 'dispositions'], function () {
+        Route::post('/', [\App\Http\Controllers\DispositionController::class, 'create']);
+    });
     
 });

@@ -34,4 +34,9 @@ class Agent extends Model
     {
         return $this->belongsTo(Server::class);
     }
+
+    public function dispositions()
+    {
+        return $this->hasMany(Disposition::class)->orderById('desc');
+    }
 }

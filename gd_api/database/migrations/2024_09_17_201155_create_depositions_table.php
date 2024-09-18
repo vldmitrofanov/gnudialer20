@@ -11,12 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('queues', function (Blueprint $table) {
+        Schema::create('dispositions', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('agent_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('campaign_id')->nullable()->index()->constrained()->onDelete('cascade');
-            $table->foreignId('server_id')->nullable()->index()->constrained()->onDelete('cascade');
-            $table->tinyInteger('status')->default(0);
-            $table->json('settings')->nullable();
+            $table->tinyInteger('disposition')->default(-1);
+            $table->bigInteger('lead_id')->nullable();
+            $table->dateTime('start')->nullable();
+            $table->dateTime('end')->nullable();
+            $table->tinyInteger('call_ended')->default(0);
             $table->timestamps();
         });
     }
@@ -26,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('queues');
+        Schema::dropIfExists('dispositions');
     }
 };

@@ -51,5 +51,8 @@ inline std::string getAriUser() { return ConfigSingleton::getInstance().get("ari
 inline std::string getAriPass() { return ConfigSingleton::getInstance().get("ari.ari_password"); }
 inline std::string getAriProto() { return ConfigSingleton::getInstance().get("ari.ari_proto"); }
 
+inline std::string getApiUserId() { return ConfigSingleton::getInstance().get("api.api_user_id"); }
+inline std::string getApiUrl() { return ConfigSingleton::getInstance().get("api.api_host"); }
+inline std::string getApiUserSecret() { return ConfigSingleton::getInstance().get("api.api_user_secret"); }
 
 #endif

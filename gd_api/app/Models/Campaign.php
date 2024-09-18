@@ -22,4 +22,8 @@ class Campaign extends Model
         return $this->hasMany(Queue::class);
     }
 
+    public function dispositions()
+    {
+        return $this->hasMany(Disposition::class)->orderById('desc');
+    }
 }

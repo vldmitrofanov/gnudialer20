@@ -140,6 +140,57 @@ void sig_handler(int sig)
 	return;
 }
 
+
+void createDispositionRecord(const std::string &agent_id, const std::string &campaign_code, const std::string &lead_id) {
+    // Initialize CURL
+    CURL *curl;
+    CURLcode res;
+
+    // Prepare the API URL
+    std::string url = getApiUrl() + "/api/dispositions";
+	std::cout << "DEBUG:: create dispo record URL " << url << std::endl;
+
+    // Prepare the Bearer token
+    std::string bearer_token = "Bearer " + getApiUserSecret();
+
+    // Initialize the CURL object
+    curl = curl_easy_init();
+    if (curl) {
+        // Set the URL for the request
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+
+        // Set the HTTP header with the Bearer token
+        struct curl_slist *headers = NULL;
+        headers = curl_slist_append(headers, ("Authorization: " + bearer_token).c_str());
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+        // Prepare the POST data (JSON)
+        std::string json_data = "{\"campaign_code\": \"" + campaign_code + "\","
+                                "\"agent_id\": \"" + agent_id + "\","
+                                "\"lead_id\": \"" + lead_id + "\"}";
+
+        // Set the POST fields
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data.c_str());
+
+        // Send the request and get the response
+        res = curl_easy_perform(curl);
+
+        // Check for errors
+        if (res != CURLE_OK) {
+            std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+        } else {
+            std::cout << "Request sent successfully!" << std::endl;
+        }
+
+        // Clean up
+        curl_slist_free_all(headers); // Free headers
+        curl_easy_cleanup(curl);      // Clean up CURL instance
+    } else {
+        std::cerr << "Failed to initialize CURL." << std::endl;
+    }
+}
+
 std::string trim(const std::string &str)
 {
 	size_t first = str.find_first_not_of(" \n\r\t");
@@ -249,6 +300,7 @@ void doAriRedirect(const std::string &channel,
 
 			AsteriskRedir << "Action: Logoff\r\n\r\n";
 			AsteriskRedir >> response;
+			createDispositionRecord(agent, campaign, leadid);
 			usleep(10000000);
 			/*
 			// This was disabled due to requirments that channel needs to be in Stasis app
@@ -2771,6 +2823,7 @@ int main(int argc, char **argv)
 						{
 							std::cerr << "Error selecting leads from mysql! Did you run --tzpopulate?" << std::endl;
 							// return 1;
+							usleep(10000);
 						}
 						else
 						{
@@ -2905,7 +2958,8 @@ int main(int argc, char **argv)
 							if (mysql_query(mysql, query.c_str()) != 0)
 							{
 								std::cerr << "Error selecting leads from mysql! Did you run --tzpopulate?" << std::endl;
-								return 1;
+								//return 1;
+								usleep(10000);
 							}
 							else
 							{
@@ -3001,7 +3055,8 @@ int main(int argc, char **argv)
 						if (mysql_query(mysql, query.c_str()) != 0)
 						{
 							std::cerr << "Error selecting leads from mysql! Did you run --tzpopulate?" << std::endl;
-							return 1;
+							// return 1; // let it continue
+							usleep(10000);
 						}
 						else
 						{

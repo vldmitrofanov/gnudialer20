@@ -6,7 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\UserAgentResource;
 use App\Models\CampaignFormSchema;
+use App\Models\Disposition;
 use Illuminate\Support\Facades\DB;
+use App\Models\Campaign;
 
 class LeadController extends Controller
 {
@@ -44,17 +46,30 @@ class LeadController extends Controller
         if(isset($data['phone'])){
             unset($data['phone']);
         }      
-        $campaign = $request->campaign;
+        $campaignCode = $request->campaign;
         $leadId = $request->lead['id'];
-        $table_name = 'campaign_' . $campaign;
+        $agentId = $request->agent;
+        $dispo = $request->disposition;
+        $now_string = \Carbon\Carbon::now()->toDateTimeString();
+        $table_name = 'campaign_' . $campaignCode;
         unset($data['id']);
-        $data['lastupdated'] = \Carbon\Carbon::now();
-        $data['agent'] = $request->agent;
-        $data['disposition'] = $request->disposition;
+        $data['lastupdated'] = $now_string;
+        $data['agent'] = $agentId;
+        $data['disposition'] = $dispo;
         if(!empty($request->cb_datetime)){
             $data['cb_datetime'] = \Carbon\Carbon::parse($request->cb_datetime)->toDateTimeString();
         }
         DB::table($table_name)->where('id', $leadId)->update($data);
+        $campaign = Campaign::where('code',$campaignCode)->first();
+        Disposition::where('call_ended',0)
+        ->where('agent_id', $agentId)
+        ->where('lead_id', $leadId)
+        ->where('campaign_id',$campaign->id)
+        ->update([
+            'disposition' => $dispo,
+            'end' => $now_string,
+            'call_ended' => 1
+        ]);
         return response()->json([
             'message' => 'Resource updated successfully',
         ], 201);
