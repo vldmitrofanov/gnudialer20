@@ -40,13 +40,10 @@
         <!-- Reports Menu -->
         <a-sub-menu key="sub5" :title="collapsed ? '' : 'Reports'" :icon="h(PieChartOutlined)">
             <a-menu-item key="9">
-                <NuxtLink to="/admin/reports/sales">Sales Reports</NuxtLink>
+                <NuxtLink :to="{ path: '/admin/reports', query: { mode: 'campaign' } }">Sales Reports</NuxtLink>
             </a-menu-item>
             <a-menu-item key="10">
-                <NuxtLink to="/admin/reports/activity">Activity Reports</NuxtLink>
-            </a-menu-item>
-            <a-menu-item key="10">
-                <NuxtLink to="/admin/reports/campaign">Campaign Reports</NuxtLink>
+                <NuxtLink :to="{ path: '/admin/reports', query: { mode: 'agent' } }">Agent Reports</NuxtLink>
             </a-menu-item>
         </a-sub-menu>
     </a-menu>

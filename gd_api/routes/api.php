@@ -52,6 +52,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
                 Route::post('/import-uploaded', [\App\Http\Controllers\Admin\LeadController::class, 'importUploaded']);
             });
 
+            Route::group(['prefix' => 'dispositions'], function () {
+                Route::get('/', [\App\Http\Controllers\Admin\DispositionController::class, 'index']);
+            });
+
             Route::get('/export/{fileName}', [\App\Http\Controllers\Admin\ExportController::class, 'download'])->name('download.export');
         });
     });

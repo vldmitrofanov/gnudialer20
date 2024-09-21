@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\DispositionReportResource;
 use App\Http\Resources\QueueResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\UserAgentResource;
 use App\Models\Campaign;
 use App\Models\Disposition;
+use Illuminate\Support\Carbon;
 
 class DispositionController extends Controller
 {
@@ -18,7 +20,7 @@ class DispositionController extends Controller
             'agent_id' => 'required',
             'lead_id' => 'required',
         ]);
-        $campaign = Campaign::where('code',$request->campaign_code)->first();
+        $campaign = Campaign::where('code', $request->campaign_code)->first();
         Disposition::create([
             'agent_id' => $request->agent_id,
             'campaign_id' => $campaign->id,
