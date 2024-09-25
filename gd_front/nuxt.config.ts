@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   ssr: false,
   runtimeConfig: {
     public: {
-      apiBaseUrl: process.env.API_BASE_URL || 'http://127.0.0.1:8000', // Replace with your Laravel backend URL
+      apiBaseUrl: process.env.NUXT_PUBLIC_BASE_URL || 'http://127.0.0.1:8000', // Replace with your Laravel backend URL
     },
   },
   css: [
