@@ -99,7 +99,7 @@ printmysqlver:
 	@echo
 	@echo "Checking MySQL Version..."
 	@echo
-	@echo "MYSQL VERSION: " ${MYSQLVER}
+	@echo "MYSQL VERSION: " $(MYSQLVER)
 	@echo
 	@echo "THIS MUST SAY 4.1 OR HIGHER!!!!!!"
 	@echo "CURRENTLY THERE ARE NO CHECKS TO STOP COMPILING IF TOO OLD!"                
