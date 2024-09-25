@@ -235,4 +235,18 @@ INSTALLING GNUDIALER
 	6. Set the time correctly on your server or you might accidentally 
 		call people at 4 in the morning or something.
 
+## if you are running Rocky or Centos/RH
+install mlocate, nlohmann-json-devel
 
+Go to the MySQL Connector/C++ download page and download the latest version of the source code.
+```bash
+tar -xzvf mysql-connector-c++-8.x.xx.tar.gz
+cd mysql-connector-c++-8.x.xx
+```
+```bash
+mkdir build
+cd build
+cmake .. 
+make
+sudo make install
+```

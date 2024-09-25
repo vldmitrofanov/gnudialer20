@@ -23,7 +23,7 @@ DIST := `./detect`
 #MYSQLVER := `mysql -V | cut -c25-27`    
 MYSQLVER := $(shell mysql_config --version)
 
-CXXFLAGS = -std=c++11 -Wall -I/usr/include/mysql -DDEBUG
+CXXFLAGS = -std=c++11 -Wall -I/usr/include/mysql -I/usr/include/jdbc -DDEBUG
 
 # Linker flags
 LDFLAGS = -L/usr/lib/mysql -lmysqlcppconn -lcurl 
