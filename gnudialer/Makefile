@@ -20,7 +20,8 @@ SHELL=/bin/sh
 RUNAS := `ps wwwaux | grep asterisk  | sed -e 's/ /\n/' | sed -e 's/ /\n/' | head -n 1`
 DIST := `./detect`
 
-MYSQLVER := `mysql -V | cut -c25-27`    
+#MYSQLVER := `mysql -V | cut -c25-27`    
+MYSQLVER := $(shell mysql_config --version | cut -d"." -f1-2)
 
 CXXFLAGS = -std=c++11 -Wall -I/usr/include/mysql -DDEBUG
 
