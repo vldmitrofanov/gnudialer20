@@ -10,7 +10,7 @@ import configparser
 
 # Read the /etc/gnudialer.conf file
 def read_gnudialer_conf(conf_file):
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(interpolation=None)
     config.read(conf_file)
 
     # Debug: Print out all sections and keys
