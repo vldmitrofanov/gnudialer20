@@ -21,7 +21,7 @@ RUNAS := `ps wwwaux | grep asterisk  | sed -e 's/ /\n/' | sed -e 's/ /\n/' | hea
 DIST := `./detect`
 
 #MYSQLVER := `mysql -V | cut -c25-27`    
-MYSQLVER := $(shell mysql_config --version | cut -d"." -f1-2)
+MYSQLVER := $(shell mysql_config --version)
 
 CXXFLAGS = -std=c++11 -Wall -I/usr/include/mysql -DDEBUG
 
