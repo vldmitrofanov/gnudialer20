@@ -6,29 +6,39 @@
 import mysql.connector
 import json
 import telnetlib
+import configparser
 
 # Read the /etc/gnudialer.conf file
 def read_gnudialer_conf(conf_file):
-    with open(conf_file, 'r') as file:
-        lines = file.readlines()
+    config = configparser.ConfigParser()
+    config.read(conf_file)
 
+    # Debug: Print out all sections and keys
+    for section in config.sections():
+        print(f"[{section}]")
+        for key, value in config.items(section):
+            print(f"{key}: {value}")
 
-    # Debug: Print out the lines read from the file
-    for i, line in enumerate(lines):
-        print(f"Line {i+1}: {line.strip()}")
-
-    config = {
-        "mysql_user": lines[1].strip(),     # 2nd line: MySQL user
-        "mysql_pass": lines[2].strip(),     # 3rd line: MySQL password
-        "mysql_host": lines[3].strip(),     # 4th line: MySQL host
-        "mysql_db": lines[4].strip(),     # 4th line: MySQL host
-        "mysql_port": int(lines[5].strip()),  # 5th line: MySQL port
-        "ami_user": lines[6].strip(),       # 6th line: AMI user
-        "ami_secret": lines[7].strip(),     # 7th line: AMI secret
-        "ami_host": lines[8].strip(),       # 8th line: AMI host
-        "server_id": int(lines[9].strip())   # 9th line: Server ID
+    # Parsing values from the file
+    parsed_config = {
+        "mysql_user": config.get('database', 'mysql_username'),
+        "mysql_pass": config.get('database', 'mysql_password'),
+        "mysql_host": config.get('database', 'mysql_host'),
+        "mysql_db": config.get('database', 'mysql_dbname'),
+        "mysql_port": config.getint('database', 'mysql_port'),
+        "ami_user": config.get('manager', 'manager_username'),
+        "ami_secret": config.get('manager', 'manager_password'),
+        "ami_host": config.get('asterisk', 'master_host'),
+        "server_id": config.getint('asterisk', 'server_id'),
+        "ari_user": config.get('ari', 'ari_username'),
+        "ari_secret": config.get('ari', 'ari_password'),
+        "ari_proto": config.get('ari', 'ari_proto'),
+        "redis_password": config.get('redis', 'redis_password'),
+        "redis_port": config.getint('redis', 'redis_port'),
+        "redis_host": config.get('redis', 'redis_host')
     }
-    return config
+
+    return parsed_config
 
 # Check if there are any queues with synced = 0
 def check_unsynced(config):
