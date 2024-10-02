@@ -46,7 +46,7 @@ def check_unsynced(config):
         host=config["mysql_host"],
         user=config["mysql_user"],
         password=config["mysql_pass"],
-        database=["mysql_db"],
+        database=config["mysql_db"],
         port=config["mysql_port"]
     )
     cursor = connection.cursor()
