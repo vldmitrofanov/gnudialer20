@@ -28,19 +28,30 @@ if [ -z "$IP_ADDRESSES" ]; then
     exit 1
 fi
 
+function is_ip_allowed() {
+    local ip=$1
+    iptables -L INPUT -v -n | grep -q "$ip"
+    return $?
+}
+
 # Loop through each IP and allow it through the firewall
 echo "Applying firewall rules for the following IPs:"
 for ip in $IP_ADDRESSES; do
-    echo "Allowing IP: $ip"
-    
-    # Open SIP (UDP 5060)
-    iptables -A INPUT -s "$ip" -p udp --dport 5060 -j ACCEPT
+    echo "Processing IP: $ip"
 
-    # Open media port range (UDP 10000-20000)
-    iptables -A INPUT -s "$ip" -p udp --dport 10000:20000 -j ACCEPT
+    if ! is_ip_allowed "$ip"; then
+        echo "IP $ip is not allowed, adding rules."
+        # Open SIP (UDP 5060)
+        iptables -A INPUT -s "$ip" -p udp --dport 5060 -j ACCEPT
 
-    # Open port 8443 (TCP)
-    iptables -A INPUT -s "$ip" -p tcp --dport 8443 -j ACCEPT
+        # Open media port range (UDP 10000-20000)
+        iptables -A INPUT -s "$ip" -p udp --dport 10000:20000 -j ACCEPT
+
+        # Open port 8443 (TCP)
+        iptables -A INPUT -s "$ip" -p tcp --dport 8443 -j ACCEPT
+    else
+        echo "IP $ip is already allowed, skipping."
+    fi
 done
 
 # Save iptables rules to persist them
