@@ -11,7 +11,7 @@
   <a-table :dataSource="dataSource?.data" :columns="columns">
       <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'name'">
-              <NuxtLink :to="`/admin/campaigns/${record.code}`">
+              <NuxtLink :to="`/admin/leads/${record.code}`">
                   {{ record.name }}
               </NuxtLink>
           </template>
