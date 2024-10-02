@@ -20,7 +20,7 @@ TABLE_NAME="users"
 COLUMN_NAME="ip_address"
 
 # Fetch IP addresses from MySQL
-IP_ADDRESSES=$(mysql -h $DB_HOST -P $DB_PORT -u $DB_USER -p$DB_PASS -D $DB_NAME -se "SELECT DISTINCT $COLUMN_NAME FROM $TABLE_NAME;")
+IP_ADDRESSES=$(mysql -h $DB_HOST -P $DB_PORT -u $DB_USER -p$DB_PASS -D $DB_NAME -se "SELECT DISTINCT $COLUMN_NAME FROM $TABLE_NAME WHERE IS NOT NULL $COLUMN_NAME;")
 
 # Check if there are any IP addresses returned
 if [ -z "$IP_ADDRESSES" ]; then
