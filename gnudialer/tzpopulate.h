@@ -50,7 +50,7 @@ void tzpopulate(std::string campaign) {
 	std::string dbName = getDbName();
 	std::string mySqlHost = getMySqlHost();
 
-	std::string initialQuery = "ALTER TABLE campaign_" + campaign + " ADD tzl INT(8), ADD tzh INT(8), ADD attempts int(8), ADD pickups int(8), ADD abandons int(8), ADD disposition int(8), ADD agent varchar(10), ADD closerdispo int(8), ADD closer varchar(10), ADD subdispo varchar(10) default \'\', ADD lastupdated timestamp NOT NULL default \'1970-01-01 00:00:00\' on update CURRENT_TIMESTAMP, ADD cb_datetime timestamp NOT NULL default \'1970-01-01 00:00:00\', ADD INDEX ( attempts ), ADD INDEX ( pickups ), ADD INDEX ( disposition ), ADD INDEX ( phone )";
+	std::string initialQuery = "ALTER TABLE campaign_" + campaign + " ADD tzl INT(8), ADD tzh INT(8), ADD attempts int(8), ADD pickups int(8), ADD abandons int(8), ADD disposition int(8), ADD agent varchar(10), ADD closerdispo int(8), ADD closer varchar(10), ADD subdispo varchar(10) default \'\', ADD lastupdated timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP, ADD cb_datetime timestamp NOT NULL default \'1970-01-01 00:00:00\', ADD INDEX ( attempts ), ADD INDEX ( pickups ), ADD INDEX ( disposition ), ADD INDEX ( phone )";
 	TheQueries.push_back(initialQuery);
 	std::string initializeValuesQuery = "UPDATE campaign_" + campaign + " SET tzl=0, tzh=0, attempts=0, pickups=0, abandons=0, disposition=1, agent=\\\"000\\\", closerdispo=0, closer=\\\"000\\\" WHERE disposition is NULL" ;
 	TheQueries.push_back(initializeValuesQuery);
