@@ -3047,7 +3047,7 @@ int main(int argc, char **argv)
 						}
 
 						query += " disposition = 0 AND";
-						query += " cb_datetime > '1970-01-01 00:00:00' AND cb_datetime < NOW()";
+						query += " cb_datetime > '2000-01-01 00:00:00' AND cb_datetime < NOW()";
 						query += " AND ((lastupdated) < DATE_SUB(NOW(),INTERVAL 2 MINUTE)) ";
 
 						query += " ORDER BY attempts + pickups ASC LIMIT " + itos(remaininglines);
