@@ -18,7 +18,7 @@ class QueueController extends Controller
         $results = \App\Models\Queue::where('server_id', $request->server_id)->whereHas('agents', function($q) use($agent_id){
             $q->where('id',$agent_id);
         })
-        ->with(['campaign'])
+        ->with(['campaign', 'campaign.threeWays', 'campaign.settings'])
         ->get();
         return QueueResource::collection($results);
     }

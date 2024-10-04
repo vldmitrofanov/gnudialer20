@@ -119,7 +119,13 @@
                 </a-row>
             </a-card>
             <a-card :title="null" v-if="queue?.campaign?.settings?.allow3way>0">
-
+                <a-col :span="24">3Way transfer:</a-col>
+                <a-col :span="12" v-for="threeWay in queue?.campaign?.three_ways">
+                    <a-button block class="three-way-button" :disabled="allButtonsDisabled"
+                            @click=handle3WayTransfer(threeWay.id)>
+                            {{ threeWay.name }}
+                    </a-button>
+                </a-col>
             </a-card>
         </a-col>
 
