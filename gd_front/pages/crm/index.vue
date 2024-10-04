@@ -348,6 +348,8 @@ const handleDisposition = async (dispo) => {
     gdialDispo(dispo)
     if (!pauseAfterCall.value) {
         setOnWait()
+    } else {
+        togglePause()
     }
 }
 
@@ -545,6 +547,9 @@ const togglePause = async () => {
         }
         if (parseInt(resObj?.Paused) === 0) {
             setOnWait()
+            pauseAfterCall.value = false
+        } else {
+            pauseAfterCall.value = true
         }
     }
 }
