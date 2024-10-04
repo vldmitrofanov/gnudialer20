@@ -300,7 +300,7 @@ const handleSettingCreate = async (queueId) => {
             Accept: `application/json`,
             Authorization: `Bearer ${authToken}`
         },
-        body: JSON.stringify({ ...newSetting, queue_id: queueId }),
+        body: { ...newSetting.value, queue_id: queueId },
         onResponseError: ({ response }) => {
             // Access response data and handle error
             if (response && response._data && response._data.message) {
