@@ -2,7 +2,7 @@
     <a-row>
         <!-- Left Pane: Dial Pad and Disposition Buttons -->
         <a-col :span="5" class="left-pane">
-            <a-card title="Disposition" class="disposition">
+            <a-card :title="null" class="disposition">
                 <div class="agent-status-wrapper">
                     <DatabaseOutlined :style="{ color: connected ? 'green' : 'lightgray' }" />
 
@@ -117,6 +117,9 @@
                         </a-button>
                     </a-col>
                 </a-row>
+            </a-card>
+            <a-card :title="null" v-if="queue?.campaign?.settings?.allow3way>0">
+
             </a-card>
         </a-col>
 

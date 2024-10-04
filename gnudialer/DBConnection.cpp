@@ -219,3 +219,31 @@ std::vector<ParsedAgent> DBConnection::getAllAgents(u_long serverId)
     }
     return itsAgents;
 }
+
+u_long DBConnection::getQueueIdByCode(const std::string &campaignCode, u_long serverId = 1)
+{
+    try
+    {
+        std::shared_ptr<sql::PreparedStatement> pstmt(
+            conn->prepareStatement("SELECT queues.id FROM queues "
+                                   "JOIN campaigns ON campaigns.id = queues.campaign_id "
+                                   "WHERE campaigns.code = ? AND queues.server_id = ? LIMIT 1"));
+
+        pstmt->setString(1, campaignCode);
+        pstmt->setUInt64(2, serverId);
+
+        std::shared_ptr<sql::ResultSet> res(pstmt->executeQuery());
+        if (res->next())
+        {
+            return res->getUInt64("id");
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "SQLException: " << e.what() << std::endl;
+        std::cerr << "MySQL error code: " << e.getErrorCode() << std::endl;
+        std::cerr << "SQLState: " << e.getSQLState() << std::endl;
+    }
+    return 0; // return 0 if not found
+}
+

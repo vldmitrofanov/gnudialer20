@@ -26,4 +26,9 @@ class Campaign extends Model
     {
         return $this->hasMany(Disposition::class)->orderById('desc');
     }
+
+    public function threeWays() 
+    {
+        return $this->hasMany(ThreeWay::class);
+    }
 }
