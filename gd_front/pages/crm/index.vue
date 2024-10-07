@@ -185,6 +185,7 @@
 import { message } from 'ant-design-vue';
 import { useFetch, useCookie, useRuntimeConfig } from '#app'
 import { SearchOutlined } from '@ant-design/icons-vue';
+const DEBUG = true
 const config = useRuntimeConfig()
 const authToken = useCookie('auth_token').value
 const isCBModalVisible = ref(false)
@@ -213,6 +214,7 @@ const leadFormRef = ref(null)
 const pauseAfterCall = ref(false)
 const cb_datetime = ref(null)
 const defaultDate = ref(new Date());
+const bridgeId = ref(null)
 
 defaultDate.value.setDate(defaultDate.value.getDate() + 1);
 defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
@@ -277,7 +279,9 @@ const handleSearch = async () => {
 }
 
 const initiateWebsocket = (server) => {
-    console.log(server?.data.ws.proto)
+    if(DEBUG){
+        console.log('initiateWebsocket(server)', server?.data.ws.proto)
+    }
     const proto = server?.data?.ws?.proto
     const host = server?.data?.ws?.host
     const app_name = server?.data?.ws?.app_name
@@ -289,7 +293,9 @@ const initiateWebsocket = (server) => {
     }
     const ws = new WebSocket(`${proto}://${host}/ari/events?api_key=${user}:${password}&app=${app_name}&subscribeAll=true`);
     ws.onopen = () => {
-        console.log('WebSocket connection opened');
+        if(DEBUG){
+            console.log('WebSocket connection opened');
+        }
         connected.value = true
     };
 
@@ -301,7 +307,9 @@ const initiateWebsocket = (server) => {
         // Handle different events based on the event type
         switch (data.variable) {
             case 'BRIDGEPEER':
-                console.log('BRIDGEPEER event:', data);
+                if(DEBUG){
+                    console.log('BRIDGEPEER event:', data);
+                }
                 if (data.value.includes(`PJSIP/${agent.value?.id}-`)) {
                     onBringePeer(data)
                 }
@@ -325,6 +333,17 @@ const initiateWebsocket = (server) => {
                 if (data.channel?.name?.includes(`PJSIP/${agent.value?.id}-`)) {
                     queue.value = null;
                     agentStatus.value = null;
+                    bridgeId.value = null
+                }
+                break;
+            case "ChannelEnteredBridge":
+                if (data.channel?.name?.includes(`PJSIP/${agent.value?.id}-`)) {
+                    if(DEBUG){
+                        console.log('ENTERED_BRIDGE',data.bridge)
+                    }
+                    if(data.bridge){
+                        bridgeId.value = data.bridge.id
+                    }
                 }
                 break;
         }
@@ -338,14 +357,18 @@ const initiateWebsocket = (server) => {
 
     // Handle WebSocket close
     ws.onclose = (event) => {
-        console.log('WebSocket connection closed:', event);
+        if(DEBUG){
+            console.log('WebSocket connection closed:', event);
+        }
         connected.value = false;  // Update connection status on close
     };
 }
 
 const handleDisposition = async (dispo) => {
     disposition.value = dispo
-    console.log(dispo)
+    if(DEBUG){
+        console.log(dispo)
+    }
     if(parseInt(dispo) === 0 && (!cb_datetime.value || cb_datetime.value == '')) {
         isCBModalVisible.value = true 
         return
@@ -510,7 +533,9 @@ const getLead = async (campaign, leadId) => {
 }
 
 const handleSelectQueue = (ql) => {
-    console.log(ql)
+    if(DEBUG){
+        console.log(ql)
+    }
     queue.value = ql
     if (queue.value) {
         getAgentStatus()
@@ -544,7 +569,9 @@ const togglePause = async () => {
     } else {
         //console.log('Fetched data:', data.value)
         const resObj = data.value?.data?.QueueMemberPause[0]
-        console.log('resObj', resObj)
+        if(DEBUG){
+            console.log('resObj', resObj)
+        }
         if (parseInt(resObj?.Status) === 2) {
             agentStatus.value = {
                 status: {
@@ -578,7 +605,9 @@ const getAgentQueues = async () => {
         console.error('Failed to fetch data:', error.value)
         return null
     } else {
-        console.log('Fetched data:', data.value)
+        if(DEBUG){
+            console.log('Fetched data:', data.value)
+        }
         queues.value = data.value.data
         if (!loggedIn.value) {
             queueButtonDisabled.value = false
@@ -603,7 +632,9 @@ const getAgentStatus = async () => {
         console.error('Failed to fetch data:', error.value)
         return null
     } else {
-        console.log('Fetched data:', data.value)
+        if(DEBUG){
+            console.log('Fetched data:', data.value)
+        }
         agentStatus.value = data.value
         startButtonDisabled.value = false
     }
@@ -622,7 +653,9 @@ const fetchServerData = async (id) => {
         console.error('Failed to fetch data:', error.value)
         return null
     } else {
-        console.log('Fetched data:', data.value)
+        if(DEBUG){
+            console.log('Fetched data:', data.value)
+        }
         return data.value
     }
 }
