@@ -660,6 +660,10 @@ const fetchServerData = async (id) => {
     }
 }
 
+const handle3WayTransfer = async(threeWayId) => {
+    console.log(bridgeId.value,threeWayId)
+}
+
 onMounted(async () => {
     const chunk = localStorage.getItem('user')
     if (!chunk) {
