@@ -270,6 +270,66 @@ class AsteriskAMIService
         }
     }
 
+    public function sendCommandAndGetChannell($command, $end)
+    {
+        Log::info("AMI Command Line: {$command}");
+        fwrite($this->socket, $command);
+
+        $response = '';
+        $startTime = time(); // Track the start time
+        $timeout = 10; // Set a timeout in seconds
+        $channel = ''; // Variable to store the channel name
+
+        while (!feof($this->socket)) {
+            $line = fgets($this->socket);
+            if ($line === false) {
+                break;
+            }
+
+            $response .= $line;
+
+            // Log each line for debugging purposes
+            Log::info("AMI Response Line: {$line}");
+
+            // Capture the channel name from the response
+            if (strpos($line, 'Channel:') !== false) {
+                $channel = trim(explode(":", $line)[1]); // Extract and trim the channel name
+                Log::info("Captured Channel Name: {$channel}");
+                break;
+            }
+
+            // Check for "Newstate" event indicating the call was answered
+            if (strpos($line, 'Event: Newstate') !== false && strpos($line, 'ChannelStateDesc: Up') !== false) {
+                Log::info("The third party has answered the call on Channel: {$channel}");
+                // You can add more logic here to handle the event when the call is picked up
+            }
+
+            // Break if the end of the QueueStatus response is reached
+            if (strpos($line, $end) !== false) {
+                break;
+            }
+
+            // Implement a timeout to avoid infinite loops
+            if ((time() - $startTime) > $timeout) {
+                Log::warning("AMI response timed out after {$timeout} seconds");
+                break;
+            }
+        }
+
+        // Optionally return the response or the channel name as needed
+        return ['response' => $this->parseResponse($response), 'channel' => $channel];
+    }
+
+    public function joinBridge($bridgeId, $channel)
+    {
+        $command = "Action: Bridge\r\n";
+        $command .= "BridgeUniqueid: {$bridgeId}\r\n";
+        $command .= "Channel: {$channel}\r\n";  // The third party's SIP channel
+        $command .= "ActionID: addThirdPartyToBridge\r\n\r\n";
+
+        return $this->sendCommand($command, "\r\n");
+    }
+
     public function __destruct()
     {
         $this->logout();

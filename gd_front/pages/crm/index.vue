@@ -11,14 +11,14 @@
                             >
                             1 ? 'green' : '#999'
                     }">{{ `${agentStatus?.status?.Paused == 1 ? 'Paused' :
-                            agentStatus?.status?.Status
-                                >
+                        agentStatus?.status?.Status
+                            >
                             1 ? 'Active' : 'Inactive'}` }}</span></span>
                 </div>
                 <a-row :gutter="{ xs: 8, sm: 8, md: 8, lg: 8 }">
                     <a-col :span="12">
                         <a-button block class="disposition-button" :disabled="allButtonsDisabled"
-                        @click=handleDisposition(0)>
+                            @click=handleDisposition(0)>
                             Callback <small>0</small>
                         </a-button>
                     </a-col>
@@ -118,14 +118,21 @@
                     </a-col>
                 </a-row>
             </a-card>
-            <a-card :title="null" v-if="queue?.settings?.find(item => item.parameter === 'allow3way' && item.value === '1')">
+            <a-card :title="null"
+                v-if="queue?.settings?.find(item => item.parameter === 'allow3way' && item.value === '1')">
                 <a-col :span="24">3Way transfer:</a-col>
-                <a-col :span="12" v-for="threeWay in queue?.campaign?.three_ways">
-                    <a-button block class="three-way-button" :disabled="allButtonsDisabled"
+                <div v-if="!threeWayStatus">
+                    <a-col :span="12" v-for="threeWay in queue?.campaign?.three_ways">
+                        <a-button block class="three-way-button" :disabled="allButtonsDisabled"
                             @click=handle3WayTransfer(threeWay.id)>
                             {{ threeWay.name }}
-                    </a-button>
-                </a-col>
+                        </a-button>
+                    </a-col>
+                </div>
+                <div v-else>
+                    <a-col :span="12"><a-button>Leave 3way</a-button></a-col>
+                    <a-col :span="12"><a-button>Hangup 3way Line</a-button></a-col>
+                </div>
             </a-card>
         </a-col>
 
@@ -164,20 +171,11 @@
             </a-tabs>
         </a-col>
     </a-row>
-    <a-modal
-      :open="isCBModalVisible"
-      title="Select Date and Time"
-      @ok="handleCBDateSelected"
-      @cancel="isCBModalVisible=false"
-    >
-    <h3>Pleas select CB date</h3>
-      <a-date-picker
-        v-model:value="cb_datetime"
-        show-time
-        :default-value="defaultDate"
-        format="YYYY-MM-DD hh:mm A"
-        style="width: 100%;"
-      />
+    <a-modal :open="isCBModalVisible" title="Select Date and Time" @ok="handleCBDateSelected"
+        @cancel="isCBModalVisible = false">
+        <h3>Pleas select CB date</h3>
+        <a-date-picker v-model:value="cb_datetime" show-time :default-value="defaultDate" format="YYYY-MM-DD hh:mm A"
+            style="width: 100%;" />
     </a-modal>
 </template>
 
@@ -215,12 +213,13 @@ const pauseAfterCall = ref(false)
 const cb_datetime = ref(null)
 const defaultDate = ref(new Date());
 const bridgeId = ref(null)
+const threeWayStatus = ref(null)
 
 defaultDate.value.setDate(defaultDate.value.getDate() + 1);
 defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
 
 const handleCBDateSelected = () => {
-    if((!cb_datetime.value || cb_datetime.value == '')){
+    if ((!cb_datetime.value || cb_datetime.value == '')) {
         message.error("Please select CB date")
         return
     }
@@ -228,19 +227,19 @@ const handleCBDateSelected = () => {
     isCBModalVisible.value = false
 }
 const formatDateToSQL = (date) => {
-      if (!date) return null;
+    if (!date) return null;
 
-      const padZero = (num) => (num < 10 ? '0' + num : num);
+    const padZero = (num) => (num < 10 ? '0' + num : num);
 
-      const year = date.getFullYear();
-      const month = padZero(date.getMonth() + 1); // Months are zero-based
-      const day = padZero(date.getDate());
-      const hours = padZero(date.getHours());
-      const minutes = padZero(date.getMinutes());
-      const seconds = padZero(date.getSeconds());
+    const year = date.getFullYear();
+    const month = padZero(date.getMonth() + 1); // Months are zero-based
+    const day = padZero(date.getDate());
+    const hours = padZero(date.getHours());
+    const minutes = padZero(date.getMinutes());
+    const seconds = padZero(date.getSeconds());
 
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    };
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
 
 const handleSearch = async () => {
     if (!queue.value) {
@@ -279,7 +278,7 @@ const handleSearch = async () => {
 }
 
 const initiateWebsocket = (server) => {
-    if(DEBUG){
+    if (DEBUG) {
         console.log('initiateWebsocket(server)', server?.data.ws.proto)
     }
     const proto = server?.data?.ws?.proto
@@ -293,7 +292,7 @@ const initiateWebsocket = (server) => {
     }
     const ws = new WebSocket(`${proto}://${host}/ari/events?api_key=${user}:${password}&app=${app_name}&subscribeAll=true`);
     ws.onopen = () => {
-        if(DEBUG){
+        if (DEBUG) {
             console.log('WebSocket connection opened');
         }
         connected.value = true
@@ -307,7 +306,7 @@ const initiateWebsocket = (server) => {
         // Handle different events based on the event type
         switch (data.variable) {
             case 'BRIDGEPEER':
-                if(DEBUG){
+                if (DEBUG) {
                     console.log('BRIDGEPEER event:', data);
                 }
                 if (data.value.includes(`PJSIP/${agent.value?.id}-`)) {
@@ -334,14 +333,15 @@ const initiateWebsocket = (server) => {
                     queue.value = null;
                     agentStatus.value = null;
                     bridgeId.value = null
+                    threeWayStatus.value = null
                 }
                 break;
             case "ChannelEnteredBridge":
                 if (data.channel?.name?.includes(`PJSIP/${agent.value?.id}-`)) {
-                    if(DEBUG){
-                        console.log('ENTERED_BRIDGE',data.bridge)
+                    if (DEBUG) {
+                        console.log('ENTERED_BRIDGE', data.bridge)
                     }
-                    if(data.bridge){
+                    if (data.bridge) {
                         bridgeId.value = data.bridge.id
                     }
                 }
@@ -357,7 +357,7 @@ const initiateWebsocket = (server) => {
 
     // Handle WebSocket close
     ws.onclose = (event) => {
-        if(DEBUG){
+        if (DEBUG) {
             console.log('WebSocket connection closed:', event);
         }
         connected.value = false;  // Update connection status on close
@@ -366,11 +366,11 @@ const initiateWebsocket = (server) => {
 
 const handleDisposition = async (dispo) => {
     disposition.value = dispo
-    if(DEBUG){
+    if (DEBUG) {
         console.log(dispo)
     }
-    if(parseInt(dispo) === 0 && (!cb_datetime.value || cb_datetime.value == '')) {
-        isCBModalVisible.value = true 
+    if (parseInt(dispo) === 0 && (!cb_datetime.value || cb_datetime.value == '')) {
+        isCBModalVisible.value = true
         return
     }
     if (channel.value) {
@@ -472,7 +472,7 @@ const handleLeadSave = async (updatedLead) => {
             lead: updatedLead,
             agent: agent.value.id,
             disposition: disposition.value,
-            cb_datetime: cb_datetime.value?formatDateToSQL(cb_datetime.value):''
+            cb_datetime: cb_datetime.value ? formatDateToSQL(cb_datetime.value) : ''
         }
     })
     cb_datetime.value = null
@@ -533,7 +533,7 @@ const getLead = async (campaign, leadId) => {
 }
 
 const handleSelectQueue = (ql) => {
-    if(DEBUG){
+    if (DEBUG) {
         console.log(ql)
     }
     queue.value = ql
@@ -569,7 +569,7 @@ const togglePause = async () => {
     } else {
         //console.log('Fetched data:', data.value)
         const resObj = data.value?.data?.QueueMemberPause[0]
-        if(DEBUG){
+        if (DEBUG) {
             console.log('resObj', resObj)
         }
         if (parseInt(resObj?.Status) === 2) {
@@ -605,7 +605,7 @@ const getAgentQueues = async () => {
         console.error('Failed to fetch data:', error.value)
         return null
     } else {
-        if(DEBUG){
+        if (DEBUG) {
             console.log('Fetched data:', data.value)
         }
         queues.value = data.value.data
@@ -632,7 +632,7 @@ const getAgentStatus = async () => {
         console.error('Failed to fetch data:', error.value)
         return null
     } else {
-        if(DEBUG){
+        if (DEBUG) {
             console.log('Fetched data:', data.value)
         }
         agentStatus.value = data.value
@@ -653,15 +653,37 @@ const fetchServerData = async (id) => {
         console.error('Failed to fetch data:', error.value)
         return null
     } else {
-        if(DEBUG){
+        if (DEBUG) {
             console.log('Fetched data:', data.value)
         }
         return data.value
     }
 }
 
-const handle3WayTransfer = async(threeWayId) => {
-    console.log(bridgeId.value,threeWayId)
+const handle3WayTransfer = async (threeWayId) => {
+    console.log(bridgeId.value, threeWayId)
+    const serverId = serverData.value.id
+    const { data, error, pending, onError } = await useFetch(`/api/asterisk/bridge-3way`, {
+        method: 'POST',
+        baseURL: config.public.apiBaseUrl,
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        },
+        body: {
+            server_id: serverId,
+            three_way_id: threeWayId,
+            bridge: bridgeId.value,
+        }
+    })
+    onError((fetchError) => {
+        message.error("Error during 3-way transfer:", fetchError);
+        return
+    });
+    if (!error.value) {
+        threeWayStatus.value = data
+        console.log('3__Way__Response',data)
+    }
 }
 
 onMounted(async () => {
@@ -704,6 +726,7 @@ onMounted(async () => {
     align-items: center;
     margin-bottom: 10px;
     gap: 10px;
+
     .agent-status-text {
         font-size: 12px;
         color: #999;
