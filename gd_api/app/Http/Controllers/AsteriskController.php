@@ -109,12 +109,12 @@ class AsteriskController extends Controller
         $command .= "Timeout: 30000\r\n";  // Timeout in milliseconds
         $command .= "ActionID: dialThirdParty\r\n";
         $command .= "Async: true\r\n\r\n";
-        $result = $this->amiService->sendCommandAndGetChannell($command, "\r\n");
+        $result = $this->amiService->sendCommandAndGetChannell($command, "\r\n\r\n");
         if (!empty($result['channel'])) {
             $status =  $this->amiService->joinBridge($bridge, $result['channel']);
             return response()->json(['status' => $status, 'channel' => $result['channel']], 200);
         } else {
-            return response()->json(['status' => null], 428);
+            return response()->json(['status' => null], 422);
         }
     }
 }
