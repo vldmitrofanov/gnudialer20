@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\AsteriskAMIService;
+use Illuminate\Support\Facades\Log;
 
 class AsteriskController extends Controller
 {
@@ -109,6 +110,7 @@ class AsteriskController extends Controller
         $command .= "Timeout: 30000\r\n";  // Timeout in milliseconds
         $command .= "ActionID: dialThirdParty\r\n";
         $command .= "Async: true\r\n\r\n";
+        Log::info("Dialing Trunk: {$threeWay->trunk}");
         $result = $this->amiService->sendCommandAndGetChannell($command, "\r\n\r\n");
         if (!empty($result['channel'])) {
             $status =  $this->amiService->joinBridge($bridge, $result['channel']);
