@@ -94,6 +94,11 @@
                             NoSale <small>11</small>
                         </a-button>
                     </a-col>
+                    <a-col :span="12" v-if="channel2">
+                        <a-button block class="hold-button" :disabled="allButtonsDisabled" @click=toggleHold>
+                            {{ isChannel2OnHold ? 'Unhold' : 'Put On Hold' }}
+                        </a-button>
+                    </a-col>
                     <a-col :span="24">
                         <a-dropdown class="qsb-etytrui" :disabled="queueButtonDisabled">
                             <template #overlay>
@@ -169,6 +174,9 @@
                     <p>Call history and other interactions with the lead.</p>
                 </a-tab-pane>agentStatus
             </a-tabs>
+            <div v-if="DEBUG" class="debug-panel">channel: {{ channel }} | channel2 {{ channel2 }} |
+                onHold: {{ isChannel2OnHold }} | bridge: {{ bridgeId }} | leadCampaign {{ leadCampaign }}
+            </div>
         </a-col>
     </a-row>
     <a-modal :open="isCBModalVisible" title="Select Date and Time" @ok="handleCBDateSelected"
@@ -200,6 +208,8 @@ const queue = ref(null)
 const queueButtonDisabled = ref(true)
 const loggedIn = ref(false)
 const channel = ref(null)
+const channel2 = ref(null)
+const isChannel2OnHold = ref(false)
 const lead = ref(null)
 const leadSchema = ref(null)
 const callerId = ref(null)
@@ -218,6 +228,47 @@ const threeWayStatus = ref(null)
 defaultDate.value.setDate(defaultDate.value.getDate() + 1);
 defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
 
+const toggleHold = async () => {
+    if (!channel2.value) {
+        message.error("No channel found to put on hold")
+        return
+    }
+    let actionCommand = ''
+    if (!isChannel2OnHold.value) {
+        actionCommand = "Action: Redirect\r\n";
+        actionCommand += `Channel: ${channel2.value}\r\n`;
+        actionCommand += "Context: gnudialer_hold\r\n";
+        actionCommand += "Exten: s\r\n";
+        actionCommand += "Priority: 1\r\n";
+    } else if(!threeWayStatus.value) {
+        actionCommand = "Action: Redirect\r\n";
+        actionCommand += `Channel: ${channel2.value}\r\n`;  // Customer channel currently on hold
+        actionCommand += "Context: gnudialer_bridge\r\n";      // Context to handle the bridge
+        actionCommand += "Exten: s\r\n";                     // Extension to handle bridging
+        actionCommand += "Priority: 1\r\n";                  // Priority in the dialplan
+        actionCommand += `Setvar: BRIDGE_ID=${bridgeId.value}\r\n`;
+    }
+    const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
+        method: 'POST',
+        baseURL: config.public.apiBaseUrl,
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        },
+        body: {
+            server_id: serverData.value?.id,
+            action: actionCommand
+        }
+    })
+    if (error.value) {
+        console.error('Error during hangup: ', error.value)
+        message.error(error.value);
+        return null
+    } else {
+        channel2.value = null
+    }
+
+}
 const handleCBDateSelected = () => {
     if ((!cb_datetime.value || cb_datetime.value == '')) {
         message.error("Please select CB date")
@@ -309,8 +360,10 @@ const initiateWebsocket = (server) => {
                 if (DEBUG) {
                     console.log('BRIDGEPEER event:', data);
                 }
-                if (data.value.includes(`PJSIP/${agent.value?.id}-`)) {
+                if (data.value?.channel?.name?.includes(`PJSIP/${agent.value?.id}-`)) {
                     onBringePeer(data)
+                } else if (agent.value?.id > 0 && parseInt(data.value?.channel?.connected?.number) === parseInt(agent.value.id)) {
+                    channel2.value = data.value.channel.name
                 }
                 break;
         }
@@ -342,6 +395,7 @@ const initiateWebsocket = (server) => {
                         console.log('ENTERED_BRIDGE', data.bridge)
                     }
                     if (data.bridge) {
+                        channel2.value
                         bridgeId.value = data.bridge.id
                     }
                 }
@@ -410,6 +464,8 @@ const gdialDispo = async (dispo) => {
         console.error('Error during hangup: ', error.value)
         message.error(error.value);
         return null
+    } else {
+        channel2.value = null
     }
 }
 
@@ -682,7 +738,7 @@ const handle3WayTransfer = async (threeWayId) => {
     });
     if (!error.value) {
         threeWayStatus.value = data
-        console.log('3__Way__Response',data)
+        console.log('3__Way__Response', data)
     }
 }
 
@@ -745,6 +801,16 @@ onMounted(async () => {
 
 .right-pane {
     padding: 16px;
+    padding-bottom: 60px;
+    position: relative;
+
+    .debug-panel {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        border-top: #777 1px solid;
+    }
 }
 
 .dial-pad {
@@ -772,6 +838,11 @@ onMounted(async () => {
     background-color: #ffc0cb;
     /* Light pink */
     border-color: #ffc0cb;
+}
+
+.hold-button {
+    background-color: cadetblue;
+    border-color: cadetblue;
 }
 
 .sale-button {
