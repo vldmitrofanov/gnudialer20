@@ -103,14 +103,14 @@ class AsteriskController extends Controller
         $serverId = $request->server_id;
         $this->amiService->setServer($serverId);
         $command = "Action: Originate\r\n";
-        $command .= "Channel: $threeWay->trunk\r\n";  // The third party's SIP channel
+        $command .= "Channel: $threeWay->extension\r\n";  // The third party's SIP channel
         $command .= "Context: $threeWay->context\r\n";  // The dialplan context
         $command .= "Priority: 1\r\n";  // Priority in dialplan
         $command .= "CallerID: $threeWay->caller_id\r\n";
         $command .= "Timeout: 30000\r\n";  // Timeout in milliseconds
         $command .= "ActionID: dialThirdParty\r\n";
         $command .= "Async: true\r\n\r\n";
-        Log::info("Dialing Trunk: {$threeWay->trunk}");
+        Log::info("Dialing extension: {$threeWay->extension}");
         $result = $this->amiService->sendCommandAndGetChannell($command, "\r\n\r\n");
         if (!empty($result['channel'])) {
             $status =  $this->amiService->joinBridge($bridge, $result['channel']);
