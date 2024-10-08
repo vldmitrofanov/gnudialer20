@@ -360,11 +360,10 @@ const initiateWebsocket = (server) => {
                 if (DEBUG) {
                     console.log('BRIDGEPEER event:', data);
                 }
-                if (data.value?.channel?.name?.includes(`PJSIP/${agent.value?.id}-`)) {
+                if (data.value?.includes(`PJSIP/${agent.value?.id}-`)) {
                     onBringePeer(data)
-                } else if (agent.value?.id > 0 && parseInt(data.value?.channel?.connected?.number) === parseInt(agent.value.id)) {
-                    channel2.value = data.value.channel.name
-                }
+                    channel2.value = data.channel.name
+                } 
                 break;
         }
         switch (data.dialplan_app) {
