@@ -96,7 +96,7 @@
                     </a-col>
                     <a-col :span="12" v-if="customerChannel">
                         <a-button block class="hold-button" :disabled="allButtonsDisabled" @click=toggleHold>
-                            {{ isChannel2OnHold ? 'Unhold' : 'Put On Hold' }}
+                            {{ isChannel2OnHold ? 'Unhold' : 'Hold' }}
                         </a-button>
                     </a-col>
                     <a-col :span="24">
