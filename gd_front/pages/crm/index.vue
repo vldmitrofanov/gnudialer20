@@ -265,7 +265,7 @@ const toggleHold = async () => {
         message.error(error.value);
         return null
     } else {
-        customerChannel.value = null
+        isChannel2OnHold.value =! isChannel2OnHold.value
     }
 
 }
