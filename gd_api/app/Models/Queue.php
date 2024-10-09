@@ -46,4 +46,9 @@ class Queue extends Model
     {
         return $this->hasMany(Filter::class)->orderBy('position', 'asc');
     }
+
+    public function confBridges()
+    {
+        return $this->belongsToMany(ConfBridge::class, 'conf_bridge_queue');
+    }
 }
