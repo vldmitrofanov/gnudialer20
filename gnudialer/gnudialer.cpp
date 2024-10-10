@@ -231,10 +231,6 @@ void doAriRedirect(const std::string &channel,
 
 	DBConnection dbConn;
 	u_long agentId = std::stoul(agent.c_str());
-	if (doColorize)
-	{
-		std::cout << "[DEBUG]" << campaign << fg_light_yellow << ": Searching for ConfBridge - Agent ID: " << agentId << " Server ID: " << serverId << normal << std::endl;
-	}
 	u_long bridgeDbId = dbConn.getConfBridgeIdForAgent(agentId, serverId);
 
 	if (bridgeDbId == 0)
@@ -294,7 +290,7 @@ void doAriRedirect(const std::string &channel,
 					}
 				}
 				break;
-			}
+			} 
 		}
 
 		if (!bridgeFound)
@@ -308,16 +304,13 @@ void doAriRedirect(const std::string &channel,
 
 			if (doColorize)
 			{
-				std::cout << campaign << ": Bridging - " << channel << " to Agent's channel: " << agentChannel << std::endl;
+				std::cout << "[DEBUG]" << fg_light_yellow <<campaign << ": Bridging - " << channel << " to Agent's channel: " << agentChannel << " in a confBridge " << bridgeId << std::endl;
 			}
 			// I use AMI to join agent's conf bridge, because
 			// of the eror that channel is not part os stasis app
 			ClientSocket AsteriskManager(getMainHost(), 5038);
 			AsteriskManager >> response;
-			AsteriskManager << "Action: Login\r\n";
-			AsteriskManager << "UserName: " + managerUser + "\r\n";
-			AsteriskManager << "Secret: " + managerPass + "\r\n";
-			AsteriskManager << "Events: off\r\n\r\n";
+			AsteriskManager << "Action: Login\r\nUserName: " + managerUser + "\r\nSecret: " + managerPass + "\r\nEvents:off\r\n\r\n";
 			AsteriskManager >> response;
 
 			AsteriskManager << "Action: ConfBridge\r\n";
