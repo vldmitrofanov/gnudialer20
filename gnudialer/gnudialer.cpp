@@ -49,6 +49,7 @@
 #include "color.h"
 #include "HttpClient.h"
 #include "ConfigSingleton.h"
+#include "ParsedConfBridge.h"
 
 #define CRASH                                                          \
 	do                                                                 \
@@ -140,55 +141,63 @@ void sig_handler(int sig)
 	return;
 }
 
+void createDispositionRecord(const std::string &agent_id, const std::string &campaign_code, const std::string &lead_id)
+{
+	// Initialize CURL
+	CURL *curl;
+	CURLcode res;
 
-void createDispositionRecord(const std::string &agent_id, const std::string &campaign_code, const std::string &lead_id) {
-    // Initialize CURL
-    CURL *curl;
-    CURLcode res;
-
-    // Prepare the API URL
-    std::string url = getApiUrl() + "/api/dispositions";
+	// Prepare the API URL
+	std::string url = getApiUrl() + "/api/dispositions";
 	std::cout << "DEBUG:: create dispo record URL " << url << std::endl;
 
-    // Prepare the Bearer token
-    std::string bearer_token = "Bearer " + getApiUserSecret();
+	// Prepare the Bearer token
+	std::string bearer_token = "Bearer " + getApiUserSecret();
 
-    // Initialize the CURL object
-    curl = curl_easy_init();
-    if (curl) {
-        // Set the URL for the request
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+	// Initialize the CURL object
+	curl = curl_easy_init();
+	if (curl)
+	{
+		// Set the URL for the request
+		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-        // Set the HTTP header with the Bearer token
-        struct curl_slist *headers = NULL;
-        headers = curl_slist_append(headers, ("Authorization: " + bearer_token).c_str());
-        headers = curl_slist_append(headers, "Content-Type: application/json");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+		// Set the HTTP header with the Bearer token
+		struct curl_slist *headers = NULL;
+		headers = curl_slist_append(headers, ("Authorization: " + bearer_token).c_str());
+		headers = curl_slist_append(headers, "Content-Type: application/json");
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-        // Prepare the POST data (JSON)
-        std::string json_data = "{\"campaign_code\": \"" + campaign_code + "\","
-                                "\"agent_id\": \"" + agent_id + "\","
-                                "\"lead_id\": \"" + lead_id + "\"}";
+		// Prepare the POST data (JSON)
+		std::string json_data = "{\"campaign_code\": \"" + campaign_code + "\","
+																		   "\"agent_id\": \"" +
+								agent_id + "\","
+										   "\"lead_id\": \"" +
+								lead_id + "\"}";
 
-        // Set the POST fields
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data.c_str());
+		// Set the POST fields
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data.c_str());
 
-        // Send the request and get the response
-        res = curl_easy_perform(curl);
+		// Send the request and get the response
+		res = curl_easy_perform(curl);
 
-        // Check for errors
-        if (res != CURLE_OK) {
-            std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
-        } else {
-            std::cout << "Request sent successfully!" << std::endl;
-        }
+		// Check for errors
+		if (res != CURLE_OK)
+		{
+			std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+		}
+		else
+		{
+			std::cout << "Request sent successfully!" << std::endl;
+		}
 
-        // Clean up
-        curl_slist_free_all(headers); // Free headers
-        curl_easy_cleanup(curl);      // Clean up CURL instance
-    } else {
-        std::cerr << "Failed to initialize CURL." << std::endl;
-    }
+		// Clean up
+		curl_slist_free_all(headers); // Free headers
+		curl_easy_cleanup(curl);	  // Clean up CURL instance
+	}
+	else
+	{
+		std::cerr << "Failed to initialize CURL." << std::endl;
+	}
 }
 
 std::string trim(const std::string &str)
@@ -218,7 +227,21 @@ void doAriRedirect(const std::string &channel,
 	HttpClient client(ariHost, 8088, ariUser, ariPass); // You need to implement or use an existing HTTP client library
 	std::string response;
 
-	if (atoi(agent.c_str()) || agent == "699" && doChangeCallerId)
+	u_long serverId = std::stoull(getServerId());
+
+	DBConnection dbConn;
+	u_long agentId = std::stoul(agent.c_str());
+	u_long bridgeDbId = dbConn.getConfBridgeIdForAgent(agentId, serverId);
+
+	if (bridgeDbId == 0)
+	{
+		std::cerr << "ERROR: No bridge found for agent: " << agent << std::endl;
+		return;
+	}
+
+	std::string bridgeName = std::to_string(bridgeDbId);
+
+	if (atoi(agent.c_str()) || (agent == "699" && doChangeCallerId))
 	{
 
 		if (doColorize)
@@ -231,43 +254,51 @@ void doAriRedirect(const std::string &channel,
 		}
 
 		writeGnudialerLog(campaign + ": Transferring - " + channel + " to Agent: " + agent + "");
-
-		// Find the agent's channel using ARI
-		// std::string agentChannelId;
-		// std::string collabeChannelId;
-		std::string agentChannel = TheAgents.where(atoi(agent.c_str())).GetChannel();
-
-		// This check disabled as agent always juping
-		// from one channel to another
-		// if (agentChannel.empty())
-		//{
-		response = client.get("/ari/channels");
+		response = client.get("/ari/bridges");
 		std::istringstream responseStream(response);
-		json jsonArray;
-		responseStream >> jsonArray;
-		// int found = 0;
-		for (const auto &item : jsonArray)
-		{
-			std::string channelName = item["name"];
-			if (channelName.find("PJSIP/" + agent + "-") != std::string::npos)
-			{
-				// agentChannelId = item["id"]; // Get the channel ID
-				agentChannel = channelName;
-				break;
-				// found++;
-			} // else if(channelName.find(channel) != std::string::npos) {
-			  // collabeChannelId = item["id"];
-			  // found++;
-			//}
-			// if(found > 1) {
-			//	break;
-			//}
-		}
-		//} else {
-		//	std::cout << "Found agen't channel within her properties" << agentChannel  << std::endl;
-		//}
+		json bridgesJsonArray;
+		responseStream >> bridgesJsonArray;
 
-		// if (!agentChannelId.empty() && !collabeChannelId.empty())
+		std::string bridgeId;
+		std::string agentChannel;
+		bool bridgeFound = false;
+
+		for (const auto &bridge : bridgesJsonArray)
+		{
+			std::string currentBridgeName = bridge["name"];
+			if (currentBridgeName == bridgeName)
+			{
+				bridgeId = bridge["id"];
+				std::cout << "[DEBUG] Found matching bridge: " << bridgeName << " (ID: " << bridgeId << ")" << std::endl;
+
+				for (const auto &channelId : bridge["channels"])
+				{
+					// Step 5: Get channel details to map channel ID to channel name (PJSIP/...)
+					std::string channelResponse = client.get("/ari/channels/" + std::string(channelId));
+					std::istringstream channelStream(channelResponse);
+					json channelDetails;
+					channelStream >> channelDetails;
+
+					std::string fullChannelName = channelDetails["name"]; // Full name like "PJSIP/10001-xxxxxxxx"
+
+					// Step 6: Check if the channel belongs to the agent
+					if (fullChannelName.find("PJSIP/" + agent + "-") != std::string::npos)
+					{
+						agentChannel = fullChannelName; // Store the agent's channel name
+						bridgeFound = true;				// Mark that we found the right bridge
+						break;
+					}
+				}
+				break;
+			}
+		}
+
+		if (!bridgeFound)
+		{
+			std::cerr << "[ERROR] No matching bridge found for name: " << bridgeName << std::endl;
+			return;
+		}
+
 		if (!agentChannel.empty())
 		{
 			if (doColorize)
@@ -280,54 +311,22 @@ void doAriRedirect(const std::string &channel,
 				std::cout << campaign << ": Bridging - " << channel << " to Agent's channel: " << agentChannel << std::endl;
 			}
 
-			ClientSocket AsteriskRedir(getMainHost(), 5038);
-			AsteriskRedir >> response;
-			AsteriskRedir << "Action: Login\r\nUserName: " + managerUser + "\r\nSecret: " + managerPass + "\r\nEvents:off\r\n\r\n";
-			AsteriskRedir >> response;
+			// Step 4: Now add the third-party channel to the found bridge using ARI
+			std::string addChannelUrl = "/ari/bridges/" + bridgeId + "/addChannel?channel=" + channel;
+			response = client.post(addChannelUrl,"");
 
-			AsteriskRedir << "Action: Bridge\r\n";
-			AsteriskRedir << "Channel1: " + channel + "\r\n";
-			AsteriskRedir << "Channel2: " + agentChannel + "\r\n";
-			AsteriskRedir << "Tone: yes\r\n\r\n";
-			AsteriskRedir >> response;
-			std::cout << "Bridge Response: " << response << std::endl;
+			std::cout << "[DEBUG] Add Channel to Bridge Response: " << response << std::endl;
 
-			AsteriskRedir << "Action: UserEvent\r\n";
-			AsteriskRedir << "UserEvent: SetOnCall\r\n";
-			AsteriskRedir << "Header1: Agent: " + agent + "\r\n";
-			AsteriskRedir << "Header2: ConnectedChannel: " + channel + "\r\n\r\n";
-			AsteriskRedir >> response;
-
-			AsteriskRedir << "Action: Logoff\r\n\r\n";
-			AsteriskRedir >> response;
-			createDispositionRecord(agent, campaign, leadid);
-			usleep(10000000);
-			/*
-			// This was disabled due to requirments that channel needs to be in Stasis app
-			// TODO: fix it tp use ARI completely
-			// Create a bridge and add both channels to it
-			std::string bridgeName = "bridge-" + campaign + "-" + agent;
-			std::string bridgeResponse = client.post("/ari/bridges", "{\"type\":\"mixing\",\"name\":\"" + bridgeName + "\"}");
-			json bridgeJson = json::parse(bridgeResponse);
-			std::string bridgeId = bridgeJson["id"];
-
-			if (!bridgeId.empty())
+			if (!response.empty())
 			{
-				response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + collabeChannelId + "\"}");
-				response = client.post("/ari/bridges/" + bridgeId + "/addChannel", "{\"channel\":\"" + agentChannelId + "\"}");
-				// Optionally, you can play a tone when the bridge is created
-				response = client.post("/ari/bridges/" + bridgeId + "/play", "{\"media\":\"tone_stream://%(400,200,400,450);%(400,200,400,450);%(400,200,400,450)\"}");
-
-				std::cout << "Bridge Response: " << response << std::endl;
-
-				// Send a custom UserEvent to notify the agent is on call
-				response = client.post("/ari/channels/" + agentChannelId + "/userEvent", "{\"eventName\":\"SetOnCall\",\"variables\":{\"Agent\":\"" + agent + "\"}}");
+				std::cout << campaign << ": Successfully added channel: " << channel << " to bridge: " << bridgeId << std::endl;
 			}
 			else
 			{
-				std::cerr << "Failed to create bridge: " << response << std::endl;
+				std::cerr << "[ERROR] Failed to add channel: " << channel << " to bridge: " << bridgeId << std::endl;
 			}
-			*/
+			createDispositionRecord(agent, campaign, leadid);
+			usleep(10000000);
 		}
 		else
 		{
@@ -2958,7 +2957,7 @@ int main(int argc, char **argv)
 							if (mysql_query(mysql, query.c_str()) != 0)
 							{
 								std::cerr << "Error selecting leads from mysql! Did you run --tzpopulate?" << std::endl;
-								//return 1;
+								// return 1;
 								usleep(10000);
 							}
 							else

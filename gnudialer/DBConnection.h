@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include "Campaign.h"
 #include "ParsedAgent.h"
+#include "ParsedConfBridge.h"
 
 class DBConnection {
 public:
@@ -26,6 +27,8 @@ public:
     std::vector<u_long> getCampaignAgents(u_long campaignId, u_long serverId);
     std::vector<ParsedAgent> getAllAgents(u_long serverId);
     u_long getQueueIdByCode(const std::string& campaignCode, u_long serverId);
+    u_long getConfBridgeIdForAgent(u_long agentId, u_long serverId);
+    std::vector<ParsedConfBridge> getAllConfBridges(u_long serverId);
     std::shared_ptr<sql::PreparedStatement> prepareStatement(const std::string &query)
     {
         return std::shared_ptr<sql::PreparedStatement>(conn->prepareStatement(query));

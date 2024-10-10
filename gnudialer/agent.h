@@ -30,6 +30,7 @@
 #include "DBConnection.h"
 #include "Campaign.h"
 #include "ParsedAgent.h"
+#include "ParsedConfBridge.h"
 #include "HttpClient.h"
 
 #ifndef AGENT
@@ -341,7 +342,7 @@ public:
 			"1234"}));
 	}
 
-	void ParseAgentQueueStatus()
+	void ParseAgentQueueStatusDEPRECATED()
 	{
 		std::string managerUsername = getManagerUsername();
 		std::string managerPassword = getManagerPassword();
@@ -430,6 +431,43 @@ public:
 					}
 				}
 			}
+		}
+	}
+
+	void ParseAgentQueueStatus()
+	{
+		DBConnection dbConn;
+		u_long serverId = std::stoull(getServerId());
+		std::vector<ParsedConfBridge> confBridges = dbConn.getAllConfBridges(serverId);
+
+		for (const auto &bridge : confBridges)
+		{
+			int agentID = bridge.agent_id;
+			u_long bridgeID = bridge.id; // Bridge ID now available
+
+			if (bridge.online == 0)
+			{
+				std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " offline..." << std::endl;
+				where(agentID).SetOffline();
+			}
+			else if (bridge.pause == 1)
+			{
+				std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " on pause..." << std::endl;
+				where(agentID).SetOnPause();
+			}
+			else if (bridge.available == 1)
+			{
+				std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " on wait..." << std::endl;
+				where(agentID).SetOnCall(); // Assuming "on wait" means on call			
+			}
+			else
+			{
+				std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " on call..." << std::endl;
+				where(agentID).SetLoggedIn(); // Assuming "available" means logged in
+			}
+
+			// Optionally log the bridge ID for debugging or further operations
+			std::cout << "[DEBUG](agent.h) Bridge ID for agent " << agentID << " is " << bridgeID << std::endl;
 		}
 	}
 

@@ -12,6 +12,7 @@
 #include "Campaign.h"
 #include "etcinfo.h"
 #include "ParsedAgent.h"
+#include "ParsedConfBridge.h"
 
 DBConnection::DBConnection()
 {
@@ -247,3 +248,66 @@ u_long DBConnection::getQueueIdByCode(const std::string &campaignCode, u_long se
     return 0; // return 0 if not found
 }
 
+std::vector<ParsedConfBridge> DBConnection::getAllConfBridges(u_long serverId)
+{
+    std::vector<ParsedConfBridge> confBridges;
+
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> pstmt(
+            conn->prepareStatement(
+                "SELECT id, agent_id, online, available, pause FROM conf_bridges WHERE server_id = ?"
+            ));
+
+        pstmt->setUInt64(1, serverId); // Setting the first parameter as serverId
+
+        // Execute the query
+        std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
+
+        // Fetch the results row by row
+        while (res->next())
+        {
+            ParsedConfBridge bridge;
+            bridge.id = res->getUInt64("id");             // Bridge ID
+            bridge.agent_id = res->getUInt64("agent_id"); // Agent ID
+            bridge.online = res->getInt("online");        // Online status
+            bridge.available = res->getInt("available");  // Available status
+            bridge.pause = res->getInt("pause");          // Pause status
+
+            // Add the bridge to the vector
+            confBridges.push_back(bridge);
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "MySQL error: " << e.what() << " (MySQL error code: " << e.getErrorCode() << ")" << std::endl;
+    }
+
+    return confBridges;
+}
+
+u_long DBConnection::getConfBridgeIdForAgent(u_long agentId, u_long serverId){
+    try
+    {
+        std::shared_ptr<sql::PreparedStatement> pstmt(
+            conn->prepareStatement(
+                "SELECT id FROM conf_bridges WHERE agent_id = ? AND server_id = ?"
+            ));
+        pstmt->setUInt64(1, serverId);
+        pstmt->setUInt64(2, serverId); // Setting the first parameter as serverId
+
+        // Execute the query
+        std::shared_ptr<sql::ResultSet> res(pstmt->executeQuery());
+        if (res->next())
+        {
+            return res->getUInt64("id");
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "SQLException: " << e.what() << std::endl;
+        std::cerr << "MySQL error code: " << e.getErrorCode() << std::endl;
+        std::cerr << "SQLState: " << e.getSQLState() << std::endl;
+    }
+    return 0; // return 0 if not found
+}
