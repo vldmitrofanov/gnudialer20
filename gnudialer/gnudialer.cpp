@@ -231,6 +231,10 @@ void doAriRedirect(const std::string &channel,
 
 	DBConnection dbConn;
 	u_long agentId = std::stoul(agent.c_str());
+	if (doColorize)
+		{
+			std::cout << "[DEBUG]" << campaign << fg_light_yellow << ": Searching for ConfBridge - Agent ID: " << agentId << " Server ID: " << serverId << normal << std::endl;
+		}
 	u_long bridgeDbId = dbConn.getConfBridgeIdForAgent(agentId, serverId);
 
 	if (bridgeDbId == 0)

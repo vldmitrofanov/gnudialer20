@@ -293,7 +293,7 @@ u_long DBConnection::getConfBridgeIdForAgent(u_long agentId, u_long serverId){
             conn->prepareStatement(
                 "SELECT id FROM conf_bridges WHERE agent_id = ? AND server_id = ?"
             ));
-        pstmt->setUInt64(1, serverId);
+        pstmt->setUInt64(1, agentId);
         pstmt->setUInt64(2, serverId); // Setting the first parameter as serverId
 
         // Execute the query
