@@ -305,65 +305,33 @@ void doAriRedirect(const std::string &channel,
 
 		if (!agentChannel.empty())
 		{
+
 			if (doColorize)
-			{
-				// std::cout << campaign << fg_magenta << ": Bridging - " << channel << "(" << collabeChannelId << ") to Agent's channel: " << agentChannelId << normal << std::endl;
-				std::cout << campaign << fg_magenta << ": Bridging - " << channel << " to Agent's channel: " << agentChannel << normal << std::endl;
-			}
-			else
 			{
 				std::cout << campaign << ": Bridging - " << channel << " to Agent's channel: " << agentChannel << std::endl;
 			}
+			// I use AMI to join agent's conf bridge, because
+			// of the eror that channel is not part os stasis app
+			ClientSocket AsteriskManager(getMainHost(), 5038);
+			AsteriskManager >> response;
+			AsteriskManager << "Action: Login\r\n";
+			AsteriskManager << "UserName: " + managerUser + "\r\n";
+			AsteriskManager << "Secret: " + managerPass + "\r\n";
+			AsteriskManager << "Events: off\r\n\r\n";
+			AsteriskManager >> response;
 
-			std::string response = client.get("/ari/channels");
-			std::istringstream responseStream(response);
-			json channelsJsonArray;
-			responseStream >> channelsJsonArray;
+			AsteriskManager << "Action: ConfBridge\r\n";
+			AsteriskManager << "Conference: " + bridgeId + "\r\n";
+			AsteriskManager << "Channel: " + channel + "\r\n";
+			AsteriskManager >> response;
 
-			// Iterate over the channels to find the matching channel by name (e.g., "SIP/shirker_net-0000008d")
-			std::string channelId = "";
-			for (const auto &ch : channelsJsonArray)
-			{
-				std::string name = ch["name"];
-				if (name == channel)
-				{
-					channelId = ch["id"];
-					break;
-				}
-			}
+			std::cout << "ConfBridge Response: " << response << std::endl;
 
-			if (!channelId.empty())
-			{
-				std::cout << "Found Customer's Channel ID: " << channelId << std::endl;
+			AsteriskManager << "Action: Logoff\r\n\r\n";
+    		AsteriskManager >> response;
 
-				// Step 4: Now add the third-party channel to the found bridge using ARI
-				std::string addChannelUrl = "/ari/bridges/" + bridgeId + "/addChannel?channel=" + channelId;
-				response = client.post(addChannelUrl, "");
-
-				std::cout << "[DEBUG] Add Channel to Bridge Response: " << response << std::endl;
-
-				if (!response.empty())
-				{
-					std::cout << campaign << ": Successfully added channel: " << channel << " ( " << channelId << " )" << " to bridge: " << bridgeId << std::endl;
-				}
-				else
-				{
-					std::cerr << "[ERROR] Failed to add channel: " << channel << " to bridge: " << bridgeId << std::endl;
-				}
-				createDispositionRecord(agent, campaign, leadid);
-				usleep(10000000);
-			}
-			else
-			{
-				if (doColorize)
-				{
-					std::cout << campaign << fg_red << ": ERROR - " << channel << " to Agent's channel NOT FOUND! Agent: " << agent << normal << std::endl;
-				}
-				else
-				{
-					std::cout << campaign << ": ERROR - " << channel << " to Agent's channel NOT FOUND: " << agent << std::endl;
-				}
-			}
+			createDispositionRecord(agent, campaign, leadid);
+			usleep(10000000);
 		}
 		else
 		{
