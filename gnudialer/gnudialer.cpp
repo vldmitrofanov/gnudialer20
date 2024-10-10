@@ -290,7 +290,7 @@ void doAriRedirect(const std::string &channel,
 					}
 				}
 				break;
-			} 
+			}
 		}
 
 		if (!bridgeFound)
@@ -304,7 +304,7 @@ void doAriRedirect(const std::string &channel,
 
 			if (doColorize)
 			{
-				std::cout << "[DEBUG]" << fg_light_yellow <<campaign << ": Bridging - " << channel << " to Agent's channel: " << agentChannel << " in a confBridge " << bridgeId << std::endl;
+				std::cout << "[DEBUG]" << fg_light_yellow << campaign << ": Bridging - " << channel << " to Agent's channel: " << agentChannel << " in a confBridge " << bridgeId << normal << std::endl;
 			}
 			// I use AMI to join agent's conf bridge, because
 			// of the eror that channel is not part os stasis app
@@ -313,15 +313,18 @@ void doAriRedirect(const std::string &channel,
 			AsteriskManager << "Action: Login\r\nUserName: " + managerUser + "\r\nSecret: " + managerPass + "\r\nEvents:off\r\n\r\n";
 			AsteriskManager >> response;
 
-			AsteriskManager << "Action: ConfBridge\r\n";
-			AsteriskManager << "Conference: " + bridgeId + "\r\n";
-			AsteriskManager << "Channel: " + channel + "\r\n";
+			AsteriskManager << "Action: Redirect\r\n";
+			AsteriskManager << "Channel: " + channel + "\r\n";						  // Channel to redirect
+			AsteriskManager << "Context: conf_bridge_context\r\n";					  // Dialplan context
+			AsteriskManager << "Exten: s\r\n";										  // Extension to handle the conference join
+			AsteriskManager << "Priority: 1\r\n";									  // Priority in dialplan
+			AsteriskManager << "Variable: __CONF_BRIDGE_ID=" + confBridgeId + "\r\n"; // Pass the ConfBridge ID as a variable
+			AsteriskManager << "\r\n";
 			AsteriskManager >> response;
-
 			std::cout << "ConfBridge Response: " << response << std::endl;
 
 			AsteriskManager << "Action: Logoff\r\n\r\n";
-    		AsteriskManager >> response;
+			AsteriskManager >> response;
 
 			createDispositionRecord(agent, campaign, leadid);
 			usleep(10000000);
