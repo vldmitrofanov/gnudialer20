@@ -232,9 +232,9 @@ void doAriRedirect(const std::string &channel,
 	DBConnection dbConn;
 	u_long agentId = std::stoul(agent.c_str());
 	if (doColorize)
-		{
-			std::cout << "[DEBUG]" << campaign << fg_light_yellow << ": Searching for ConfBridge - Agent ID: " << agentId << " Server ID: " << serverId << normal << std::endl;
-		}
+	{
+		std::cout << "[DEBUG]" << campaign << fg_light_yellow << ": Searching for ConfBridge - Agent ID: " << agentId << " Server ID: " << serverId << normal << std::endl;
+	}
 	u_long bridgeDbId = dbConn.getConfBridgeIdForAgent(agentId, serverId);
 
 	if (bridgeDbId == 0)
@@ -315,22 +315,55 @@ void doAriRedirect(const std::string &channel,
 				std::cout << campaign << ": Bridging - " << channel << " to Agent's channel: " << agentChannel << std::endl;
 			}
 
-			// Step 4: Now add the third-party channel to the found bridge using ARI
-			std::string addChannelUrl = "/ari/bridges/" + bridgeId + "/addChannel?channel=" + channel;
-			response = client.post(addChannelUrl,"");
+			std::string response = client.get("/ari/channels");
+			std::istringstream responseStream(response);
+			json channelsJsonArray;
+			responseStream >> channelsJsonArray;
 
-			std::cout << "[DEBUG] Add Channel to Bridge Response: " << response << std::endl;
-
-			if (!response.empty())
+			// Iterate over the channels to find the matching channel by name (e.g., "SIP/shirker_net-0000008d")
+			std::string channelId = "";
+			for (const auto &ch : channelsJsonArray)
 			{
-				std::cout << campaign << ": Successfully added channel: " << channel << " to bridge: " << bridgeId << std::endl;
+				std::string name = ch["name"];
+				if (name == channel)
+				{
+					channelId = ch["id"];
+					break;
+				}
+			}
+
+			if (!channelId.empty())
+			{
+				std::cout << "Found Customer's Channel ID: " << channelId << std::endl;
+
+				// Step 4: Now add the third-party channel to the found bridge using ARI
+				std::string addChannelUrl = "/ari/bridges/" + bridgeId + "/addChannel?channel=" + channelId;
+				response = client.post(addChannelUrl, "");
+
+				std::cout << "[DEBUG] Add Channel to Bridge Response: " << response << std::endl;
+
+				if (!response.empty())
+				{
+					std::cout << campaign << ": Successfully added channel: " << channel << " ( " << channelId << " )" << " to bridge: " << bridgeId << std::endl;
+				}
+				else
+				{
+					std::cerr << "[ERROR] Failed to add channel: " << channel << " to bridge: " << bridgeId << std::endl;
+				}
+				createDispositionRecord(agent, campaign, leadid);
+				usleep(10000000);
 			}
 			else
 			{
-				std::cerr << "[ERROR] Failed to add channel: " << channel << " to bridge: " << bridgeId << std::endl;
+				if (doColorize)
+				{
+					std::cout << campaign << fg_red << ": ERROR - " << channel << " to Agent's channel NOT FOUND! Agent: " << agent << normal << std::endl;
+				}
+				else
+				{
+					std::cout << campaign << ": ERROR - " << channel << " to Agent's channel NOT FOUND: " << agent << std::endl;
+				}
 			}
-			createDispositionRecord(agent, campaign, leadid);
-			usleep(10000000);
 		}
 		else
 		{
