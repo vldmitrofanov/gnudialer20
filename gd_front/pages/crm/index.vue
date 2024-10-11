@@ -7,13 +7,13 @@
                     <DatabaseOutlined :style="{ color: connected ? 'green' : 'lightgray' }" />
 
                     <span class="agent-status-text">Agent Status: <span :style="{
-                        color: agentStatus?.status?.online
+                        color: parseInt(agentStatus?.status?.online)
                             >
                             0 ? 'green' : '#999'
-                    }">{{ `${agentStatus?.status?.pause == 1 ? 'Paused' :
+                    }">{{ `${parseInt(agentStatus?.status?.pause) === 1 ? 'Paused' :
                         agentStatus?.status?.online
                             ==
-                            0 ? 'Active' : 'Inactive'}` }}</span></span>
+                            1 ? 'Active' : 'Inactive'}` }}</span></span>
                 </div>
                 <a-row :gutter="{ xs: 8, sm: 8, md: 8, lg: 8 }">
                     <a-col :span="12">
@@ -197,7 +197,7 @@ const authToken = useCookie('auth_token').value
 const isCBModalVisible = ref(false)
 const serverData = ref(null)
 const allButtonsDisabled = ref(true)
-const running = computed(() => parseInt(agentStatus.value?.status?.online) > 1 && parseInt(agentStatus.value?.status?.pause) === 0 && parseInt(agentStatus.value?.status?.available) ===1 )
+const running = computed(() => parseInt(agentStatus.value?.status?.online) > 1 && parseInt(agentStatus.value?.status?.pause) === 0 )
 const user = ref(null)
 const agent = ref(null)
 const connected = ref(false)
