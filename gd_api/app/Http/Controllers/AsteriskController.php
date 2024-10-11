@@ -100,7 +100,7 @@ class AsteriskController extends Controller
                 }
             }
             if (!empty($ariBridge)) {
-                if (!empty($ariBridge['channels'])) {
+                if (isset($ariBridge['channels']) && !empty($ariBridge['channels'])) {
                     if (sizeof($ariBridge['channels']) > 1) {
                         $brigde->available = 0;
                     } else {
