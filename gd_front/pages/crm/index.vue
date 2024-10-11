@@ -7,11 +7,11 @@
                     <DatabaseOutlined :style="{ color: connected ? 'green' : 'lightgray' }" />
 
                     <span class="agent-status-text">Agent Status: <span :style="{
-                        color: parseInt(agentStatus?.status?.online)
+                        color: parseInt(agentStatus?.online)
                             >
                             0 ? 'green' : '#999'
-                    }">{{ `${parseInt(agentStatus?.status?.pause) === 1 ? 'Paused' :
-                        agentStatus?.status?.online
+                    }">{{ `${parseInt(agentStatus?.pause) === 1 ? 'Paused' :
+                        agentStatus?.online
                             ==
                             1 ? 'Active' : 'Inactive'}` }}</span></span>
                 </div>
@@ -197,7 +197,7 @@ const authToken = useCookie('auth_token').value
 const isCBModalVisible = ref(false)
 const serverData = ref(null)
 const allButtonsDisabled = ref(true)
-const running = computed(() => parseInt(agentStatus.value?.online) === 1 && parseInt(agentStatus.value?.pause) !== 0 )
+const running = computed(() => parseInt(agentStatus.value?.online) === 1 && parseInt(agentStatus.value?.pause) === 0 )
 const user = ref(null)
 const agent = ref(null)
 const connected = ref(false)
@@ -644,6 +644,9 @@ const togglePause = async () => {
             pauseAfterCall.value = true
         }*/
         agentStatus.value = data.value?.data
+        if (DEBUG) {
+            console.log('agentStatus', agentStatus.value)
+        }
     }
 }
 
@@ -691,6 +694,7 @@ const getAgentStatus = async () => {
     } else {
         if (DEBUG) {
             console.log('Fetched data:', data.value)
+            console.log('Fetched data.data:', data.value?.data)
         }
         agentStatus.value = data.value?.data
         agentChannel.value = {name: data.value?.data?.agent_channel,id: data.value?.data?.agent_channel_id}
