@@ -74,7 +74,7 @@ class AsteriskARIService
     public function getBridgeById($bridge_id)
     {
         // Construct the ARI URL for listing bridges
-        $url = "{$this->proto}://{$this->host}:{$this->port}/ari/bridges/{$bridge_id}?api_key={$this->username}:{$this->secret}&app=my_app";
+        $url = "{$this->proto}://{$this->host}/ari/bridges/{$bridge_id}?api_key={$this->username}:{$this->secret}&app=my_app";
 
         // Initialize cURL session
         $ch = curl_init();
@@ -112,7 +112,7 @@ class AsteriskARIService
     public function getAllChannels()
     {
         // Construct the ARI URL for listing bridges
-        $url = "{$this->proto}://{$this->host}:{$this->port}/ari/channels?api_key={$this->username}:{$this->secret}&app=my_app";
+        $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}&app=my_app";
 
         // Initialize cURL session
         $ch = curl_init();
@@ -150,7 +150,7 @@ class AsteriskARIService
     public function getChannelById($channel_id)
     {
         // Construct the ARI URL for listing bridges
-        $url = "{$this->proto}://{$this->host}:{$this->port}/ari/channels/{$channel_id}?api_key={$this->username}:{$this->secret}&app=my_app";
+        $url = "{$this->proto}://{$this->host}/ari/channels/{$channel_id}?api_key={$this->username}:{$this->secret}&app=my_app";
 
         // Initialize cURL session
         $ch = curl_init();
