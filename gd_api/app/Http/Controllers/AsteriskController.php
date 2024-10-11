@@ -90,7 +90,8 @@ class AsteriskController extends Controller
             $this->ariService->setServer($serverId);
             if (!empty($brigde->bridge_id)) {
                 $ariBridge = $this->ariService->getBridgeById($brigde->bridge_id);
-            } else {
+            } 
+            if(empty($ariBridge)){
                 $ariBridges = $this->ariService->getAllBridges();
                 foreach ($ariBridges as $v) {
                     if ($v['name'] == $brigde->id) {
@@ -100,7 +101,7 @@ class AsteriskController extends Controller
                 }
             }
             if (!empty($ariBridge)) {
-                if (isset($ariBridge['channels']) && !empty($ariBridge['channels'])) {
+                if (!empty($ariBridge['channels'])) {
                     if (sizeof($ariBridge['channels']) > 1) {
                         $brigde->available = 0;
                     } else {
