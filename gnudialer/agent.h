@@ -549,11 +549,11 @@ public:
 				else
 				{
 
-					if (currentStatus == -2 || currentStatus == -1)
-					{
-						where(agentNumber).SetLoggedIn();
-						where(agentNumber).SetLeadId("");
-					}
+				//	if (currentStatus == -2 || currentStatus == -1)
+				//	{
+				//		where(agentNumber).SetLoggedIn();
+				//		where(agentNumber).SetLeadId("");
+				//	}
 					std::cout << "[DEBUG](agent.h) Channel: " << channelName << " has no valid connected name." << std::endl;
 				}
 			}
