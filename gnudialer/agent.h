@@ -478,6 +478,7 @@ public:
 		std::string ariPass = getAriPass();
 		HttpClient client(ariHost, 8088, ariUser, ariPass);
 		std::string ariResponse;
+		ParseAgentQueueStatus();
 		ariResponse = client.get("/ari/channels");
 		std::istringstream responseStream(ariResponse);
 		json jsonArray;
