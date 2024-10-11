@@ -4,15 +4,18 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\AsteriskAMIService;
+use App\Services\AsteriskARIService;
 use Illuminate\Support\Facades\Log;
 
 class AsteriskController extends Controller
 {
     protected $amiService;
+    protected $ariService;
 
-    public function __construct(AsteriskAMIService $amiService)
+    public function __construct(AsteriskAMIService $amiService, AsteriskARIService $ariService)
     {
         $this->amiService = $amiService;
+        $this->ariService = $ariService;
     }
 
     /**
@@ -30,10 +33,10 @@ class AsteriskController extends Controller
         $agent = $request->input('agent');
         $queue = $request->input('queue');
         $pause = $request->input('pause');
-        $pause = $pause == 'true'?1:0;
+        $pause = $pause == 'true' ? 1 : 0;
         $serverId = $request->input('server_id');
-        $brigde = \App\Models\ConfBridge::where('agent_id',$agent)->where('server_id',$serverId)->first();
-        if(empty($brigde)){
+        $brigde = \App\Models\ConfBridge::where('agent_id', $agent)->where('server_id', $serverId)->first();
+        if (empty($brigde)) {
             return response()->json(['message' => 'An error occured'], 422);
         }
         $brigde->pause = $pause;
@@ -63,8 +66,37 @@ class AsteriskController extends Controller
         $agent = $request->input('agent');
         $queue = $request->input('queue');
         $serverId = $request->input('server_id');
-        $brigde = \App\Models\ConfBridge::where('agent_id',$agent)->where('server_id',$serverId)->first();
-        return response()->json(['data' => $brigde], 200);
+        $ariBridge = null;
+        $channels = [];
+        $brigde = \App\Models\ConfBridge::where('agent_id', $agent)->where('server_id', $serverId)->first();
+        if (!empty($brigde)) {
+            $this->ariService->setServer($serverId);
+            if (!empty($brigde->bridge_id)) {
+                $ariBridge = $this->ariService->getBridgeById($brigde->bridge_id);
+            } else {
+                $ariBridges = $this->ariService->getAllBridges();
+                foreach ($ariBridges as $v) {
+                    if ($v['name'] = $brigde->id) {
+                        $ariBridge = $v;
+                    }
+                }
+            }
+            if(!empty($ariBridge)){
+                if(sizeof($ariBridge['channels'])>1) {
+                    $brigde->available = 0;
+                }
+                foreach($ariBridge['channels'] as $chanId) {
+                    $chan = $this->ariService->getChannelById($chanId);
+                    if($chan && $chan['caller']['number'] == $agent) {
+                        $brigde->channel = $chan['name'];
+                        $brigde->channel_id = $chan['id'];
+                    } elseif($chan) {
+                        $channels[] = $chan;
+                    }
+                }
+            }
+        }
+        return response()->json(['data' => $brigde, 'channels' => $channels], 200);
         /*
         try {
             $this->amiService->setServer($serverId);
@@ -113,7 +145,7 @@ class AsteriskController extends Controller
         $serverId = $request->server_id;
         $this->amiService->setServer($serverId);
         $command = "Action: Originate\r\n";
-        $command .= "Channel: Local/{$threeWay->extension}@{$threeWay->context}\r\n"; 
+        $command .= "Channel: Local/{$threeWay->extension}@{$threeWay->context}\r\n";
         $command .= "Exten: $threeWay->extension\r\n";  // The third party's SIP channel
         $command .= "Context: $threeWay->context\r\n";  // The dialplan context
         $command .= "Priority: 1\r\n";  // Priority in dialplan
