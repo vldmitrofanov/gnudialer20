@@ -455,7 +455,7 @@ public:
 				std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " on pause..." << std::endl;
 				where(agentID).SetOnPause();
 			}
-			else if (bridge.available == 1)
+			else if (bridge.available == 0)
 			{
 				std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " on wait..." << std::endl;
 				where(agentID).SetOnCall(); // Assuming "on wait" means on call			
