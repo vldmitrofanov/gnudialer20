@@ -174,7 +174,7 @@
                     <p>Call history and other interactions with the lead.</p>
                 </a-tab-pane>agentStatus
             </a-tabs>
-            <div v-if="DEBUG" class="debug-panel">Agent channel: {{ agentChannel?.name }} | customerChannel {{ customerChannel.name }} |
+            <div v-if="DEBUG" class="debug-panel">Agent channel: {{ agentChannel?.name }} | customerChannel {{ customerChannel?.name }} |
                 onHold: {{ isChannel2OnHold }} | bridge: {{ bridge?.id }} | leadCampaign {{ leadCampaign }}
             </div>
         </a-col>
