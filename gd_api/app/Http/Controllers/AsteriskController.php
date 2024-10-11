@@ -64,7 +64,7 @@ class AsteriskController extends Controller
         $queue = $request->input('queue');
         $serverId = $request->input('server_id');
         $brigde = \App\Models\ConfBridge::where('agent_id',$agent)->where('server_id',$serverId)->first();
-        return response()->json(['status' => $brigde], 200);
+        return response()->json(['data' => $brigde], 200);
         /*
         try {
             $this->amiService->setServer($serverId);
