@@ -63,14 +63,16 @@ class AsteriskController extends Controller
         $agent = $request->input('agent');
         $queue = $request->input('queue');
         $serverId = $request->input('server_id');
-
+        $brigde = \App\Models\ConfBridge::where('agent_id',$agent)->where('server_id',$serverId)->first();
+        return response()->json(['status' => $brigde], 200);
+        /*
         try {
             $this->amiService->setServer($serverId);
             $status = $this->amiService->getAgentStatus($queue, $agent);
             return response()->json(['status' => $status], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
-        }
+        }*/
     }
 
     public function callHangup(Request $request)
