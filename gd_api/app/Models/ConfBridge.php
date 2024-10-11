@@ -11,11 +11,13 @@ class ConfBridge extends Model
 
     protected $fillable = [
         'agent_id',
+        'bridge_id',
         'server_id',
         'online',
         'available',
         'pause',
-        'channel'
+        'agent_channel_id',
+        'agent_channel'
     ];
 
     public function queues()

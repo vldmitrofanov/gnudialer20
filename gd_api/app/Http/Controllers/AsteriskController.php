@@ -88,8 +88,8 @@ class AsteriskController extends Controller
                 foreach($ariBridge['channels'] as $chanId) {
                     $chan = $this->ariService->getChannelById($chanId);
                     if($chan && $chan['caller']['number'] == $agent) {
-                        $brigde->channel = $chan['name'];
-                        $brigde->channel_id = $chan['id'];
+                        $brigde->agent_channel = $chan['name'];
+                        $brigde->agent_channel_id = $chan['id'];
                     } elseif($chan) {
                         $channels[] = $chan;
                     }
