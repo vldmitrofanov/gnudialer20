@@ -30,15 +30,23 @@ class AsteriskController extends Controller
         $agent = $request->input('agent');
         $queue = $request->input('queue');
         $pause = $request->input('pause');
+        $pause = $pause?1:0;
         $serverId = $request->input('server_id');
-
+        $brigde = \App\Models\ConfBridge::where('agent_id',$agent)->where('server_id',$serverId)->first();
+        if(empty($brigde)){
+            return response()->json(['message' => 'An error occured'], 422);
+        }
+        $brigde->pause = $pause;
+        $brigde->update();
+        return response()->json(['message' => 'Agent pause status updated successfully', 'data' => $brigde], 200);
+        /*
         try {
             $this->amiService->setServer($serverId);
             $response = $this->amiService->setAgentPause($queue, $agent, $pause);
             return response()->json(['message' => 'Agent pause status updated successfully', 'data' => $response], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
-        }
+        }*/
     }
 
     /**

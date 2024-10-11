@@ -482,7 +482,7 @@ public:
 		std::istringstream responseStream(ariResponse);
 		json jsonArray;
 		responseStream >> jsonArray;
-		std::regex regexPattern(R"~(\~([a-zA-Z0-9]+)-(\d+)-)~");
+		std::regex regexPattern(R"~(\~([a-zA-Z0-9]+)-(\d+)(?:-([a-zA-Z]+))?\~)~");
 		std::set<int> parsedAgentNumbers;
 		// int found = 0;
 		for (const auto &item : jsonArray)
