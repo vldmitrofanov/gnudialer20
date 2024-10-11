@@ -174,8 +174,8 @@
                     <p>Call history and other interactions with the lead.</p>
                 </a-tab-pane>agentStatus
             </a-tabs>
-            <div v-if="DEBUG" class="debug-panel">Agent channel: {{ agentChannel }} | customerChannel {{ customerChannel }} |
-                onHold: {{ isChannel2OnHold }} | bridge: {{ bridgeId }} | leadCampaign {{ leadCampaign }}
+            <div v-if="DEBUG" class="debug-panel">Agent channel: {{ agentChannel?.name }} | customerChannel {{ customerChannel.name }} |
+                onHold: {{ isChannel2OnHold }} | bridge: {{ bridge?.id }} | leadCampaign {{ leadCampaign }}
             </div>
         </a-col>
     </a-row>
@@ -222,7 +222,7 @@ const leadFormRef = ref(null)
 const pauseAfterCall = ref(false)
 const cb_datetime = ref(null)
 const defaultDate = ref(new Date());
-const bridgeId = ref(null)
+const bridge = ref(null)
 const threeWayStatus = ref(null)
 
 defaultDate.value.setDate(defaultDate.value.getDate() + 1);
@@ -236,17 +236,17 @@ const toggleHold = async () => {
     let actionCommand = ''
     if (!isChannel2OnHold.value) {
         actionCommand = "Action: Redirect\r\n";
-        actionCommand += `Channel: ${customerChannel.value}\r\n`;
+        actionCommand += `Channel: ${customerChannel.value?.name}\r\n`;
         actionCommand += "Context: gnudialer_hold\r\n";
         actionCommand += "Exten: s\r\n";
         actionCommand += "Priority: 1\r\n";
     } else if(!threeWayStatus.value) {
         actionCommand = "Action: Redirect\r\n";
-        actionCommand += `Channel: ${customerChannel.value}\r\n`;  // Customer channel currently on hold
+        actionCommand += `Channel: ${customerChannel.value?.name}\r\n`;  // Customer channel currently on hold
         actionCommand += "Context: gnudialer_bridge\r\n";      // Context to handle the bridge
         actionCommand += "Exten: s\r\n";                     // Extension to handle bridging
         actionCommand += "Priority: 1\r\n";                  // Priority in the dialplan
-        actionCommand += `Setvar: BRIDGE_ID=${bridgeId.value}\r\n`;
+        actionCommand += `Setvar: BRIDGE_ID=${bridge.value.id}\r\n`;
     }
     const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
         method: 'POST',
@@ -362,7 +362,7 @@ const initiateWebsocket = (server) => {
                 }
                 if (data.value?.includes(`PJSIP/${agent.value?.id}-`)) {
                     onBringePeer(data)
-                    customerChannel.value = data.channel.name
+                    customerChannel.value = {name:data.channel.name}
                 } 
                 break;
         }
@@ -384,7 +384,7 @@ const initiateWebsocket = (server) => {
                 if (data.channel?.name?.includes(`PJSIP/${agent.value?.id}-`)) {
                     queue.value = null;
                     agentStatus.value = null;
-                    bridgeId.value = null
+                    bridge.value = null
                     threeWayStatus.value = null
                 }
                 break;
@@ -395,7 +395,7 @@ const initiateWebsocket = (server) => {
                     }
                     if (data.bridge) {
                         customerChannel.value
-                        bridgeId.value = data.bridge.id
+                        bridge.value = {name:data.bridge.id}
                     }
                 }
                 break;
@@ -446,7 +446,7 @@ const gdialDispo = async (dispo) => {
     actionCommand += `Header3: Transfer: ${transf}\r\n`
     actionCommand += `Header4: Campaign: ${queue.value?.campaign?.code}\r\n`
     actionCommand += `Header5: Leadid: ${lead.value?.id}\r\n`
-    actionCommand += `Header6: Channel: ${customerChannel.value}\r\n`
+    actionCommand += `Header6: Channel: ${customerChannel.value?.name}\r\n`
     const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
@@ -498,7 +498,7 @@ const hangup = async () => {
         },
         body: {
             server_id: serverData.value?.id,
-            channel: customerChannel.value
+            channel: customerChannel.value?.name
         }
     })
     if (error.value) {
@@ -544,7 +544,7 @@ const handleLeadSave = async (updatedLead) => {
 
 const onBringePeer = (data) => {
     if (data.channel) {
-        agentChannel.value = data.value
+        agentChannel.value = {name: data.value}
         const str = data.channel.connected.name
         callerId.value = data.channel.caller
         const trimmedStr = str.slice(1, -1);  // Removes the first and last characters
@@ -693,8 +693,8 @@ const getAgentStatus = async () => {
             console.log('Fetched data:', data.value)
         }
         agentStatus.value = data.value?.data
-        agentChannel.value = data.value?.data?.agent_channel
-        bridgeId.value = data.value?.data?.bridge_id
+        agentChannel.value = {name: data.value?.data?.agent_channel,id: data.value?.data?.agent_channel_id}
+        bridge.value = {id:data.value?.data?.bridge_id,name: data.value?.data?.id}
         startButtonDisabled.value = false
     }
 }
