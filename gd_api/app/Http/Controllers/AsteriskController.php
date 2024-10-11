@@ -85,6 +85,8 @@ class AsteriskController extends Controller
             if(!empty($ariBridge)){
                 if(sizeof($ariBridge['channels'])>1) {
                     $brigde->available = 0;
+                } else {
+                    $brigde->available = 1;
                 }
                 foreach($ariBridge['channels'] as $chanId) {
                     $chan = $this->ariService->getChannelById($chanId);
