@@ -316,8 +316,9 @@ void doAriRedirect(const std::string &channel,
 			AsteriskManager << "Action: Redirect\r\n";
 			AsteriskManager << "Channel: " + channel + "\r\n";						  // Channel to redirect
 			AsteriskManager << "Context: conf_bridge_context\r\n";					  // Dialplan context
-			AsteriskManager << "Exten: s\r\n";										  // Extension to handle the conference join
-			AsteriskManager << "Priority: 1\r\n";									  // Priority in dialplan
+			//AsteriskManager << "Exten: s\r\n";										  // Extension to handle the conference join
+			AsteriskManager << "Priority: 1\r\n";	
+			AsteriskManager << "Exten: " + bridgeName + "\r\n";							  // Priority in dialplan
 			AsteriskManager << "Variable: CONF_BRIDGE_ID=" + bridgeName + "\r\n"; // Pass the ConfBridge ID as a variable
 			AsteriskManager << "\r\n";
 			AsteriskManager >> response;
