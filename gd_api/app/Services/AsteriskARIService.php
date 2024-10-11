@@ -30,7 +30,7 @@ class AsteriskARIService
         $this->host = $server['host'];
         $this->proto = $server['proto'];
         $this->username = $server['user'];
-        $this->secret = $server['secret'];
+        $this->secret = $server['password'];
     }
 
     public function getAllBridges()
