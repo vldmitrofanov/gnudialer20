@@ -611,6 +611,7 @@ const getLead = async (campaign, leadId) => {
         lead.value = data.value?.lead
         leadSchema.value = data.value?.schema
         leadCampaign.value = campaign
+        allButtonsDisabled.value = false
     }
 }
 
