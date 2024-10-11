@@ -643,7 +643,7 @@ const togglePause = async () => {
         } else {
             pauseAfterCall.value = true
         }*/
-        agentStatus.value = data.value
+        agentStatus.value = data.value?.data
     }
 }
 
@@ -692,7 +692,7 @@ const getAgentStatus = async () => {
         if (DEBUG) {
             console.log('Fetched data:', data.value)
         }
-        agentStatus.value = data.value
+        agentStatus.value = data.value?.data
         startButtonDisabled.value = false
     }
 }

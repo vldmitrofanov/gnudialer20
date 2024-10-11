@@ -14,12 +14,14 @@ return new class extends Migration
     {
         Schema::create('conf_bridges', function (Blueprint $table) {
             $table->id();
+            $table->string('bridge_id')->nullable();
             $table->foreignId('agent_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('server_id')->nullable()->constrained()->onDelete('cascade');
             $table->tinyInteger('online')->default(0);
             $table->tinyInteger('available')->default(0);
             $table->tinyInteger('pause')->default(0);
-            $table->string('channel')->nullable();
+            $table->string('agent_channel_id')->nullable();
+            $table->string('agent_channel')->nullable();
             $table->timestamps();
 
             $table->unique(['agent_id', 'server_id']);
