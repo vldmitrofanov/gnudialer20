@@ -468,7 +468,34 @@ const gdialDispo = async (dispo) => {
     }
 }
 
+const setAvailable = async() =>{
+    const { data, error } = await useFetch(`/api/asterisk/agent/available`, {
+        method: 'POST',
+        baseURL: config.public.apiBaseUrl,
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        },
+        body: {
+            server_id: serverId,
+            agent: agentId,
+        }
+    })
+
+    if (error.value) {
+        console.error('Failed to fetch data:', error.value)
+        return null
+    } else {
+        agentStatus.value = data.value?.data
+        if (DEBUG) {
+            console.log('agentStatus', agentStatus.value)
+        }
+    }
+}
+
 const setOnWait = async () => {
+    setAvailable()
+    /*
     const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
@@ -485,7 +512,7 @@ const setOnWait = async () => {
         console.error('Error during hangup: ', error.value)
         message.error(error.value);
         return null
-    }
+    }*/
 }
 
 const hangup = async () => {

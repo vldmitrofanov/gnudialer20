@@ -52,6 +52,22 @@ class AsteriskController extends Controller
         }*/
     }
 
+    public function setAgentAvailable(Request $request){
+        $request->validate([
+            'agent' => 'required',
+            'server_id' => 'required|integer'
+        ]);
+        $agent = $request->input('agent');
+        $serverId = $request->input('server_id');
+        $brigde = \App\Models\ConfBridge::where('agent_id', $agent)->where('server_id', $serverId)->first();
+        if (empty($brigde)) {
+            return response()->json(['message' => 'An error occured'], 422);
+        }
+        $brigde->available = 1;
+        $brigde->update();
+        return response()->json(['message' => 'Agent available status updated successfully', 'data' => $brigde], 200);
+    }
+
     /**
      * Get an agent's status regarding a queue.
      */
