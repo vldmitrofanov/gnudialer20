@@ -33,7 +33,7 @@ class AsteriskController extends Controller
         $agent = $request->input('agent');
         $queue = $request->input('queue');
         $pause = $request->input('pause');
-        $pause = $pause? 1 : 0;
+        $pause = $pause ? 1 : 0;
         $serverId = $request->input('server_id');
         $brigde = \App\Models\ConfBridge::where('agent_id', $agent)->where('server_id', $serverId)->first();
         if (empty($brigde)) {
@@ -52,7 +52,8 @@ class AsteriskController extends Controller
         }*/
     }
 
-    public function setAgentAvailable(Request $request){
+    public function setAgentAvailable(Request $request)
+    {
         $request->validate([
             'agent' => 'required',
             'server_id' => 'required|integer'
@@ -98,19 +99,21 @@ class AsteriskController extends Controller
                     }
                 }
             }
-            if(!empty($ariBridge)){
-                if(sizeof($ariBridge['channels'])>1) {
-                    $brigde->available = 0;
-                } else {
-                    $brigde->available = 1;
-                }
-                foreach($ariBridge['channels'] as $chanId) {
-                    $chan = $this->ariService->getChannelById($chanId);
-                    if($chan && $chan['caller']['number'] == $agent) {
-                        $brigde->agent_channel = $chan['name'];
-                        $brigde->agent_channel_id = $chan['id'];
-                    } elseif($chan) {
-                        $channels[] = $chan;
+            if (!empty($ariBridge)) {
+                if (!empty($ariBridge['channels'])) {
+                    if (sizeof($ariBridge['channels']) > 1) {
+                        $brigde->available = 0;
+                    } else {
+                        $brigde->available = 1;
+                    }
+                    foreach ($ariBridge['channels'] as $chanId) {
+                        $chan = $this->ariService->getChannelById($chanId);
+                        if ($chan && $chan['caller']['number'] == $agent) {
+                            $brigde->agent_channel = $chan['name'];
+                            $brigde->agent_channel_id = $chan['id'];
+                        } elseif ($chan) {
+                            $channels[] = $chan;
+                        }
                     }
                 }
             }
