@@ -78,6 +78,7 @@ class AsteriskController extends Controller
                 foreach ($ariBridges as $v) {
                     if ($v['name'] == $brigde->id) {
                         $ariBridge = $v;
+                        $brigde->bridge_id = $v['id'];
                     }
                 }
             }

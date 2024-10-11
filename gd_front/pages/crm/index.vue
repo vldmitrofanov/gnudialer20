@@ -197,7 +197,7 @@ const authToken = useCookie('auth_token').value
 const isCBModalVisible = ref(false)
 const serverData = ref(null)
 const allButtonsDisabled = ref(true)
-const running = computed(() => parseInt(agentStatus.value?.status?.online) > 1 && parseInt(agentStatus.value?.status?.pause) === 0 )
+const running = computed(() => parseInt(agentStatus.value?.online) > 1 && parseInt(agentStatus.value?.pause) === 0 )
 const user = ref(null)
 const agent = ref(null)
 const connected = ref(false)
@@ -693,6 +693,8 @@ const getAgentStatus = async () => {
             console.log('Fetched data:', data.value)
         }
         agentStatus.value = data.value?.data
+        agentChannel.value = data.value?.data?.agent_channel
+        bridgeId.value = data.value?.data?.bridge_id
         startButtonDisabled.value = false
     }
 }
