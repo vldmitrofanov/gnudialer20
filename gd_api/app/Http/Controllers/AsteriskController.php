@@ -30,7 +30,7 @@ class AsteriskController extends Controller
         $agent = $request->input('agent');
         $queue = $request->input('queue');
         $pause = $request->input('pause');
-        $pause = $pause?1:0;
+        $pause = $pause == 'true'?1:0;
         $serverId = $request->input('server_id');
         $brigde = \App\Models\ConfBridge::where('agent_id',$agent)->where('server_id',$serverId)->first();
         if(empty($brigde)){
