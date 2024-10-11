@@ -197,7 +197,7 @@ const authToken = useCookie('auth_token').value
 const isCBModalVisible = ref(false)
 const serverData = ref(null)
 const allButtonsDisabled = ref(true)
-const running = computed(() => parseInt(agentStatus.value?.online) > 1 && parseInt(agentStatus.value?.pause) === 0 )
+const running = computed(() => parseInt(agentStatus.value?.online) === 1 && parseInt(agentStatus.value?.pause) !== 0 )
 const user = ref(null)
 const agent = ref(null)
 const connected = ref(false)
