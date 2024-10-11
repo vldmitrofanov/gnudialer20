@@ -21,9 +21,9 @@ class AsteriskARIService
             return Server::findOrFail($server_id)->data['ari'];
         });
 
-        if (empty($server) || !isset($server['username'])) {
+        if (empty($server) || !isset($server['user'])) {
             throw new \Exception("Server configuration is incomplete or missing for server ID {$server_id}. 
-            Please ensure that the server data contains the necessary AMI credentials, including 'username', 'host', 'port', and 'secret'.");
+            Please ensure that the server data contains the necessary AMI credentials, including 'user', 'host', 'port', and 'secret'.");
         }
 
         Log::info('ARI Server host: ' . $server['host']);
@@ -31,7 +31,7 @@ class AsteriskARIService
         $this->host = $server['host'];
         $this->port = $server['port'];
         $this->proto = $server['proto'];
-        $this->username = $server['username'];
+        $this->username = $server['user'];
         $this->secret = $server['secret'];
     }
 

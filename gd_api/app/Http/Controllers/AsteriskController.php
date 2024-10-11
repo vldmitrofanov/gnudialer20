@@ -95,6 +95,7 @@ class AsteriskController extends Controller
                     }
                 }
             }
+            $brigde->update();
         }
         return response()->json(['data' => $brigde, 'channels' => $channels], 200);
         /*
