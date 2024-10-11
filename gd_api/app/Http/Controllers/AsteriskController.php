@@ -76,7 +76,7 @@ class AsteriskController extends Controller
             } else {
                 $ariBridges = $this->ariService->getAllBridges();
                 foreach ($ariBridges as $v) {
-                    if ($v['name'] = $brigde->id) {
+                    if ($v['name'] == $brigde->id) {
                         $ariBridge = $v;
                     }
                 }
