@@ -9,8 +9,7 @@ use Illuminate\Support\Facades\Log;
 class AsteriskARIService
 {
     protected $socket;
-    protected $host = '127.0.0.1';
-    protected $port = 8088;
+    protected $host = '127.0.0.1:8088';
     protected $proto = 'http';
     protected $username;
     protected $secret;
@@ -29,7 +28,6 @@ class AsteriskARIService
         Log::info('ARI Server host: ' . $server['host']);
         // Assign the credentials
         $this->host = $server['host'];
-        $this->port = $server['port'];
         $this->proto = $server['proto'];
         $this->username = $server['user'];
         $this->secret = $server['secret'];
@@ -38,7 +36,7 @@ class AsteriskARIService
     public function getAllBridges()
     {
         // Construct the ARI URL for listing bridges
-        $url = "{$this->proto}://{$this->host}:{$this->port}/ari/bridges?api_key={$this->username}:{$this->secret}&app=my_app";
+        $url = "{$this->proto}://{$this->host}/ari/bridges?api_key={$this->username}:{$this->secret}&app=my_app";
 
         // Initialize cURL session
         $ch = curl_init();
