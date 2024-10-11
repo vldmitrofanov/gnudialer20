@@ -702,6 +702,21 @@ const getAgentQueues = async () => {
     }
 }
 
+function parseCampaignString(str) {
+    // Regular expression to match the format ~campaignName-leadID-true~
+    const regex = /^~([a-zA-Z0-9]+)-(\d+)-true~$/;
+    const match = str.match(regex);
+
+    // If the match is successful, return the campaign name and lead ID
+    if (match) {
+        const campaignName = match[1];
+        const leadID = match[2];
+        return { campaignName, leadID };
+    } else {
+        throw new Error("Invalid format");
+    }
+}
+
 const getAgentStatus = async () => {
     startButtonDisabled.value = true
     const serverId = serverData.value.id
@@ -727,6 +742,18 @@ const getAgentStatus = async () => {
         agentChannel.value = {name: data.value?.data?.agent_channel,id: data.value?.data?.agent_channel_id}
         bridge.value = {id:data.value?.data?.bridge_id,name: data.value?.data?.id}
         startButtonDisabled.value = false
+        if(data.value?.data?.channels?.length>0){
+            let fnd = false
+            data.value.data.channels.forEach(v=>{
+                if(!fnd) {
+                    const cmpData = parseCampaignString(v?.connected?.name)
+                    if(cmpData && cmpData.campaignName && cmpData.leadID){
+                        fnd = true
+                        getLead(cmpData.campaignName,cmpData.leadID)
+                    }
+                }
+            })
+        }
     }
 }
 
