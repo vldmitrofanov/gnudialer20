@@ -799,12 +799,11 @@ const runContinue = async() => {
         }
     })
     onError((fetchError) => {
-        message.error("Error during 3-way transfer:", fetchError);
+        message.error(fetchError);
         return
     });
     if (!error.value) {
-        threeWayStatus.value = data
-        console.log('3__Way__Response', data)
+        console.log('runContinue', data)
     }
 }
 const handle3WayTransfer = async (threeWayId) => {
@@ -858,6 +857,7 @@ onMounted(async () => {
                 const d2 = await fetchServerData(agent.value.server_id)
                 serverData.value = d2
                 initiateWebsocket(d2)
+                getAgentStatus()
                 await getAgentQueues()
             }
         }
