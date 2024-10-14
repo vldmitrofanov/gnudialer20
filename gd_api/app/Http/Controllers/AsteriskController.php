@@ -76,7 +76,7 @@ class AsteriskController extends Controller
     {
         $request->validate([
             'agent' => 'required|string',
-            'queue' => 'required|string',
+            'queue' => 'nullable|string',
             'server_id' => 'required|integer'
         ]);
 
