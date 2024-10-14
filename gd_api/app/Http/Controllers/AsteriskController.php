@@ -66,6 +66,9 @@ class AsteriskController extends Controller
         }
         $brigde->available = 1;
         $brigde->update();
+        "Action: UserEvent\r\nUserEvent: SetOnWait\r\nHeader: Agent: " . $agent;
+        $this->amiService->setServer($serverId);
+        $status = $this->amiService->sendCommand($request->action . "\r\n\r\n", "\r\n");
         return response()->json(['message' => 'Agent available status updated successfully', 'data' => $brigde], 200);
     }
 
