@@ -949,7 +949,7 @@ public:
 		// this is all fluff, just display only, sets nothing
 		for (int i = 0; i < TheAgents.size(); i++)
 		{
-
+			std::cout << "LeastRecent [" << name << "]: ALL AGENTS: " << TheAgents.at(i).GetNumber() << std::endl;
 			if (tempQueue.HasMemberNumber(TheAgents.at(i).GetNumber()) && TheAgents.at(i).GetStatus() != -2)
 			{
 				tempAgentStatus = TheAgents.at(i).GetStatus();
