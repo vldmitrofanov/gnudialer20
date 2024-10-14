@@ -157,7 +157,7 @@
                                         <a-select-option value="id">ID</a-select-option>
                                         <a-select-option value="phone">Phone</a-select-option>
                                     </a-select>
-                                    <a-select v-model="queue" >
+                                    <a-select v-model:value="queue" style="width: 130px;" :disabled="running">
                                         <a-select-option v-for="ql in queues" :key="ql" :value="ql">
                                         {{ ql.campaign?.name }}
                                     </a-select-option>
