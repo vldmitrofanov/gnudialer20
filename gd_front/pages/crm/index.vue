@@ -119,7 +119,7 @@
                             Continue
                         </a-button>
                     </a-col>
-                    <a-col :span="24" v-if="queue">
+                    <a-col :span="24">
                         <a-button block class="start-button" :disabled="startButtonDisabled" @click="togglePause">
                             <template #icon v-if="running">Pause <pause-circle-filled /></template>
                             <template #icon v-else>Start <play-circle-filled /></template>
@@ -784,6 +784,8 @@ const fetchServerData = async (id) => {
 }
 
 const runContinue = async() => {
+    const serverId = serverData.value.id
+    const agentId = agent.value?.id
     const { data, error, pending, onError } = await useFetch(`/api/asterisk/agent/available`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
