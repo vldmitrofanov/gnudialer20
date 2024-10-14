@@ -662,7 +662,7 @@ public:
 
 	int size() const { return itsMembersNumbers.size(); }
 
-	void OldWrite()
+	void Write_OBSOLETE()
 	{
 		return;
 		std::stable_sort(itsMembersNumbers.begin(), itsMembersNumbers.end());
