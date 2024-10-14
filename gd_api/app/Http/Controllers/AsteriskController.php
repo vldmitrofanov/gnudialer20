@@ -25,13 +25,11 @@ class AsteriskController extends Controller
     {
         $request->validate([
             'agent' => 'required',
-            'queue' => 'required|string',
             'pause' => 'required|boolean',
             'server_id' => 'required|integer'
         ]);
 
         $agent = $request->input('agent');
-        $queue = $request->input('queue');
         $pause = $request->input('pause');
         $pause = $pause ? 1 : 0;
         $serverId = $request->input('server_id');
