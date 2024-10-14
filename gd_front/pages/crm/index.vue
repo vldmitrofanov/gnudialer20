@@ -100,7 +100,7 @@
                         </a-button>
                     </a-col>
                     <a-col :span="24">
-                        <a-dropdown class="qsb-etytrui" :disabled="queueButtonDisabled">
+                        <a-dropdown class="qsb-etytrui" :disabled="queueButtonDisabled" v-if="false">
                             <template #overlay>
                                 <a-menu>
                                     <a-menu-item v-for="ql in queues" :key="ql" :value="ql"
@@ -114,6 +114,10 @@
                                 <DownOutlined />
                             </a-button>
                         </a-dropdown>
+                        <a-button block class="three-way-button" 
+                            @click="runContinue">
+                            Continue
+                        </a-button>
                     </a-col>
                     <a-col :span="24" v-if="queue">
                         <a-button block class="start-button" :disabled="startButtonDisabled" @click="togglePause">
@@ -779,6 +783,28 @@ const fetchServerData = async (id) => {
     }
 }
 
+const runContinue = async() => {
+    const { data, error, pending, onError } = await useFetch(`/api/asterisk/agent/available`, {
+        method: 'POST',
+        baseURL: config.public.apiBaseUrl,
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        },
+        body: {
+            server_id: serverId,
+            agent: agentId
+        }
+    })
+    onError((fetchError) => {
+        message.error("Error during 3-way transfer:", fetchError);
+        return
+    });
+    if (!error.value) {
+        threeWayStatus.value = data
+        console.log('3__Way__Response', data)
+    }
+}
 const handle3WayTransfer = async (threeWayId) => {
     console.log(bridgeId.value, threeWayId)
     const serverId = serverData.value.id
