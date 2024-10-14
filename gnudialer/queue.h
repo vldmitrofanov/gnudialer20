@@ -611,10 +611,10 @@ public:
 	void dumpAllAgents()
 	{
 
-		// std::cout << "Member List: " << std::endl;
-		//	for (int i = 0; i < itsMembersNumbers.size(); i++) {
-		//		std::cout << itsMembersNumbers.at(i) << std::endl;
-		//		}
+		 std::cout << "[DEBUG}[dumpAllAgents] Member List: " << std::endl;
+			for (int i = 0; i < itsMembersNumbers.size(); i++) {
+				std::cout << itsMembersNumbers.at(i) << std::endl;
+			}
 
 		std::cout << "Number of Agents: " << std::endl;
 		std::cout << itsMembersNumbers.size() << std::endl;
@@ -949,7 +949,7 @@ public:
 		// this is all fluff, just display only, sets nothing
 		for (int i = 0; i < TheAgents.size(); i++)
 		{
-			std::cout << "LeastRecent [" << name << "]: ALL AGENTS: " << TheAgents.at(i).GetNumber() << " STATUS: "<<  TheAgents.at(i).GetStatus() << std::endl;
+			std::cout << "[DEBUG] LeastRecent [" << name << "]: ALL AGENTS: " << TheAgents.at(i).GetNumber() << " STATUS: "<<  TheAgents.at(i).GetStatus() << std::endl;
 			if (tempQueue.HasMemberNumber(TheAgents.at(i).GetNumber()) && TheAgents.at(i).GetStatus() != -2)
 			{
 				tempAgentStatus = TheAgents.at(i).GetStatus();
@@ -958,6 +958,8 @@ public:
 				std::cout << name << ": Online Agent: " << tempAgentNum << " Status: " << tempAgentStatus << " Waiting: " << tv.tv_sec % 1000000 - tempAgentStatus << std::endl;
 			}
 		}
+
+		tempQueue.dumpAllAgents();
 
 		// actual loop looking for available agents
 		for (int i = 0; i < TheAgents.size(); i++)
