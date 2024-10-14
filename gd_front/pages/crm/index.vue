@@ -397,6 +397,7 @@ const initiateWebsocket = (server) => {
                         customerChannel.value
                         bridge.value = {name:data.bridge.id}
                     }
+                    getAgentStatus()
                 }
                 break;
         }
