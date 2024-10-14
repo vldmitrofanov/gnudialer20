@@ -114,8 +114,7 @@
                                 <DownOutlined />
                             </a-button>
                         </a-dropdown>
-                        <a-button block class="three-way-button" 
-                            @click="runContinue">
+                        <a-button block class="three-way-button" @click="runContinue">
                             Continue
                         </a-button>
                     </a-col>
@@ -157,10 +156,10 @@
                                         <a-select-option value="id">ID</a-select-option>
                                         <a-select-option value="phone">Phone</a-select-option>
                                     </a-select>
-                                    <a-select v-model:value="queue" style="width: 130px;" :disabled="running">
-                                        <a-select-option v-for="ql in queues" :key="ql" :value="ql">
-                                        {{ ql.campaign?.name }}
-                                    </a-select-option>
+                                    <a-select v-model:value="selectedQueueId" style="width: 130px;" :disabled="running">
+                                        <a-select-option v-for="ql in queues" :key="ql.id" :value="ql.id">
+                                            {{ ql.campaign?.name }}
+                                        </a-select-option>
                                     </a-select>
                                     <a-input v-model:value="searchTerm" :placeholder="`Enter ${searchBy}`"
                                         style="width: 200px;" @keypress.enter="handleSearch" :disabled="running" />
@@ -183,7 +182,8 @@
                     <p>Call history and other interactions with the lead.</p>
                 </a-tab-pane>agentStatus
             </a-tabs>
-            <div v-if="DEBUG" class="debug-panel">Agent channel: {{ agentChannel?.name }} | customerChannel {{ customerChannel?.name }} |
+            <div v-if="DEBUG" class="debug-panel">Agent channel: {{ agentChannel?.name }} | customerChannel {{
+                customerChannel?.name }} |
                 onHold: {{ isChannel2OnHold }} | bridge: {{ bridge?.id }} | leadCampaign {{ leadCampaign }}
             </div>
         </a-col>
@@ -206,7 +206,7 @@ const authToken = useCookie('auth_token').value
 const isCBModalVisible = ref(false)
 const serverData = ref(null)
 const allButtonsDisabled = ref(true)
-const running = computed(() => parseInt(agentStatus.value?.online) === 1 && parseInt(agentStatus.value?.pause) === 0 )
+const running = computed(() => parseInt(agentStatus.value?.online) === 1 && parseInt(agentStatus.value?.pause) === 0)
 const user = ref(null)
 const agent = ref(null)
 const connected = ref(false)
@@ -249,7 +249,7 @@ const toggleHold = async () => {
         actionCommand += "Context: gnudialer_hold\r\n";
         actionCommand += "Exten: s\r\n";
         actionCommand += "Priority: 1\r\n";
-    } else if(!threeWayStatus.value) {
+    } else if (!threeWayStatus.value) {
         actionCommand = "Action: Redirect\r\n";
         actionCommand += `Channel: ${customerChannel.value?.name}\r\n`;  // Customer channel currently on hold
         actionCommand += "Context: gnudialer_bridge\r\n";      // Context to handle the bridge
@@ -274,7 +274,7 @@ const toggleHold = async () => {
         message.error(error.value);
         return null
     } else {
-        isChannel2OnHold.value =! isChannel2OnHold.value
+        isChannel2OnHold.value = !isChannel2OnHold.value
     }
 
 }
@@ -371,8 +371,8 @@ const initiateWebsocket = (server) => {
                 }
                 if (data.value?.includes(`PJSIP/${agent.value?.id}-`)) {
                     onBringePeer(data)
-                    customerChannel.value = {name:data.channel.name}
-                } 
+                    customerChannel.value = { name: data.channel.name }
+                }
                 break;
         }
         switch (data.dialplan_app) {
@@ -404,7 +404,7 @@ const initiateWebsocket = (server) => {
                     }
                     if (data.bridge) {
                         customerChannel.value
-                        bridge.value = {name:data.bridge.id}
+                        bridge.value = { name: data.bridge.id }
                     }
                     getAgentStatus()
                 }
@@ -478,7 +478,7 @@ const gdialDispo = async (dispo) => {
     }
 }
 
-const setAvailable = async() =>{
+const setAvailable = async () => {
     const { data, error } = await useFetch(`/api/asterisk/agent/available`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
@@ -581,7 +581,7 @@ const handleLeadSave = async (updatedLead) => {
 
 const onBringePeer = (data) => {
     if (data.channel) {
-        agentChannel.value = {name: data.value}
+        agentChannel.value = { name: data.value }
         const str = data.channel.connected.name
         callerId.value = data.channel.caller
         const trimmedStr = str.slice(1, -1);  // Removes the first and last characters
@@ -750,17 +750,17 @@ const getAgentStatus = async () => {
             console.log('Fetched data.data:', data.value?.data)
         }
         agentStatus.value = data.value?.data
-        agentChannel.value = {name: data.value?.data?.agent_channel,id: data.value?.data?.agent_channel_id}
-        bridge.value = {id:data.value?.data?.bridge_id,name: data.value?.data?.id}
+        agentChannel.value = { name: data.value?.data?.agent_channel, id: data.value?.data?.agent_channel_id }
+        bridge.value = { id: data.value?.data?.bridge_id, name: data.value?.data?.id }
         startButtonDisabled.value = false
-        if(data.value?.channels?.length>0){
+        if (data.value?.channels?.length > 0) {
             let fnd = false
-            data.value.channels.forEach(v=>{
-                if(!fnd) {
+            data.value.channels.forEach(v => {
+                if (!fnd) {
                     const cmpData = parseCampaignString(v?.connected?.name)
-                    if(cmpData && cmpData.campaignName && cmpData.leadID){
+                    if (cmpData && cmpData.campaignName && cmpData.leadID) {
                         fnd = true
-                        getLead(cmpData.campaignName,cmpData.leadID)
+                        getLead(cmpData.campaignName, cmpData.leadID)
                     }
                 }
             })
@@ -788,7 +788,7 @@ const fetchServerData = async (id) => {
     }
 }
 
-const runContinue = async() => {
+const runContinue = async () => {
     const serverId = serverData.value.id
     const agentId = agent.value?.id
     const { data, error, pending, onError } = await useFetch(`/api/asterisk/agent/available`, {
@@ -836,7 +836,11 @@ const handle3WayTransfer = async (threeWayId) => {
         console.log('3__Way__Response', data)
     }
 }
+const selectedQueueId = ref(null)
 const router = useRouter()
+watch(selectedQueueId, (newId) => {
+  queue.value = queues.value.find(queue => queue.id === newId) || null;
+}, { immediate: true })
 onMounted(async () => {
     const chunk = localStorage.getItem('user')
     console.log('Retrieving user:', chunk)
