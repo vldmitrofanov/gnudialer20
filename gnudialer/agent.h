@@ -458,7 +458,7 @@ public:
 			else if (bridge.available == 0)
 			{
 				std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " on wait..." << std::endl;
-				where(agentID).SetOnCall(); // Assuming "on wait" means on call			
+				where(agentID).SetOnCall(); // Assuming "on wait" means on call
 			}
 			else
 			{
@@ -472,6 +472,100 @@ public:
 	}
 
 	void ParseAgentChannelStatus()
+	{
+		std::string ariHost = getMainHost();
+		std::string ariUser = getAriUser();
+		std::string ariPass = getAriPass();
+		HttpClient client(ariHost, 8088, ariUser, ariPass);
+
+		std::string ariResponse;
+		std::string url = "/ari/channels";
+		ariResponse = client.get(url);
+
+		std::map<int, std::string> agentStatusMap;
+
+		// Parse the ARI response (assuming it’s in JSON format)
+		json responseArray;
+		try
+		{
+			responseArray = json::parse(ariResponse);
+		}
+		catch (const std::exception &e)
+		{
+			std::cerr << "Error parsing ARI response: " << e.what() << std::endl;
+			return;
+		}
+
+		// Loop through each channel to extract agent info
+		for (const auto &channel : responseArray)
+		{
+			std::string channelName = channel["name"];
+			std::string state = channel["state"];
+			std::string connectedChannel = channel["connected"]["number"]; 
+
+			// Check if it's a PJSIP channel (modify regex as needed)
+			std::regex regexPattern(R"(PJSIP/(\d+)-\d+)");
+			std::smatch match;
+			if (std::regex_search(channelName, match, regexPattern))
+			{
+				int agentID = std::stoi(match[1]); // Extract agent ID from channel name
+				if (state == "Up" && !connectedChannel.empty()){
+					state = "Connected";
+				}
+				agentStatusMap[agentID] = state;   // Store the state of the agent
+			}
+		}
+
+		DBConnection dbConn;
+		u_long serverId = std::stoull(getServerId());
+		std::vector<ParsedConfBridge> confBridges = dbConn.getAllConfBridges(serverId);
+
+		for (const auto &bridge : confBridges)
+		{
+			int agentID = bridge.agent_id;
+			u_long bridgeID = bridge.id; // Bridge ID now available
+
+			if (bridge.online == 0)
+			{
+				std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " offline..." << std::endl;
+				where(agentID).SetOffline();
+			}
+			else if (bridge.pause == 1)
+			{
+				std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " on pause..." << std::endl;
+				where(agentID).SetOnPause();
+			}
+			else if (bridge.available == 0)
+			{
+				std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " on wait..." << std::endl;
+				where(agentID).SetOnCall(); // Assuming "on wait" means on call
+			}
+			else
+			{
+				std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " on call..." << std::endl;
+				// where(agentID).SetLoggedIn();
+				if (agentStatusMap.find(agentID) != agentStatusMap.end())
+				{
+					std::string agentState = agentStatusMap[agentID];
+
+					if (agentState == "Connected")
+					{
+						std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " on call..." << std::endl;
+						where(agentID).SetOnCall(); // Agent is on a call
+					}
+					else
+					{
+						std::cout << "[DEBUG](agent.h) GnuDialer: Setting PJSIP/" << agentID << " available..." << std::endl;
+						where(agentID).SetLoggedIn(); // Agent is available, not in call
+					}
+				}
+			}
+
+			// Optionally log the bridge ID for debugging or further operations
+			std::cout << "[DEBUG](agent.h) Bridge ID for agent " << agentID << " is " << bridgeID << std::endl;
+		}
+	}
+	void ParseAgentChannelStatus_OBSOLETE()
 	{
 		std::string ariHost = getMainHost();
 		std::string ariUser = getAriUser();
@@ -549,11 +643,11 @@ public:
 				else
 				{
 
-				//	if (currentStatus == -2 || currentStatus == -1)
-				//	{
-				//		where(agentNumber).SetLoggedIn();
-				//		where(agentNumber).SetLeadId("");
-				//	}
+					//	if (currentStatus == -2 || currentStatus == -1)
+					//	{
+					//		where(agentNumber).SetLoggedIn();
+					//		where(agentNumber).SetLeadId("");
+					//	}
 					std::cout << "[DEBUG](agent.h) Channel: " << channelName << " has no valid connected name." << std::endl;
 				}
 			}
