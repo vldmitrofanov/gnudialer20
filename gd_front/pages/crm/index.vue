@@ -157,6 +157,11 @@
                                         <a-select-option value="id">ID</a-select-option>
                                         <a-select-option value="phone">Phone</a-select-option>
                                     </a-select>
+                                    <a-select v-model="queue" >
+                                        <a-select-option v-for="ql in queues" :key="ql" :value="ql">
+                                        {{ ql.campaign?.name }}
+                                    </a-select-option>
+                                    </a-select>
                                     <a-input v-model:value="searchTerm" :placeholder="`Enter ${searchBy}`"
                                         style="width: 200px;" @keypress.enter="handleSearch" :disabled="running" />
                                     <a-button type="primary" @click="handleSearch" :disabled="running">
@@ -831,17 +836,20 @@ const handle3WayTransfer = async (threeWayId) => {
         console.log('3__Way__Response', data)
     }
 }
-
+const router = useRouter()
 onMounted(async () => {
     const chunk = localStorage.getItem('user')
+    console.log('Retrieving user:', chunk)
     if (!chunk) {
         //no user, throw some error
-        console.log('no user')
+        console.log('no user', chunk)
+        router.push({ name: 'login' })
     } else {
         user.value = JSON.parse(chunk)
         if (!user.value.agents || user.value.agents.length === 0) {
             // no agents, throw some error
             console.log('no agents')
+            message.error('No agents were found')
         } else {
             if (user.value.agents.length > 1) {
                 // we supposed to give user option
