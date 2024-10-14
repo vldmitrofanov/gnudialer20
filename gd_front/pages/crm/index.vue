@@ -722,7 +722,7 @@ function parseCampaignString(str) {
 const getAgentStatus = async () => {
     startButtonDisabled.value = true
     const serverId = serverData.value.id
-    const queueName = queue?.value.campaign?.code
+    const queueName = queue?.value?.campaign?.code || ''
     const agentId = agent.value?.id
     const { data, error } = await useFetch(`/api/asterisk/agent/status?server_id=${serverId}&queue=${queueName}&agent=${agentId}`, {
         baseURL: config.public.apiBaseUrl,
