@@ -970,7 +970,7 @@ public:
 			if (tempQueue.HasMemberNumber(tempAgentNum))
 			{
 				// the > x, is equiv to wrapuptime
-				if (tempAgentStatus < lowestTime && tv.tv_sec % 1000000 - tempAgentStatus > 5 && tempAgentStatus > 0)
+				if (tempAgentStatus < lowestTime && tv.tv_sec % 1000000 - tempAgentStatus > 2 && tempAgentStatus > 0)
 				{
 					lowestTime = tempAgentStatus;
 					agentNum = tempAgentNum;
