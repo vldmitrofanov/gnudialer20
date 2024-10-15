@@ -188,7 +188,7 @@
             </a-tabs>
             <div v-if="DEBUG" class="debug-panel">Agent channel: {{ agentChannel?.name }} | customerChannel {{
                 customerChannel?.name }} |
-                onHold: {{ isChannel2OnHold }} | bridge: {{ bridge?.id }} | leadCampaign {{ leadCampaign }}
+                onHold: {{ isChannel2OnHold }} | bridge: {{ bridge?.namw }} [{{ bridge?.id }}] | leadCampaign {{ leadCampaign }}
             </div>
         </a-col>
     </a-row>
