@@ -875,7 +875,7 @@ const runContinue = async () => {
     }
 }
 const handle3WayTransfer = async (threeWayId) => {
-    console.log(bridgeId.value, threeWayId)
+    console.log(bridge.value?.name, threeWayId)
     const serverId = serverData.value.id
     const { data, error, pending, onError } = await useFetch(`/api/asterisk/bridge-3way`, {
         method: 'POST',
@@ -887,7 +887,7 @@ const handle3WayTransfer = async (threeWayId) => {
         body: {
             server_id: serverId,
             three_way_id: threeWayId,
-            bridge: bridgeId.value,
+            bridge: bridge.value?.name,
         }
     })
     onError((fetchError) => {
