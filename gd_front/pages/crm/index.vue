@@ -149,6 +149,10 @@
             <a-tabs default-active-key="1">
                 <a-tab-pane key="1" tab="Main">
                     <div class="sticky-form">
+                        <div class="itrretyi">
+                            <span class="campaign-name">{{ queue?.campaign?.name }}</span>
+                            <a-button v-if="manualDial && !manualDialing" @click="handleManualDialing">Dial</a-button>
+                        </div>
                         <a-form layout="inline">
                             <a-form-item>
                                 <a-input-group compact>
@@ -233,10 +237,40 @@ const cb_datetime = ref(null)
 const defaultDate = ref(new Date());
 const bridge = ref(null)
 const threeWayStatus = ref(null)
+const manualDial = ref(false)
+const manualDialing = ref(false)
 
 defaultDate.value.setDate(defaultDate.value.getDate() + 1);
 defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
 
+const handleManualDialing = async () => {
+    if (!lead.value) {
+        message.error("No lead selected")
+        return
+    }
+    if (!queue.value) {
+        message.error("No Campaign selected")
+        return
+    }
+
+    const dialNumber = lead.value.phone;
+    const confBridgeId = bridge.value.id;
+    const channel = queue.value?.settings?.trunk.replace('_EXTEN_', dialNumber);
+    const context = "join_confbridge";
+    const exten = "s";
+    const priority = "1";
+
+    // Create the AMI command
+    let amiCommand = "Action: Originate\r\n";
+    amiCommand += "Channel: " + channel + "\r\n";
+    amiCommand += "Context: " + context + "\r\n";
+    amiCommand += "Exten: " + exten + "\r\n";
+    amiCommand += "Priority: " + priority + "\r\n";
+    amiCommand += "Timeout: 30000\r\n";
+    amiCommand += "Variable: CONF_BRIDGE_ID=" + confBridgeId + "\r\n";
+    amiCommand += "Async: true\r\n\r\n";
+
+}
 const toggleHold = async () => {
     if (!customerChannel.value) {
         message.error("No channel found to put on hold")
@@ -334,6 +368,7 @@ const handleSearch = async () => {
         lead.value = data.value?.lead
         leadSchema.value = data.value?.schema
         leadCampaign.value = campaign
+        manualDial.value = true
     }
 }
 
@@ -839,7 +874,7 @@ const handle3WayTransfer = async (threeWayId) => {
 const selectedQueueId = ref(null)
 const router = useRouter()
 watch(selectedQueueId, (newId) => {
-  queue.value = queues.value.find(queue => queue.id === newId) || null;
+    queue.value = queues.value.find(queue => queue.id === newId) || null;
 }, { immediate: true })
 onMounted(async () => {
     const chunk = localStorage.getItem('user')
@@ -913,6 +948,9 @@ onMounted(async () => {
         left: 0;
         width: 100%;
         border-top: #777 1px solid;
+        padding: 8px;
+        color: #777;
+        font-size: 13px;
     }
 }
 
