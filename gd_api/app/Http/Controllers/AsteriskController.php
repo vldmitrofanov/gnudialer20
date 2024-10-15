@@ -181,10 +181,10 @@ class AsteriskController extends Controller
         $command .= "Variable: CONF_BRIDGE_ID=" . $bridge . "\r\n";
         $command .= "Async: true\r\n\r\n";
         Log::info("Dialing extension: {$threeWay->extension}");
-        $result = $this->amiService->sendCommandAndGetChannell($command, "\r\n\r\n");
+        $result = $this->amiService->sendCustomEvent($command, "\r\n\r\n");
         if (!empty($result['channel'])) {
-            $status =  $this->amiService->joinBridge($bridge, $result['channel']);
-            return response()->json(['status' => $status, 'channel' => $result['channel']], 200);
+            //$status =  $this->amiService->joinBridge($bridge, $result['channel']);
+            return response()->json(['status' => 'OK', 'channel' => $result['channel']], 200);
         } else {
             return response()->json(['status' => null], 422);
         }
