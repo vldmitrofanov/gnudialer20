@@ -256,6 +256,7 @@ const handleManualDialing = async () => {
     const dialNumber = lead.value.phone;
     const confBridgeId = bridge.value.name;
     const dialprefix = queue.value?.settings?.find(v=>v.parameter=="dialprefix")?.value
+    const cid = queue.value?.settings?.find(v=>v.parameter=="callerid")?.value
     const trunk = queue.value?.settings?.find(v=>v.parameter=="trunk")
     if (!trunk) {
         message.error("Trunk not found")
@@ -272,6 +273,7 @@ const handleManualDialing = async () => {
     amiCommand += "Context: " + context + "\r\n";
     amiCommand += "Exten: " + exten + "\r\n";
     amiCommand += "Priority: " + priority + "\r\n";
+    amiCommand += "CallerID: " + cid + "\r\n";
     amiCommand += "Timeout: 30000\r\n";
     amiCommand += "Variable: CONF_BRIDGE_ID=" + confBridgeId + "\r\n";
     amiCommand += "Async: true\r\n\r\n";
