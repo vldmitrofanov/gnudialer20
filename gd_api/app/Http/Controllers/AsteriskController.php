@@ -170,7 +170,7 @@ class AsteriskController extends Controller
         $serverId = $request->server_id;
         $this->amiService->setServer($serverId);
         $command = "Action: Originate\r\n";
-        $command .= "Channel: " . rtrim($threeWay->trunk, '/'). '/' . $threeWay->extension . "\r\n";
+        $command .= "Channel: " . $threeWay->trunk . $threeWay->extension . "\r\n";
         //$command .= "Channel: Local/{$threeWay->extension}@{$threeWay->context}\r\n";
         $command .= "Exten: $threeWay->extension\r\n";  // The third party's SIP channel
         $command .= "Context: $threeWay->context\r\n";  // The dialplan context
