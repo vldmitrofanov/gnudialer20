@@ -255,12 +255,13 @@ const handleManualDialing = async () => {
 
     const dialNumber = lead.value.phone;
     const confBridgeId = bridge.value.id;
+    const dialprefix = queue.value?.settings?.find(v=>v.parameter=="dialprefix")
     const trunk = queue.value?.settings?.find(v=>v.parameter=="trunk")
     if (!trunk) {
         message.error("Trunk not found")
         return
     }
-    const channel = trunk.value.replace('_EXTEN_', dialNumber);
+    const channel = trunk.value.replace('_EXTEN_', dialprefix + dialNumber);
     const context = "join_confbridge";
     const exten = "s";
     const priority = "1";
