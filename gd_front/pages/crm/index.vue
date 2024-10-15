@@ -255,7 +255,7 @@ const handleManualDialing = async () => {
 
     const dialNumber = lead.value.phone;
     const confBridgeId = bridge.value.id;
-    const trunk = queue.value?.settings?.filter(v=>v.parameter=="trunk")
+    const trunk = queue.value?.settings?.find(v=>v.parameter=="trunk")
     if (!trunk) {
         message.error("Trunk not found")
         return
@@ -1011,7 +1011,7 @@ onMounted(async () => {
 .sticky-form {
     position: relative;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     width: 100%;
     background-color: white;
     padding: 0 0 16px;
@@ -1022,6 +1022,13 @@ onMounted(async () => {
     /*box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);*/
     .ant-form-item {
         margin-inline-end: 0 !important;
+    }
+    .itrretyi{
+        display: flex;
+        gap: 10px;
+        .campaign-name{
+            font-weight: 500;
+        }
     }
 }
 </style>
