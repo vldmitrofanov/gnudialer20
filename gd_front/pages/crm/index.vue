@@ -254,7 +254,7 @@ const handleManualDialing = async () => {
     }
 
     const dialNumber = lead.value.phone;
-    const confBridgeId = bridge.value.id;
+    const confBridgeId = bridge.value.name;
     const dialprefix = queue.value?.settings?.find(v=>v.parameter=="dialprefix")?.value
     const trunk = queue.value?.settings?.find(v=>v.parameter=="trunk")
     if (!trunk) {
