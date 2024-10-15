@@ -275,6 +275,26 @@ const handleManualDialing = async () => {
     amiCommand += "Variable: CONF_BRIDGE_ID=" + confBridgeId + "\r\n";
     amiCommand += "Async: true\r\n\r\n";
 
+    const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
+        method: 'POST',
+        baseURL: config.public.apiBaseUrl,
+        headers: {
+            Accept: `application/json`,
+            Authorization: `Bearer ${authToken}`
+        },
+        body: {
+            server_id: serverData.value?.id,
+            action: amiCommand
+        }
+    })
+    if (error.value) {
+        console.error('Error during hangup: ', error.value)
+        message.error(error.value);
+        return null
+    } else {
+        console.log(data)
+    }
+
 }
 const toggleHold = async () => {
     if (!customerChannel.value) {
