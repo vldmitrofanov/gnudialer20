@@ -170,7 +170,7 @@ class AsteriskController extends Controller
         $serverId = $request->server_id;
         $this->amiService->setServer($serverId);
         $command = "Action: Originate\r\n";
-        $command .= "Channel: " . $threeWay->trunk . $threeWay->extension . "\r\n";
+        $command .= "Channel: " . str_replace('_EXTEN_', $threeWay->extension, $threeWay->trunk) . "\r\n";
         //$command .= "Channel: Local/{$threeWay->extension}@{$threeWay->context}\r\n";
         $command .= "Exten: $threeWay->extension\r\n";  // The third party's SIP channel
         $command .= "Context: $threeWay->context\r\n";  // The dialplan context
@@ -178,6 +178,7 @@ class AsteriskController extends Controller
         $command .= "CallerID: $threeWay->caller_id\r\n";
         $command .= "Timeout: 30000\r\n";  // Timeout in milliseconds
         $command .= "ActionID: dialThirdParty\r\n";
+        $command .= "Variable: CONF_BRIDGE_ID=" . $bridge . "\r\n";
         $command .= "Async: true\r\n\r\n";
         Log::info("Dialing extension: {$threeWay->extension}");
         $result = $this->amiService->sendCommandAndGetChannell($command, "\r\n\r\n");
