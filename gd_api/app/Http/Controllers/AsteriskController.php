@@ -162,7 +162,7 @@ class AsteriskController extends Controller
         $request->validate([
             'three_way_id' => 'required',
             'server_id' => 'required',
-            'bridge' => 'required|string',
+            'bridge' => 'required',
         ]);
         $bridge = $request->bridge;
         $threeWayId = $request->three_way_id;
