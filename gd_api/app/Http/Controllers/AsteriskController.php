@@ -201,7 +201,7 @@ class AsteriskController extends Controller
             'lead_id' => 'required',
             'bridge' => 'required',
         ]);
-        $campaignCode = $request->campaign;
+        $campaignCode = $request->queue;
         $bridge = \App\Models\ConfBridge::findOrFail($request->bridge);
         $campaign = \App\Models\Campaign::where('code', $campaignCode)->first();
         if (empty($campaign)) {
