@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\AsteriskAMIService;
 use App\Services\AsteriskARIService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class AsteriskController extends Controller
 {
@@ -76,7 +77,7 @@ class AsteriskController extends Controller
     public function getAgentStatus(Request $request)
     {
         $request->validate([
-            'agent' => 'required|string',
+            'agent' => 'required',
             'queue' => 'nullable|string',
             'server_id' => 'required|integer'
         ]);
@@ -91,8 +92,8 @@ class AsteriskController extends Controller
             $this->ariService->setServer($serverId);
             if (!empty($brigde->bridge_id)) {
                 $ariBridge = $this->ariService->getBridgeById($brigde->bridge_id);
-            } 
-            if(empty($ariBridge)){
+            }
+            if (empty($ariBridge)) {
                 $ariBridges = $this->ariService->getAllBridges();
                 foreach ($ariBridges as $v) {
                     if ($v['name'] == $brigde->id) {
@@ -168,7 +169,7 @@ class AsteriskController extends Controller
         $threeWayId = $request->three_way_id;
         $threeWay = \App\Models\ThreeWay::findOrFail($threeWayId);
         $serverId = $request->server_id;
-        
+
         $command = "Action: Originate\r\n";
         $command .= "Channel: " . str_replace('_EXTEN_', $threeWay->extension, $threeWay->trunk) . "\r\n";
         //$command .= "Channel: Local/{$threeWay->extension}@{$threeWay->context}\r\n";
@@ -185,6 +186,92 @@ class AsteriskController extends Controller
         $result = $this->amiService->sendCommand($command, "\r\n\r\n");
         if (!empty($result['channel'])) {
             //$status =  $this->amiService->joinBridge($bridge, $result['channel']);
+            return response()->json(['status' => 'OK', 'channel' => $result['channel']], 200);
+        } else {
+            return response()->json(['status' => null], 422);
+        }
+    }
+
+    public function callLeadByID(Request $request)
+    {
+        $request->validate([
+            'agent' => 'required',
+            'queue' => 'required|string',
+            'server_id' => 'required|integer',
+            'lead_id' => 'required',
+            'bridge' => 'required',
+        ]);
+        $campaignCode = $request->campaign;
+        $bridge = \App\Models\ConfBridge::findOrFail($request->bridge);
+        $campaign = \App\Models\Campaign::where('code', $campaignCode)->first();
+        if (empty($campaign)) {
+            return response()->json(['message' => 'Campaign not found'], 422);
+        }
+        $leadId = $request->lead_id;
+        $agent = $request->agent;
+        $serverId = $request->server_id;
+        $table_name = 'campaign_' . $campaignCode;
+        $lead = DB::table($table_name)->where('id', $leadId)->where('dnc', '!=', 8);
+        $lead = $lead->first();
+        if (empty($lead)) {
+            return response()->json(['message' => 'Lead not found'], 422);
+        }
+        $queue = null;
+        foreach ($campaign->queues as $q) {
+            if ($q->server_id == $serverId) {
+                $queue = $q;
+                break;
+            }
+        }
+        $dialNumber = $lead->phone;
+        $confBridgeId = $bridge->id;
+        $dialprefix = null;
+        $cid = null;
+        $trunk = null;
+
+        // Loop through the queue settings
+        foreach ($queue->settings as $setting) {
+            if ($setting['parameter'] === 'dialprefix') {
+                $dialprefix = $setting['value'];
+            }
+            if ($setting['parameter'] === 'callerid') {
+                $cid = $setting['value'];
+            }
+            if ($setting['parameter'] === 'trunk') {
+                $trunk = $setting['value'];
+            }
+        }
+
+        // Ensure that $trunk and $dialprefix are set before proceeding
+        if ($trunk && $dialprefix) {
+            $channel = str_replace('_EXTEN_', $dialprefix . $dialNumber, $trunk);
+        } else {
+            // Handle the case where trunk or dialprefix are missing
+            throw new \Exception('Missing required settings: trunk or dialprefix');
+        }
+
+        $context = "join_confbridge";
+        $exten = "s";
+        $priority = "1";
+
+        // Create the AMI command
+        $amiCommand = "Action: Originate\r\n";
+        $amiCommand .= "Channel: " . $channel . "\r\n";
+        $amiCommand .= "Context: " . $context . "\r\n";
+        $amiCommand .= "Exten: " . $exten . "\r\n";
+        $amiCommand .= "Priority: " . $priority . "\r\n";
+        $amiCommand .= "CallerID: " . $cid . "\r\n";
+        $amiCommand .= "Timeout: 30000\r\n";
+        $amiCommand .= "Variable: CONF_BRIDGE_ID=" . $confBridgeId . "\r\n";
+        $amiCommand .= "Async: true\r\n\r\n";
+
+        $this->amiService->setServer($serverId);
+        $result = $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
+        if (!empty($result['channel'])) {
+            $lead->update([
+                'agent' => $agent,
+                'lastupdated' => DB::raw('NOW()')
+            ]);
             return response()->json(['status' => 'OK', 'channel' => $result['channel']], 200);
         } else {
             return response()->json(['status' => null], 422);
