@@ -94,19 +94,15 @@ class AsteriskAMIService
 
         $response = '';
         $startTime = time(); // Track the start time
-        $timeout = 10; // Set a timeout in seconds
-
+        $timeout = 60; // Set a timeout in seconds
+        $responseLog = "";
         while (!feof($this->socket)) {
             $line = fgets($this->socket);
             if ($line === false) {
                 break;
             }
-
             $response .= $line;
-
-            // Log each line for debugging purposes
-            Log::info("AMI Response Line: {$line}");
-
+            $responseLog .= $line . PHP_EOL;
             // Break if the end of the QueueStatus response is reached
             if (strpos($line, $end) !== false) {
                 break;
@@ -118,6 +114,7 @@ class AsteriskAMIService
                 break;
             }
         }
+        Log::info("AMI Response: {$responseLog}");
 
         return $this->parseResponse($response);
     }
