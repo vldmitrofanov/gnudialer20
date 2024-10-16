@@ -223,6 +223,9 @@ class AsteriskController extends Controller
                 break;
             }
         }
+        if (empty($queue)) {
+            return response()->json(['message' => 'Queue not found'], 422);
+        }
         $dialNumber = $lead->phone;
         $confBridgeId = $bridge->id;
         $dialprefix = null;
@@ -231,14 +234,14 @@ class AsteriskController extends Controller
 
         // Loop through the queue settings
         foreach ($queue->settings as $setting) {
-            if ($setting['parameter'] === 'dialprefix') {
-                $dialprefix = $setting['value'];
+            if ($setting->parameter === 'dialprefix') {
+                $dialprefix = $setting->value;
             }
-            if ($setting['parameter'] === 'callerid') {
-                $cid = $setting['value'];
+            if ($setting->parameter === 'callerid') {
+                $cid = $setting->value;
             }
-            if ($setting['parameter'] === 'trunk') {
-                $trunk = $setting['value'];
+            if ($setting->parameter === 'trunk') {
+                $trunk = $setting->value;
             }
         }
 
