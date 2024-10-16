@@ -233,7 +233,7 @@ class AsteriskController extends Controller
         $trunk = null;
 
         // Loop through the queue settings
-        foreach ($queue->settings as $setting) {
+        foreach ($queue->queueSettings as $setting) {
             if ($setting->parameter === 'dialprefix') {
                 $dialprefix = $setting->value;
             }

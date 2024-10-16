@@ -37,7 +37,7 @@ class Queue extends Model
         return $this->belongsTo(Campaign::class);
     }
 
-    public function settings()
+    public function queueSettings()
     {
         return $this->hasMany(Setting::class);
     }
