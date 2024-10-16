@@ -253,7 +253,7 @@ const handleManualDialing = async () => {
         return
     }
 
-    const dialNumber = lead.value.phone;
+    /*const dialNumber = lead.value.phone;
     const confBridgeId = bridge.value.name;
     const dialprefix = queue.value?.settings?.find(v=>v.parameter=="dialprefix")?.value
     const cid = queue.value?.settings?.find(v=>v.parameter=="callerid")?.value
@@ -277,8 +277,9 @@ const handleManualDialing = async () => {
     amiCommand += "Timeout: 30000\r\n";
     amiCommand += "Variable: CONF_BRIDGE_ID=" + confBridgeId + "\r\n";
     amiCommand += "Async: true\r\n\r\n";
-
-    const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
+    */
+    // const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
+    const { data, error } = await useFetch(`/api/asterisk/call`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
         headers: {
@@ -287,7 +288,10 @@ const handleManualDialing = async () => {
         },
         body: {
             server_id: serverData.value?.id,
-            action: amiCommand
+            queue: queue.value?.campaign?.code,
+            agent: agent.value?.id,
+            lead_id: lead.value?.id,
+            bridge: bridge.value?.id
         }
     })
     if (error.value) {
