@@ -127,7 +127,7 @@
                 </a-row>
             </a-card>
             <a-card :title="null"
-                v-if="queue?.queueSettings?.find(item => item.parameter === 'allow3way' && item.value === '1')">
+                v-if="queue?.queue_settings?.find(item => item.parameter === 'allow3way' && item.value === '1')">
                 <a-col :span="24">3Way transfer:</a-col>
                 <div v-if="!threeWayStatus">
                     <a-col :span="12" v-for="threeWay in queue?.campaign?.three_ways">
@@ -151,7 +151,8 @@
                     <div class="sticky-form">
                         <div class="itrretyi">
                             <span class="campaign-name">{{ queue?.campaign?.name }}</span>
-                            <a-button v-if="manualDial && !manualDialing" @click="handleManualDialing">Dial</a-button>
+                            <a-button v-if="manualDial && !manualDialing" @click="handleManualDialing"
+                                :loading="manualDialProgress">Dial</a-button>
                         </div>
                         <a-form layout="inline">
                             <a-form-item>
@@ -188,7 +189,8 @@
             </a-tabs>
             <div v-if="DEBUG" class="debug-panel">Agent channel: {{ agentChannel?.name }} | customerChannel {{
                 customerChannel?.name }} |
-                onHold: {{ isChannel2OnHold }} | bridge: {{ bridge?.namw }} [{{ bridge?.id }}] | leadCampaign {{ leadCampaign }}
+                onHold: {{ isChannel2OnHold }} | bridge: {{ bridge?.namw }} [{{ bridge?.id }}] | leadCampaign {{
+                leadCampaign }}
             </div>
         </a-col>
     </a-row>
@@ -239,6 +241,7 @@ const bridge = ref(null)
 const threeWayStatus = ref(null)
 const manualDial = ref(false)
 const manualDialing = ref(false)
+const manualDialProgress = ref(false)
 
 defaultDate.value.setDate(defaultDate.value.getDate() + 1);
 defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
@@ -255,9 +258,9 @@ const handleManualDialing = async () => {
 
     /*const dialNumber = lead.value.phone;
     const confBridgeId = bridge.value.name;
-    const dialprefix = queue.value?.queueSettings?.find(v=>v.parameter=="dialprefix")?.value
-    const cid = queue.value?.queueSettings?.find(v=>v.parameter=="callerid")?.value
-    const trunk = queue.value?.queueSettings?.find(v=>v.parameter=="trunk")
+    const dialprefix = queue.value?.queue_settings?.find(v=>v.parameter=="dialprefix")?.value
+    const cid = queue.value?.queue_settings?.find(v=>v.parameter=="callerid")?.value
+    const trunk = queue.value?.queue_settings?.find(v=>v.parameter=="trunk")
     if (!trunk) {
         message.error("Trunk not found")
         return
@@ -279,27 +282,37 @@ const handleManualDialing = async () => {
     amiCommand += "Async: true\r\n\r\n";
     */
     // const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
-    const { data, error } = await useFetch(`/api/asterisk/call`, {
-        method: 'POST',
-        baseURL: config.public.apiBaseUrl,
-        headers: {
-            Accept: `application/json`,
-            Authorization: `Bearer ${authToken}`
-        },
-        body: {
-            server_id: serverData.value?.id,
-            queue: queue.value?.campaign?.code,
-            agent: agent.value?.id,
-            lead_id: lead.value?.id,
-            bridge: bridge.value?.name
+    manualDialProgress.value = true
+    try {
+        const { data,
+            error } = await useFetch(`/api/asterisk/call`, {
+                method: 'POST',
+                baseURL: config.public.apiBaseUrl,
+                headers: {
+                    Accept: `application/json`,
+                    Authorization: `Bearer ${authToken}`
+                },
+                body: {
+                    server_id: serverData.value?.id,
+                    queue: queue.value?.campaign?.code,
+                    agent: agent.value?.id,
+                    lead_id: lead.value?.id,
+                    bridge: bridge.value?.name
+                }
+            })
+        if (error.value) {
+            console.error('Error during hangup: ', error.value)
+            message.error(error.value);
+            return null
+        } else {
+            console.log(data)
         }
-    })
-    if (error.value) {
-        console.error('Error during hangup: ', error.value)
-        message.error(error.value);
-        return null
-    } else {
-        console.log(data)
+    } catch (e) {
+        // Handle unexpected errors
+        console.error('Unexpected error: ', e);
+        message.error('Call failed');
+    } finally {
+        manualDialProgress.value = false;
     }
 
 }
@@ -1050,10 +1063,12 @@ onMounted(async () => {
     .ant-form-item {
         margin-inline-end: 0 !important;
     }
-    .itrretyi{
+
+    .itrretyi {
         display: flex;
         gap: 10px;
-        .campaign-name{
+
+        .campaign-name {
             font-weight: 500;
         }
     }
