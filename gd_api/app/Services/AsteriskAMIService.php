@@ -95,7 +95,7 @@ class AsteriskAMIService
 
         $response = '';
         $startTime = time(); // Track the start time
-        $timeout = 60; // Set a timeout in seconds
+        $timeout = 30; // Set a timeout in seconds
         $responseLog = "";
         while (!feof($this->socket)) {
             $line = fgets($this->socket);
