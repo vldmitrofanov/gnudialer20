@@ -91,6 +91,7 @@ class AsteriskAMIService
     {
         Log::info("AMI Command Line: {$command}");
         fwrite($this->socket, $command);
+        $ends = explode("|",$end);
 
         $response = '';
         $startTime = time(); // Track the start time
@@ -104,8 +105,10 @@ class AsteriskAMIService
             $response .= $line;
             $responseLog .= $line . PHP_EOL;
             // Break if the end of the QueueStatus response is reached
-            if (strpos($line, $end) !== false) {
-                break;
+            foreach($ends as $e1){
+                if (strpos($line, $e1) !== false) {
+                    break;
+                }
             }
 
             // Implement a timeout to avoid infinite loops

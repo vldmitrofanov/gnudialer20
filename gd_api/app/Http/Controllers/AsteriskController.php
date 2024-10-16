@@ -269,7 +269,7 @@ class AsteriskController extends Controller
         $amiCommand .= "Async: true\r\n\r\n";
 
         $this->amiService->setServer($serverId);
-        $result = $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
+        $result = $this->amiService->sendCommand($amiCommand, "Response: Success|Response: Error");
         if (!empty($result['channel'])) {
             $lead->update([
                 'agent' => $agent,
