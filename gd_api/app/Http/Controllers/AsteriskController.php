@@ -168,7 +168,7 @@ class AsteriskController extends Controller
         $threeWayId = $request->three_way_id;
         $threeWay = \App\Models\ThreeWay::findOrFail($threeWayId);
         $serverId = $request->server_id;
-        $this->amiService->setServer($serverId);
+        
         $command = "Action: Originate\r\n";
         $command .= "Channel: " . str_replace('_EXTEN_', $threeWay->extension, $threeWay->trunk) . "\r\n";
         //$command .= "Channel: Local/{$threeWay->extension}@{$threeWay->context}\r\n";
@@ -180,8 +180,9 @@ class AsteriskController extends Controller
         $command .= "ActionID: dialThirdParty\r\n";
         $command .= "Variable: CONF_BRIDGE_ID=" . $bridge . "\r\n";
         $command .= "Async: true\r\n\r\n";
-        Log::info("Dialing extension: {$threeWay->extension}");
-        $result = $this->amiService->sendCustomEvent($command, "\r\n\r\n");
+        //Log::info("Dialing extension: {$threeWay->extension}");
+        $this->amiService->setServer($serverId);
+        $result = $this->amiService->sendCommand($command, "\r\n\r\n");
         if (!empty($result['channel'])) {
             //$status =  $this->amiService->joinBridge($bridge, $result['channel']);
             return response()->json(['status' => 'OK', 'channel' => $result['channel']], 200);
