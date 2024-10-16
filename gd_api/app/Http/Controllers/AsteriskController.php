@@ -211,7 +211,7 @@ class AsteriskController extends Controller
         $agent = $request->agent;
         $serverId = $request->server_id;
         $table_name = 'campaign_' . $campaignCode;
-        $lead = DB::table($table_name)->where('id', $leadId)->where('dnc', '!=', 8);
+        $lead = DB::table($table_name)->where('id', $leadId)->where('disposition', '!=', 8);
         $lead = $lead->first();
         if (empty($lead)) {
             return response()->json(['message' => 'Lead not found'], 422);
