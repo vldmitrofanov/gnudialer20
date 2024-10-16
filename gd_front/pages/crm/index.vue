@@ -127,7 +127,7 @@
                 </a-row>
             </a-card>
             <a-card :title="null"
-                v-if="queue?.settings?.find(item => item.parameter === 'allow3way' && item.value === '1')">
+                v-if="queue?.queueSettings?.find(item => item.parameter === 'allow3way' && item.value === '1')">
                 <a-col :span="24">3Way transfer:</a-col>
                 <div v-if="!threeWayStatus">
                     <a-col :span="12" v-for="threeWay in queue?.campaign?.three_ways">
@@ -255,9 +255,9 @@ const handleManualDialing = async () => {
 
     /*const dialNumber = lead.value.phone;
     const confBridgeId = bridge.value.name;
-    const dialprefix = queue.value?.settings?.find(v=>v.parameter=="dialprefix")?.value
-    const cid = queue.value?.settings?.find(v=>v.parameter=="callerid")?.value
-    const trunk = queue.value?.settings?.find(v=>v.parameter=="trunk")
+    const dialprefix = queue.value?.queueSettings?.find(v=>v.parameter=="dialprefix")?.value
+    const cid = queue.value?.queueSettings?.find(v=>v.parameter=="callerid")?.value
+    const trunk = queue.value?.queueSettings?.find(v=>v.parameter=="trunk")
     if (!trunk) {
         message.error("Trunk not found")
         return
