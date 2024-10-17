@@ -661,7 +661,7 @@ const handleLeadSave = async (updatedLead) => {
 
 const onBringePeer = (data) => {
     if (data.channel) {
-        agentChannel.value = { name: data.value }
+        agentChannel.value = { name: data.channel?.name }
         const str = data.channel.connected.name
         callerId.value = data.channel.caller
         const trimmedStr = str.slice(1, -1);  // Removes the first and last characters
@@ -672,7 +672,12 @@ const onBringePeer = (data) => {
         // Retrieve the values
         const campaign = parts[0];  // "test1"
         const leadId = parts[1]; // "111"
-        getLead(campaign, leadId)
+        if(!manualDialProgress.value){
+            getLead(campaign, leadId)
+        } else {
+            message.success('Other line connected')
+        }
+        
         allButtonsDisabled.value = false
         onCall.value = true
     }
@@ -905,6 +910,8 @@ const handle3WayTransfer = async (threeWayId) => {
             server_id: serverId,
             three_way_id: threeWayId,
             bridge: bridge.value?.name,
+            lead_id: lead.value?.id,
+            campaign: queue.value?.campaign?.code
         }
     })
     onError((fetchError) => {

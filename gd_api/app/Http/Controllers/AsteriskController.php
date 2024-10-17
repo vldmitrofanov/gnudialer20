@@ -164,11 +164,13 @@ class AsteriskController extends Controller
             'three_way_id' => 'required',
             'server_id' => 'required',
             'bridge' => 'required',
+            'lead_id' => 'nullable'
         ]);
         $bridge = $request->bridge;
         $threeWayId = $request->three_way_id;
         $threeWay = \App\Models\ThreeWay::findOrFail($threeWayId);
         $serverId = $request->server_id;
+        $leadId = $request->lead_id;
 
         $command = "Action: Originate\r\n";
         $command .= "Channel: " . str_replace('_EXTEN_', $threeWay->extension, $threeWay->trunk) . "\r\n";
@@ -180,13 +182,14 @@ class AsteriskController extends Controller
         $command .= "Timeout: 30000\r\n";  // Timeout in milliseconds
         $command .= "ActionID: dialThirdParty\r\n";
         $command .= "Variable: CONF_BRIDGE_ID=" . $bridge . "\r\n";
+        $command .= "Variable: LEAD_ID=" . $leadId . "\r\n";
         $command .= "Async: true\r\n\r\n";
         //Log::info("Dialing extension: {$threeWay->extension}");
         $this->amiService->setServer($serverId);
         $result = $this->amiService->sendCommand($command, "Response: Success|Response: Error");
-        if (!empty($result['channel'])) {
+        if (strpos(serialize($result), 'Response: Success') !== false) {
             //$status =  $this->amiService->joinBridge($bridge, $result['channel']);
-            return response()->json(['status' => 'OK', 'channel' => $result['channel']], 200);
+            return response()->json(['status' => 'OK'], 200);
         } else {
             return response()->json(['status' => null], 422);
         }
@@ -270,12 +273,13 @@ class AsteriskController extends Controller
 
         $this->amiService->setServer($serverId);
         $result = $this->amiService->sendCommand($amiCommand, "Response: Success|Response: Error");
-        if (!empty($result['channel'])) {
+        if (strpos(serialize($result), 'Response: Success') !== false) {
+            //$status =  $this->amiService->joinBridge($bridge, $result['channel']);
             $lead->update([
                 'agent' => $agent,
                 'lastupdated' => DB::raw('NOW()')
             ]);
-            return response()->json(['status' => 'OK', 'channel' => $result['channel']], 200);
+            return response()->json(['status' => 'OK'], 200);
         } else {
             return response()->json(['status' => null], 422);
         }
