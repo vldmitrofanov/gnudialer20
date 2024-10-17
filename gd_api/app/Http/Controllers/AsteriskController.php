@@ -183,7 +183,7 @@ class AsteriskController extends Controller
         $command .= "Async: true\r\n\r\n";
         //Log::info("Dialing extension: {$threeWay->extension}");
         $this->amiService->setServer($serverId);
-        $result = $this->amiService->sendCommand($command, "\r\n\r\n");
+        $result = $this->amiService->sendCommand($command, "Response: Success|Response: Error");
         if (!empty($result['channel'])) {
             //$status =  $this->amiService->joinBridge($bridge, $result['channel']);
             return response()->json(['status' => 'OK', 'channel' => $result['channel']], 200);
