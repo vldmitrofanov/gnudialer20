@@ -660,7 +660,7 @@ const handleLeadSave = async (updatedLead) => {
 }
 
 const onBringePeer = (data) => {
-    if (data.channel) {
+    if (data.channel && data.channel?.name.includes("/" + agent.id + "-")) {
         agentChannel.value = { name: data.channel?.name }
         const str = data.channel.connected.name
         callerId.value = data.channel.caller
