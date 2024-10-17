@@ -183,6 +183,7 @@ class AsteriskController extends Controller
         $command .= "ActionID: dialThirdParty\r\n";
         $command .= "Variable: CONF_BRIDGE_ID=" . $bridge . "\r\n";
         $command .= "Variable: LEAD_ID=" . $leadId . "\r\n";
+        $command .= "Variable: CONNECTION_TYPE=THREE_WAY\r\n";
         $command .= "Async: true\r\n\r\n";
         //Log::info("Dialing extension: {$threeWay->extension}");
         $this->amiService->setServer($serverId);
