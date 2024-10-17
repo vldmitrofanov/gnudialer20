@@ -173,7 +173,7 @@ class AsteriskController extends Controller
         $command = "Action: Originate\r\n";
         $command .= "Channel: " . str_replace('_EXTEN_', $threeWay->extension, $threeWay->trunk) . "\r\n";
         //$command .= "Channel: Local/{$threeWay->extension}@{$threeWay->context}\r\n";
-        $command .= "Exten: $threeWay->extension\r\n";  // The third party's SIP channel
+        $command .= "Exten: s\r\n";  // The third party's SIP channel
         $command .= "Context: $threeWay->context\r\n";  // The dialplan context
         $command .= "Priority: 1\r\n";  // Priority in dialplan
         $command .= "CallerID: $threeWay->caller_id\r\n";
