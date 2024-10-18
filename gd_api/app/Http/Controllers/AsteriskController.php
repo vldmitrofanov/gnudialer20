@@ -306,20 +306,26 @@ class AsteriskController extends Controller
         $newConfBridgeId = $campaignCode . "_" . $leadId;
         $amiCommand = "Action: Redirect\r\n";
         $amiCommand .= "Channel: " . $customerChannel . "\r\n"; // Channel ID of the customer
-        $amiCommand .= "Context: create_confbridgebridge3w\r\n"; // ConfBridge dialplan context
+        $amiCommand .= "Context: create_confbridge3w\r\n"; // ConfBridge dialplan context
         $amiCommand .= "Exten: s\r\n";
         $amiCommand .= "Priority: 1\r\n";
         $amiCommand .= "Variable: CONF_BRIDGE_ID=" . $newConfBridgeId . "\r\n";
+        $amiCommand .= "Variable: CAMPAIGN=" . $campaignCode . "\r\n";
+        $amiCommand .= "Variable: LEAD_ID=" . $leadId . "\r\n";
+        $amiCommand .= "Variable: AGENT=" . $agent . "\r\n";
         $amiCommand .= "\r\n";
         $this->amiService->setServer($serverId);
         $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
 
         $amiCommand = "Action: Redirect\r\n";
         $amiCommand .= "Channel: " . $threewayChannel . "\r\n"; // Channel ID of the manager
-        $amiCommand .= "Context: create_confbridgebridge3w\r\n";
+        $amiCommand .= "Context: create_confbridge3w\r\n";
         $amiCommand .= "Exten: s\r\n";
         $amiCommand .= "Priority: 1\r\n";
         $amiCommand .= "Variable: CONF_BRIDGE_ID=" . $newConfBridgeId . "\r\n";
+        $amiCommand .= "Variable: CAMPAIGN=" . $campaignCode . "\r\n";
+        $amiCommand .= "Variable: LEAD_ID=" . $leadId . "\r\n";
+        $amiCommand .= "Variable: AGENT=" . $agent . "\r\n";
         $amiCommand .= "\r\n";
 
         $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
