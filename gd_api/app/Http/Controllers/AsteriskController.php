@@ -321,7 +321,7 @@ class AsteriskController extends Controller
         $amiCommand = "Action: Redirect\r\n";
         $amiCommand .= "Channel: " . $threewayChannel . "\r\n"; // Channel ID of the manager
         $amiCommand .= "Context: create_confbridge3w\r\n";
-        $amiCommand .= "Exten: s\r\n";
+        $amiCommand .= "Exten: ".$leadId . "\r\n";
         $amiCommand .= "Priority: 1\r\n";
         $amiCommand .= "Variable: NEW_CONF_BRIDGE_ID=" . $newConfBridgeId . "\r\n";
         $amiCommand .= "Variable: CAMPAIGN=" . $campaignCode . "\r\n";
