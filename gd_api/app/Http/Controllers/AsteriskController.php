@@ -308,28 +308,35 @@ class AsteriskController extends Controller
         $amiCommand .= "Channel: " . $customerChannel . "\r\n"; // Channel ID of the customer
         $amiCommand .= "Context: create_confbridge3w\r\n"; // ConfBridge dialplan context
         //$amiCommand .= "Exten: s\r\n";
-        $amiCommand .= "Exten: ".$leadId . "\r\n";
+        $amiCommand .= "Exten: " . $leadId . "\r\n";
         $amiCommand .= "Priority: 1\r\n";
         $amiCommand .= "Variable: NEW_CONF_BRIDGE_ID=" . $newConfBridgeId . "\r\n";
         $amiCommand .= "Variable: CAMPAIGN=" . $campaignCode . "\r\n";
         $amiCommand .= "Variable: LEAD_ID=" . $leadId . "\r\n";
         $amiCommand .= "Variable: AGENT=" . $agent . "\r\n";
         $amiCommand .= "\r\n";
+
+        $amiCommand2 = "Action: Redirect\r\n";
+        $amiCommand2 .= "Channel: " . $threewayChannel . "\r\n"; // Channel ID of the manager
+        $amiCommand2 .= "Context: create_confbridge3w\r\n";
+        $amiCommand2 .= "Exten: " . $leadId . "\r\n";
+        $amiCommand2 .= "Priority: 1\r\n";
+        $amiCommand2 .= "Variable: NEW_CONF_BRIDGE_ID=" . $newConfBridgeId . "\r\n";
+        $amiCommand2 .= "Variable: CAMPAIGN=" . $campaignCode . "\r\n";
+        $amiCommand2 .= "Variable: LEAD_ID=" . $leadId . "\r\n";
+        $amiCommand2 .= "Variable: AGENT=" . $agent . "\r\n";
+        $amiCommand2 .= "\r\n";
         $this->amiService->setServer($serverId);
-        $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
 
-        $amiCommand = "Action: Redirect\r\n";
-        $amiCommand .= "Channel: " . $threewayChannel . "\r\n"; // Channel ID of the manager
-        $amiCommand .= "Context: create_confbridge3w\r\n";
-        $amiCommand .= "Exten: ".$leadId . "\r\n";
-        $amiCommand .= "Priority: 1\r\n";
-        $amiCommand .= "Variable: NEW_CONF_BRIDGE_ID=" . $newConfBridgeId . "\r\n";
-        $amiCommand .= "Variable: CAMPAIGN=" . $campaignCode . "\r\n";
-        $amiCommand .= "Variable: LEAD_ID=" . $leadId . "\r\n";
-        $amiCommand .= "Variable: AGENT=" . $agent . "\r\n";
-        $amiCommand .= "\r\n";
-
-        $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
+        $pid = pcntl_fork();
+        if ($pid == -1) {
+            // Error in forking
+            die('Could not fork');
+        } elseif ($pid) {
+            $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
+        } else {
+            $this->amiService->sendCommand($amiCommand2, "\r\n\r\n");
+        }
         return response()->json(['status' => 'OK'], 200);
     }
 }
