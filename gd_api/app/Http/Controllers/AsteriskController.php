@@ -328,15 +328,15 @@ class AsteriskController extends Controller
         $amiCommand2 .= "\r\n";
         $this->amiService->setServer($serverId);
 
-        $pid = pcntl_fork();
-        if ($pid == -1) {
+        //$pid = pcntl_fork();
+        //if ($pid == -1) {
             // Error in forking
-            die('Could not fork');
-        } elseif ($pid) {
+        //    die('Could not fork');
+       // } elseif ($pid) {
             $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
-        } else {
+        //} else {
             $this->amiService->sendCommand($amiCommand2, "\r\n\r\n");
-        }
+        //}
         return response()->json(['status' => 'OK'], 200);
     }
 }
