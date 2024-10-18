@@ -132,13 +132,13 @@
                 <div v-if="!threeWayStatus">
                     <a-col :span="12" v-for="threeWay in queue?.campaign?.three_ways">
                         <a-button block class="three-way-button" :disabled="allButtonsDisabled"
-                            @click=handle3WayTransfer(threeWay.id)>
+                            @click=handle3WayDial(threeWay.id)>
                             {{ threeWay.name }}
                         </a-button>
                     </a-col>
                 </div>
                 <div v-else>
-                    <a-col :span="12"><a-button>Leave 3way</a-button></a-col>
+                    <a-col :span="12"><a-button @click="handleLeave3way">Leave 3way</a-button></a-col>
                     <a-col :span="12"><a-button>Hangup 3way Line</a-button></a-col>
                 </div>
             </a-card>
@@ -190,7 +190,7 @@
             <div v-if="DEBUG" class="debug-panel">Agent channel: {{ agentChannel?.name }} | customerChannel {{
                 customerChannel?.name }} |
                 onHold: {{ isChannel2OnHold }} | bridge: {{ bridge?.namw }} [{{ bridge?.id }}] | leadCampaign {{
-                leadCampaign }}
+                leadCampaign }} | 3way: {{ threeWayChannel?.name }}
             </div>
         </a-col>
     </a-row>
@@ -224,6 +224,7 @@ const queueButtonDisabled = ref(true)
 const loggedIn = ref(false)
 const agentChannel = ref(null)
 const customerChannel = ref(null)
+const threeWayChannel = ref(null)
 const isChannel2OnHold = ref(false)
 const lead = ref(null)
 const leadSchema = ref(null)
@@ -316,6 +317,43 @@ const handleManualDialing = async () => {
     }
 
 }
+
+const handleLeave3way = async () => {
+    const payloadData = {
+        agentt: agent.value?.id,
+        queue: queue.value?.campaign?.code,
+        server_id: serverData.value?.id,
+        lead_id: lead.value?.id,
+        customer_channel: customerChannel.value?.name,
+        threeway_channel: threeWayChannel.value?.name,
+    }
+    try {
+        const { data,
+            error } = await useFetch(`/api/asterisk/leave-3way`, {
+                method: 'POST',
+                baseURL: config.public.apiBaseUrl,
+                headers: {
+                    Accept: `application/json`,
+                    Authorization: `Bearer ${authToken}`
+                },
+                body: payloadData
+            })
+        if (error.value) {
+            console.error('Error during hangup: ', error.value)
+            message.error(error.value);
+            return null
+        } else {
+            console.log(data)
+        }
+    } catch (e) {
+        // Handle unexpected errors
+        console.error('Unexpected error: ', e);
+        message.error('Transfer failed');
+    } finally {
+        manualDialProgress.value = false;
+    }
+}
+
 const toggleHold = async () => {
     if (!customerChannel.value) {
         message.error("No channel found to put on hold")
@@ -451,7 +489,13 @@ const initiateWebsocket = (server) => {
                 }
                 if (data.value?.includes(`PJSIP/${agent.value?.id}-`)) {
                     onBringePeer(data)
-                    customerChannel.value = { name: data.channel.name }
+                    if(data?.channel?.dialplan?.context === 'join_confbridge3w'){
+                        threeWayChannel.value = { name: data.channel.name }
+                        threeWayStatus.value = { channel3w: data.channel.name, channel: customerChannel.value}
+                    } else {
+                        customerChannel.value = { name: data.channel.name }
+                    }
+                    
                 }
                 break;
         }
@@ -475,6 +519,10 @@ const initiateWebsocket = (server) => {
                     agentStatus.value = null;
                     bridge.value = null
                     threeWayStatus.value = null
+                    threeWayChannel.value = null
+                } else if (threeWayChannel.value?.name && data.channel?.name === threeWayChannel.value.name) {
+                    threeWayStatus.value = null
+                    threeWayChannel.value = null
                 }
                 break;
             case "ChannelEnteredBridge":
@@ -555,6 +603,8 @@ const gdialDispo = async (dispo) => {
         return null
     } else {
         customerChannel.value = null
+        threeWayStatus.value = null 
+        threeWayChannel.value = null
     }
 }
 
@@ -660,8 +710,11 @@ const handleLeadSave = async (updatedLead) => {
 }
 
 const onBringePeer = (data) => {
-    if (data.channel && data.channel?.name.includes("/" + agent.id + "-")) {
-        agentChannel.value = { name: data.channel?.name }
+    console.log('agent.id', agent.value?.id)
+    if (data.channel && data.value?.includes("/" + agent.value?.id + "-")) {
+        if(data.channel?.name?.includes("/" + agent.value?.id + "-")){
+            agentChannel.value = { name: data.channel?.name }
+        }       
         const str = data.channel.connected.name
         callerId.value = data.channel.caller
         const trimmedStr = str.slice(1, -1);  // Removes the first and last characters
@@ -719,7 +772,6 @@ const handleSelectQueue = (ql) => {
         getAgentStatus()
     }
 }
-
 
 const togglePause = async () => {
     const serverId = serverData.value.id
@@ -896,7 +948,8 @@ const runContinue = async () => {
         console.log('runContinue', data)
     }
 }
-const handle3WayTransfer = async (threeWayId) => {
+
+const handle3WayDial = async (threeWayId) => {
     console.log(bridge.value?.name, threeWayId)
     const serverId = serverData.value.id
     const { data, error, pending, onError } = await useFetch(`/api/asterisk/bridge-3way`, {

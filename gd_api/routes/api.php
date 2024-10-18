@@ -77,6 +77,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/call/hangup', [\App\Http\Controllers\AsteriskController::class, 'callHangup']);
         Route::post('/custom/user-action', [\App\Http\Controllers\AsteriskController::class, 'userAction']);
         Route::post('/bridge-3way' , [\App\Http\Controllers\AsteriskController::class, 'bridge3way']);
+        Route::post('/leave-3way' , [\App\Http\Controllers\AsteriskController::class, 'leave3way']);
     });
 
     Route::group(['prefix' => 'leads'], function () {

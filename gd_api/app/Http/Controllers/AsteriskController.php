@@ -285,4 +285,44 @@ class AsteriskController extends Controller
             return response()->json(['status' => null], 422);
         }
     }
+
+    public function leave3way(Request $request)
+    {
+        $request->validate([
+            'agent' => 'required',
+            'queue' => 'required|string',
+            'server_id' => 'required|integer',
+            'lead_id' => 'required',
+            'customer_channel' => 'required',
+            'threeway_channel' => 'required',
+        ]);
+        $campaignCode = $request->queue;
+        $leadId = $request->lead_id;
+        $agent = $request->agent;
+        $serverId = $request->server_id;
+        $table_name = 'campaign_' . $campaignCode;
+        $customerChannel = $request->customer_channel;
+        $threewayChannel = $request->threeway_channel;
+        $newConfBridgeId = $campaignCode . "_" . $leadId;
+        $amiCommand = "Action: Redirect\r\n";
+        $amiCommand .= "Channel: " . $customerChannel . "\r\n"; // Channel ID of the customer
+        $amiCommand .= "Context: leave3way_bridge_context\r\n"; // ConfBridge dialplan context
+        $amiCommand .= "Exten: s\r\n";
+        $amiCommand .= "Priority: 1\r\n";
+        $amiCommand .= "Variable: CONF_BRIDGE_ID=" . $newConfBridgeId . "\r\n";
+        $amiCommand .= "\r\n";
+        $this->amiService->setServer($serverId);
+        $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
+
+        $amiCommand = "Action: Redirect\r\n";
+        $amiCommand .= "Channel: " . $threewayChannel . "\r\n"; // Channel ID of the manager
+        $amiCommand .= "Context: leave3way_bridge_context\r\n";
+        $amiCommand .= "Exten: s\r\n";
+        $amiCommand .= "Priority: 1\r\n";
+        $amiCommand .= "Variable: CONF_BRIDGE_ID=" . $newConfBridgeId . "\r\n";
+        $amiCommand .= "\r\n";
+
+        $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
+        return response()->json(['status' => 'OK'], 200);
+    }
 }
