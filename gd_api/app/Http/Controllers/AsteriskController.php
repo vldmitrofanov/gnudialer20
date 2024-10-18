@@ -303,7 +303,7 @@ class AsteriskController extends Controller
         $table_name = 'campaign_' . $campaignCode;
         $customerChannel = $request->customer_channel;
         $threewayChannel = $request->threeway_channel;
-        $newConfBridgeId = $campaignCode . "_" . $leadId;
+        $newConfBridgeId = $leadId; //$campaignCode . "_" . $leadId;
         $amiCommand = "Action: Redirect\r\n";
         $amiCommand .= "Channel: " . $customerChannel . "\r\n"; // Channel ID of the customer
         $amiCommand .= "Context: create_confbridge3w\r\n"; // ConfBridge dialplan context
