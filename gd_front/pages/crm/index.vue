@@ -128,6 +128,10 @@
             </a-card>
             <a-card :title="null"
                 v-if="queue?.queue_settings?.find(item => item.parameter === 'allow3way' && item.value === '1')">
+                <div v-if="threeWayStatus.value?.complete">
+                    Lines have been transferred to a new bridge
+                </div>
+                <div v-else>
                 <a-col :span="24">3Way transfer:</a-col>
                 <div v-if="!threeWayStatus">
                     <a-col :span="12" v-for="threeWay in queue?.campaign?.three_ways">
@@ -141,6 +145,7 @@
                     <a-col :span="12"><a-button @click="handleLeave3way">Leave 3way</a-button></a-col>
                     <a-col :span="12"><a-button>Hangup 3way Line</a-button></a-col>
                 </div>
+            </div>
             </a-card>
         </a-col>
 
@@ -190,7 +195,7 @@
             <div v-if="DEBUG" class="debug-panel">Agent channel: {{ agentChannel?.name }} | customerChannel {{
                 customerChannel?.name }} |
                 onHold: {{ isChannel2OnHold }} | bridge: {{ bridge?.namw }} [{{ bridge?.id }}] | leadCampaign {{
-                leadCampaign }} | 3way: {{ threeWayChannel?.name }}
+                    leadCampaign }} | 3way: {{ threeWayChannel?.name }}
             </div>
         </a-col>
     </a-row>
@@ -339,8 +344,8 @@ const handleLeave3way = async () => {
                 body: payloadData
             })
         if (error.value) {
-            console.error('Error during hangup: ', error.value)
-            message.error(error.value);
+            console.error('Error during hangup: ', error)
+            message.error(error);
             return null
         } else {
             console.log(data)
@@ -489,13 +494,19 @@ const initiateWebsocket = (server) => {
                 }
                 if (data.value?.includes(`PJSIP/${agent.value?.id}-`)) {
                     onBringePeer(data)
-                    if(data?.channel?.dialplan?.context === 'join_confbridge3w'){
+                    if (data?.channel?.dialplan?.context === 'join_confbridge3w') {
                         threeWayChannel.value = { name: data.channel.name }
-                        threeWayStatus.value = { channel3w: data.channel.name, channel: customerChannel.value}
+                        threeWayStatus.value = { channel3w: data.channel.name, channel: customerChannel.value, complete: false }
+                        allButtonsDisabled.value = true
                     } else {
                         customerChannel.value = { name: data.channel.name }
                     }
-                    
+
+                } else if (customerChannel.value && threeWayStatus.value && (data.value?.includes(customerChannel.value.name) || data.value?.includes(threeWayStatus.value.name))) {
+                    if (data?.channel?.dialplan?.context === 'create_confbridge3w') {
+                        allButtonsDisabled.value = false
+                        threeWayStatus.value.complete = true
+                    }
                 }
                 break;
         }
@@ -565,7 +576,12 @@ const handleDisposition = async (dispo) => {
         return
     }
     if (customerChannel.value) {
-        hangup()
+        if(threeWayStatus.value && threeWayStatus.value.complete){
+            threeWayStatus.value = null
+        } else {
+            hangup()
+        }
+        
     }
     triggerFormSubmit()
     gdialDispo(dispo)
@@ -603,7 +619,7 @@ const gdialDispo = async (dispo) => {
         return null
     } else {
         customerChannel.value = null
-        threeWayStatus.value = null 
+        threeWayStatus.value = null
         threeWayChannel.value = null
     }
 }
@@ -712,9 +728,9 @@ const handleLeadSave = async (updatedLead) => {
 const onBringePeer = (data) => {
     console.log('agent.id', agent.value?.id)
     if (data.channel && data.value?.includes("/" + agent.value?.id + "-")) {
-        if(data.channel?.name?.includes("/" + agent.value?.id + "-")){
+        if (data.channel?.name?.includes("/" + agent.value?.id + "-")) {
             agentChannel.value = { name: data.channel?.name }
-        }       
+        }
         const str = data.channel.connected.name
         callerId.value = data.channel.caller
         const trimmedStr = str.slice(1, -1);  // Removes the first and last characters
@@ -725,12 +741,12 @@ const onBringePeer = (data) => {
         // Retrieve the values
         const campaign = parts[0];  // "test1"
         const leadId = parts[1]; // "111"
-        if(!manualDialProgress.value){
+        if (!manualDialProgress.value) {
             getLead(campaign, leadId)
         } else {
             message.success('Other line connected')
         }
-        
+
         allButtonsDisabled.value = false
         onCall.value = true
     }
