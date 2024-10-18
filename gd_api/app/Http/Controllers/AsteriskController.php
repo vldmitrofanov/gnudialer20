@@ -306,7 +306,7 @@ class AsteriskController extends Controller
         $newConfBridgeId = $campaignCode . "_" . $leadId;
         $amiCommand = "Action: Redirect\r\n";
         $amiCommand .= "Channel: " . $customerChannel . "\r\n"; // Channel ID of the customer
-        $amiCommand .= "Context: leave3way_bridge_context\r\n"; // ConfBridge dialplan context
+        $amiCommand .= "Context: create_confbridgebridge3w\r\n"; // ConfBridge dialplan context
         $amiCommand .= "Exten: s\r\n";
         $amiCommand .= "Priority: 1\r\n";
         $amiCommand .= "Variable: CONF_BRIDGE_ID=" . $newConfBridgeId . "\r\n";
@@ -316,7 +316,7 @@ class AsteriskController extends Controller
 
         $amiCommand = "Action: Redirect\r\n";
         $amiCommand .= "Channel: " . $threewayChannel . "\r\n"; // Channel ID of the manager
-        $amiCommand .= "Context: leave3way_bridge_context\r\n";
+        $amiCommand .= "Context: create_confbridgebridge3w\r\n";
         $amiCommand .= "Exten: s\r\n";
         $amiCommand .= "Priority: 1\r\n";
         $amiCommand .= "Variable: CONF_BRIDGE_ID=" . $newConfBridgeId . "\r\n";
