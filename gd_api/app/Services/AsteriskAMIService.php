@@ -103,7 +103,7 @@ class AsteriskAMIService
                 break;
             }
             $response .= $line;
-            $responseLog .= $line . PHP_EOL;
+            $responseLog .= $line;
             // Break if the end of the QueueStatus response is reached
             foreach($ends as $e1){
                 if (strpos($line, $e1) !== false) {

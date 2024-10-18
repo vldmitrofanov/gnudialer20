@@ -320,7 +320,7 @@ const handleManualDialing = async () => {
 
 const handleLeave3way = async () => {
     const payloadData = {
-        agentt: agent.value?.id,
+        agent: agent.value?.id,
         queue: queue.value?.campaign?.code,
         server_id: serverData.value?.id,
         lead_id: lead.value?.id,
