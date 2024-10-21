@@ -128,7 +128,7 @@
             </a-card>
             <a-card :title="null"
                 v-if="queue?.queue_settings?.find(item => item.parameter === 'allow3way' && item.value === '1')">
-                <div v-if="threeWayStatus.value?.complete">
+                <div v-if="threeWayStatus && threeWayStatus.complete">
                     Lines have been transferred to a new bridge
                 </div>
                 <div v-else>

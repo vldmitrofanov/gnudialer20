@@ -7,6 +7,7 @@ use App\Services\AsteriskAMIService;
 use App\Services\AsteriskARIService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\MoveLineToNewBridge;
 
 class AsteriskController extends Controller
 {
@@ -304,6 +305,7 @@ class AsteriskController extends Controller
         $customerChannel = $request->customer_channel;
         $threewayChannel = $request->threeway_channel;
         $newConfBridgeId = $leadId; //$campaignCode . "_" . $leadId;
+        /*
         $amiCommand = "Action: Redirect\r\n";
         $amiCommand .= "Channel: " . $customerChannel . "\r\n"; // Channel ID of the customer
         $amiCommand .= "Context: create_confbridge3w\r\n"; // ConfBridge dialplan context
@@ -328,15 +330,12 @@ class AsteriskController extends Controller
         $amiCommand2 .= "\r\n";
         $this->amiService->setServer($serverId);
 
-        //$pid = pcntl_fork();
-        //if ($pid == -1) {
-            // Error in forking
-        //    die('Could not fork');
-       // } elseif ($pid) {
-            $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
-        //} else {
-            $this->amiService->sendCommand($amiCommand2, "\r\n\r\n");
-        //}
+        $this->amiService->sendCommand($amiCommand, "\r\n\r\n");
+        $this->amiService->sendCommand($amiCommand2, "\r\n\r\n");
+        */
+        MoveLineToNewBridge::dispatch($customerChannel, $leadId, $newConfBridgeId, $campaignCode, $agent, $serverId);
+        MoveLineToNewBridge::dispatch($threewayChannel, $leadId, $newConfBridgeId, $campaignCode, $agent, $serverId);
+
         return response()->json(['status' => 'OK'], 200);
     }
 }
