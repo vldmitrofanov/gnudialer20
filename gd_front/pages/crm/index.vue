@@ -258,17 +258,13 @@ defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
 const GetNextLead = async() => {
     try {
         const { data,
-            error } = await useFetch(`/api/queue/${queue.value.id}/get-next-lead`, {
-                method: 'POST',
+            error } = await useFetch(`/api/queue/${queue.value.id}/get-next-lead?agent_id=${agent.value?.id}`, {
+                method: 'GET',
                 baseURL: config.public.apiBaseUrl,
                 headers: {
                     Accept: `application/json`,
                     Authorization: `Bearer ${authToken}`
-                },
-                body: {
-                    queue: queue.value?.campaign?.code,
-                    agent_id: agent.value?.id,
-                }
+                }              
             })
         if (error.value) {
             console.error('Error during hangup: ', error.value)

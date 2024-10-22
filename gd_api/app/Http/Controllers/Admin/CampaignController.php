@@ -75,7 +75,7 @@ class CampaignController extends Controller
 
             $settings = \App\Models\Setting::$defaultSettings;
             foreach ($settings as $setting) {
-                $queue->settings()->save(\App\Models\Setting::create([
+                $queue->queueSettings()->save(\App\Models\Setting::create([
                     'parameter' => $setting['parameter'],
                     'value' => $setting['value'],
                 ]));
