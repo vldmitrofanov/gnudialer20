@@ -27,7 +27,7 @@ class CampaignController extends Controller
 
     public function show($campaign_id, Request $request)
     {
-        $campaign = Campaign::with(['queues.settings', 'queues.filters', 'queues.server', 'queues.agents'])->findOrFail($campaign_id);
+        $campaign = Campaign::with(['queues.queueSettings', 'queues.filters', 'queues.server', 'queues.agents'])->findOrFail($campaign_id);
 
         return new AdminCampaignResource($campaign);
     }

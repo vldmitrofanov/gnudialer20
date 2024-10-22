@@ -84,7 +84,7 @@
                         <h3 style="margin-bottom: 10px;">Server: {{ queue.server?.name }} [{{ queue.server?.host }}]
                         </h3>
 
-                        <a-col :span="24" v-for="(setting, sindex) in queue.settings" class="ert3b"
+                        <a-col :span="24" v-for="(setting, sindex) in queue.queue_settings" class="ert3b"
                             :key="`e${setting.id}t`">
                             <a-col :span=24 class="wqs1">
                                 <a-form-item :label="setting.parameter"
