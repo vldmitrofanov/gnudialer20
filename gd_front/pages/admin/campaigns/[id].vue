@@ -89,21 +89,21 @@
                             <a-col :span=24 class="wqs1">
                                 <a-form-item :label="setting.parameter"
                                     v-if="trueFalseSelectFields.includes(setting.parameter)">
-                                    <select v-model="campaign.queues[qindex2].settings[sindex].value"
+                                    <select v-model="campaign.queues[qindex2].queue_settings[sindex].value"
                                         style="width: 240px;" :disabled="settingLoading[qindex2][sindex]">
                                         <option>true</option>
                                         <option>false</option>
                                     </select>
                                 </a-form-item>
                                 <a-form-item :label="setting.parameter" v-else-if="setting.parameter === 'function'">
-                                    <select v-model="campaign.queues[qindex2].settings[sindex].value"
+                                    <select v-model="campaign.queues[qindex2].queue_settings[sindex].value"
                                         style="width: 200px;" :disabled="settingLoading[qindex2][sindex]">
                                         <option>predictive</option>
                                     </select>
                                 </a-form-item>
                                 <a-form-item :label="setting.parameter"
                                     v-else-if="!protectedFields.includes(setting.parameter)">
-                                    <input v-model="campaign.queues[qindex2].settings[sindex].value"
+                                    <input v-model="campaign.queues[qindex2].queue_settings[sindex].value"
                                         :placeholder="`Enter value`" style="width: 240px;"
                                         :disabled="settingLoading[qindex2][sindex]" />
                                 </a-form-item>
@@ -325,7 +325,7 @@ const handleSettingCreate = async (queueId) => {
 
 const handleSettingUpdate = async (qi, si) => {
     settingLoading.value[qi][si] = true
-    const setting = campaign.value?.queues[qi].settings[si]
+    const setting = campaign.value?.queues[qi].queue_settings[si]
     const url = `/api/admin/settings/${setting.id}`;
     const { data, error } = await useFetch(url, {
         method: 'PUT',

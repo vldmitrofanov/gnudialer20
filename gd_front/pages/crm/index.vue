@@ -156,10 +156,11 @@
                     <div class="sticky-form">
                         <div class="itrretyi">
                             <span class="campaign-name">{{ queue?.campaign?.name }}</span>
-                            <a-button v-if="manualDial && !manualDialing" @click="handleManualDialing"
+                            <a-button v-if="manualDial" @click="handleManualDialing"
                                 :loading="manualDialProgress">Dial</a-button>
                         </div>
                         <a-form layout="inline">
+                            <a-space wrap>
                             <a-form-item>
                                 <a-input-group compact>
                                     <a-select v-model:value="searchBy" style="width: 100px;" :disabled="running">
@@ -178,9 +179,10 @@
                                     </a-button>
                                 </a-input-group>
                             </a-form-item>
-                            <a-button type="secondary" @click="GetNextLead" :disabled="running" v-if="hasManualDialing">
+                            <a-button color="primary" variant="filled" class="ml2" @click="GetNextLead" :disabled="running || manualDialProgress" v-if="hasManualDialing">
                                 Get Next Lead
                             </a-button>
+                        </a-space>
                         </a-form>
                     </div>
                     <LeadForm ref="leadFormRef" v-if="lead" :lead="lead" :schema="leadSchema"
@@ -249,9 +251,8 @@ const defaultDate = ref(new Date());
 const bridge = ref(null)
 const threeWayStatus = ref(null)
 const manualDial = ref(false)
-const manualDialing = ref(false)
 const manualDialProgress = ref(false)
-const hasManualDialing = computed(() => queue.value?.dial_method === 6)
+const hasManualDialing = computed(() => queue.value?.dial_method === 1)
 
 defaultDate.value.setDate(defaultDate.value.getDate() + 1);
 defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
@@ -274,7 +275,7 @@ const GetNextLead = async () => {
         } else {
             lead.value = data.value?.lead
             leadSchema.value = data.value?.schema
-            leadCampaign.value = campaign
+            //leadCampaign.value = campaign
             manualDial.value = true
         }
     } catch (e) {
