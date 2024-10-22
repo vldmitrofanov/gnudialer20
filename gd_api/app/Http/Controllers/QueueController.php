@@ -39,7 +39,7 @@ class QueueController extends Controller
             return response()->json(['message' => 'This campaign doesn\'t support manual dial method'], 422);
         }
         $table_name = "campaign_" . $queue->campaign->code;
-        $stmt = DB::table($table_name)->where('disposition', '<>', 8);
+        $stmt = DB::table($table_name);
         $sortedFilters = collect($queue->filters)
             ->where('enabled', 1)                   // Only take enabled filters
             ->sortBy('position')                    // Sort by 'position'
@@ -48,7 +48,7 @@ class QueueController extends Controller
             ->toArray();                            // Convert to array
 
         // Step 2: Build the raw query by concatenating all filters
-        $rawQuery = implode(' ', $sortedFilters);  // Combine filters with AND operator
+        $rawQuery = 'disposition <> 8  AND ' . implode(' AND ', $sortedFilters);  // Combine filters with AND operator
 
         // Example SQL query using the concatenated filters
         $lead = $stmt
