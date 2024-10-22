@@ -67,6 +67,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::group(['prefix' => 'queue'], function () {
         Route::get('/', [\App\Http\Controllers\QueueController::class, 'agentIndex']);
+        Route::get('/{queue_id}/get-next-lead', [\App\Http\Controllers\QueueController::class, 'getNextLead']);
     });
 
     Route::group(['prefix' => 'asterisk'], function () {

@@ -873,8 +873,8 @@ public:
 		std::vector<std::string> queueNames;
 
 		DBConnection dbConn;
-
-		queueNames = dbConn.getCampaigns();
+		u_long serverId = std::stoull(getServerId());
+		queueNames = dbConn.getCampaigns(serverId);
 
 		//	std::cout << "Got here 1" << std::endl;
 		/*

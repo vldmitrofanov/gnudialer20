@@ -20,7 +20,7 @@ public:
     ~DBConnection();
 
     std::shared_ptr<sql::Connection> getConnection();
-    std::vector<std::string> getCampaigns();
+    std::vector<std::string> getCampaigns(u_long serverId);
     Campaign getCampaignByName(const std::string& name);
     std::vector<std::string> getCampaignSettings(u_long campaigId, u_long serverId);
     std::vector<std::string> getCampaignFilters(u_long campaignId, u_long serverId);

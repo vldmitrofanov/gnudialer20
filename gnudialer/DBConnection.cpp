@@ -58,14 +58,20 @@ std::shared_ptr<sql::Connection> DBConnection::getConnection()
     return conn;
 }
 
-std::vector<std::string> DBConnection::getCampaigns()
+std::vector<std::string> DBConnection::getCampaigns(u_long serverId)
 {
     std::vector<std::string> campaigns;
     try
     {
         std::shared_ptr<sql::PreparedStatement> pstmt(
             conn->prepareStatement(
-                "SELECT code FROM campaigns WHERE status = 1"));
+                "SELECT campaigns.code "
+                "FROM campaigns "
+                "JOIN queues ON campaigns.id = queues.campaign_id "
+                "WHERE campaigns.status = 1 "
+                "AND queues.server_id = ? "
+                "AND queues.dial_method = 6"));
+        pstmt->setUInt64(1, serverId); 
         std::shared_ptr<sql::ResultSet> res(pstmt->executeQuery());
 
         while (res->next())

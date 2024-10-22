@@ -11,11 +11,17 @@ class Queue extends Model
     const STATUS_ACTIVE=1;
     const STATUS_INACTIVE=0;
 
+    const DIAL_METHOD_RATIO=6;
+    const DIAL_METHOD_MANUAL=1;
+    const DIAL_METHOD_INBOUND=2;
+    const DIAL_METHOD_CLOSER=3;
+
     protected $fillable = [
         'campaign_id',
         'server_id',
         'status',
-        'settings'
+        'settings',
+        'dial_method'
     ];
 
     protected $casts = [

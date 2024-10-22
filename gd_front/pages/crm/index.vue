@@ -175,9 +175,12 @@
                                         style="width: 200px;" @keypress.enter="handleSearch" :disabled="running" />
                                     <a-button type="primary" @click="handleSearch" :disabled="running">
                                         <SearchOutlined /> <!-- Use the imported icon -->
-                                    </a-button>
+                                    </a-button>                                
                                 </a-input-group>
                             </a-form-item>
+                            <a-button type="secondary" @click="GetNextLead" :disabled="running" v-if="hasManualDialing">
+                                Get Next Lead
+                            </a-button>
                         </a-form>
                     </div>
                     <LeadForm ref="leadFormRef" v-if="lead" :lead="lead" :schema="leadSchema"
@@ -248,10 +251,40 @@ const threeWayStatus = ref(null)
 const manualDial = ref(false)
 const manualDialing = ref(false)
 const manualDialProgress = ref(false)
+const hasManualDialing = computed(() => queue.value?.dial_method===6)
 
 defaultDate.value.setDate(defaultDate.value.getDate() + 1);
 defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
-
+const GetNextLead = async() => {
+    try {
+        const { data,
+            error } = await useFetch(`/api/queue/${queue.value.id}/get-next-lead`, {
+                method: 'POST',
+                baseURL: config.public.apiBaseUrl,
+                headers: {
+                    Accept: `application/json`,
+                    Authorization: `Bearer ${authToken}`
+                },
+                body: {
+                    queue: queue.value?.campaign?.code,
+                    agent_id: agent.value?.id,
+                }
+            })
+        if (error.value) {
+            console.error('Error during hangup: ', error.value)
+            message.error(error.value);
+            return null
+        } else {
+            lead.value = data
+        }
+    } catch (e) {
+        // Handle unexpected errors
+        console.error('Unexpected error: ', e);
+        message.error('Call failed');
+    } finally {
+        manualDialProgress.value = false;
+    }
+}
 const handleManualDialing = async () => {
     if (!lead.value) {
         message.error("No lead selected")
