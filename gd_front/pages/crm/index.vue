@@ -132,20 +132,20 @@
                     Lines have been transferred to a new bridge
                 </div>
                 <div v-else>
-                <a-col :span="24">3Way transfer:</a-col>
-                <div v-if="!threeWayStatus">
-                    <a-col :span="12" v-for="threeWay in queue?.campaign?.three_ways">
-                        <a-button block class="three-way-button" :disabled="allButtonsDisabled"
-                            @click=handle3WayDial(threeWay.id)>
-                            {{ threeWay.name }}
-                        </a-button>
-                    </a-col>
+                    <a-col :span="24">3Way transfer:</a-col>
+                    <div v-if="!threeWayStatus">
+                        <a-col :span="12" v-for="threeWay in queue?.campaign?.three_ways">
+                            <a-button block class="three-way-button" :disabled="allButtonsDisabled"
+                                @click=handle3WayDial(threeWay.id)>
+                                {{ threeWay.name }}
+                            </a-button>
+                        </a-col>
+                    </div>
+                    <div v-else>
+                        <a-col :span="12"><a-button @click="handleLeave3way">Leave 3way</a-button></a-col>
+                        <a-col :span="12"><a-button>Hangup 3way Line</a-button></a-col>
+                    </div>
                 </div>
-                <div v-else>
-                    <a-col :span="12"><a-button @click="handleLeave3way">Leave 3way</a-button></a-col>
-                    <a-col :span="12"><a-button>Hangup 3way Line</a-button></a-col>
-                </div>
-            </div>
             </a-card>
         </a-col>
 
@@ -175,7 +175,7 @@
                                         style="width: 200px;" @keypress.enter="handleSearch" :disabled="running" />
                                     <a-button type="primary" @click="handleSearch" :disabled="running">
                                         <SearchOutlined /> <!-- Use the imported icon -->
-                                    </a-button>                                
+                                    </a-button>
                                 </a-input-group>
                             </a-form-item>
                             <a-button type="secondary" @click="GetNextLead" :disabled="running" v-if="hasManualDialing">
@@ -251,11 +251,11 @@ const threeWayStatus = ref(null)
 const manualDial = ref(false)
 const manualDialing = ref(false)
 const manualDialProgress = ref(false)
-const hasManualDialing = computed(() => queue.value?.dial_method===6)
+const hasManualDialing = computed(() => queue.value?.dial_method === 6)
 
 defaultDate.value.setDate(defaultDate.value.getDate() + 1);
 defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
-const GetNextLead = async() => {
+const GetNextLead = async () => {
     try {
         const { data,
             error } = await useFetch(`/api/queue/${queue.value.id}/get-next-lead?agent_id=${agent.value?.id}`, {
@@ -264,7 +264,7 @@ const GetNextLead = async() => {
                 headers: {
                     Accept: `application/json`,
                     Authorization: `Bearer ${authToken}`
-                }              
+                }
             })
         if (error.value) {
             console.error('Error during fetching lead: ', error.value);
@@ -272,7 +272,10 @@ const GetNextLead = async() => {
             message.error(errorMessage);  // Display the error using message.error()
             return null;
         } else {
-            lead.value = data
+            lead.value = data.value?.lead
+            leadSchema.value = data.value?.schema
+            leadCampaign.value = campaign
+            manualDial.value = true
         }
     } catch (e) {
         // Handle unexpected errors
@@ -606,12 +609,12 @@ const handleDisposition = async (dispo) => {
         return
     }
     if (customerChannel.value) {
-        if(threeWayStatus.value && threeWayStatus.value.complete){
+        if (threeWayStatus.value && threeWayStatus.value.complete) {
             threeWayStatus.value = null
         } else {
             hangup()
         }
-        
+
     }
     triggerFormSubmit()
     gdialDispo(dispo)
