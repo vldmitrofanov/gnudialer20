@@ -6,6 +6,7 @@ use App\Http\Resources\QueueResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\UserAgentResource;
+use App\Models\CampaignFormSchema;
 use App\Models\Queue;
 use Illuminate\Support\Facades\DB;
 
@@ -63,7 +64,11 @@ class QueueController extends Controller
                 ]);
 
             // Return the updated lead
-            return response()->json($lead, 200);
+            $schema = CampaignFormSchema::where('table_name', $table_name)->first();
+            return response()->json([
+                'lead' => $lead,
+                'schema' => $schema?->schema
+            ]);
         } else {
             return response()->json(['message' => 'No leads found'], 404);
         }
