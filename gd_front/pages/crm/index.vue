@@ -267,9 +267,10 @@ const GetNextLead = async() => {
                 }              
             })
         if (error.value) {
-            console.error('Error during hangup: ', error.value)
-            message.error(error.value);
-            return null
+            console.error('Error during fetching lead: ', error.value);
+            const errorMessage = error.value.data?.message || 'Failed to get the lead';  // Extract message from the response
+            message.error(errorMessage);  // Display the error using message.error()
+            return null;
         } else {
             lead.value = data
         }
