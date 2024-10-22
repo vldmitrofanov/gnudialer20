@@ -87,7 +87,7 @@ class AsteriskAMIService
         }
     }
 
-    public function sendCommand($command, $end)
+    public function sendCommand($command, $end, $noReturn = false)
     {
         Log::info("AMI Command Line: {$command}");
         fwrite($this->socket, $command);
@@ -97,6 +97,9 @@ class AsteriskAMIService
         $startTime = time(); // Track the start time
         $timeout = 30; // Set a timeout in seconds
         $responseLog = "";
+        if($noReturn) {
+            return "Ok";
+        }
         while (!feof($this->socket)) {
             $line = fgets($this->socket);
             if ($line === false) {

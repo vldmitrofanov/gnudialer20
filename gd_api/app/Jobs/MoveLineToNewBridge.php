@@ -42,6 +42,6 @@ class MoveLineToNewBridge implements ShouldQueue
         $amiCommand .= "Variable: AGENT=" . $this->agent . "\r\n";
         $amiCommand .= "\r\n";
         $amiService->setServer($this->serverId);
-        $amiService->sendCommand($amiCommand, "\r\n\r\n");
+        $amiService->sendCommand($amiCommand, "\r\n\r\n", true);
     }
 }
