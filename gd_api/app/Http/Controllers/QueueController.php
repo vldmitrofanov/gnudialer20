@@ -31,8 +31,8 @@ class QueueController extends Controller
         $request->validate([
             'agent_id' => 'required',
         ]);
-        if ($queue->status <1) {
-            return response()->json(['message' => 'This campaign is not active'], 422);
+        if ($queue->status<1) {
+            return response()->json(['message' => 'This campaign is not active. Status: ' . $queue->status], 422);
         }
         if ($queue->dial_method != Queue::DIAL_METHOD_MANUAL) {
             return response()->json(['message' => 'This campaign doesn\'t support manual dial method'], 422);
