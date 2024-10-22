@@ -63,10 +63,7 @@ class QueueController extends Controller
                 ]);
 
             // Return the updated lead
-            return response()->json([
-                'lead' => $lead,
-                'message' => 'Lead assigned to agent successfully'
-            ], 200);
+            return response()->json($lead, 200);
         } else {
             return response()->json(['message' => 'No leads found'], 404);
         }
