@@ -26,12 +26,13 @@ class QueueController extends Controller
         return QueueResource::collection($results);
     }
 
-    public function getNextLead(Queue $queue, Request $request)
+    public function getNextLead($queue_id, Request $request)
     {
         $request->validate([
             'agent_id' => 'required',
         ]);
-        if ($queue->status<1) {
+        $queue = Queue::findOrFail($queue_id);
+        if ($queue->status < 1) {
             return response()->json(['message' => 'This campaign is not active. Status: ' . $queue->status], 422);
         }
         if ($queue->dial_method != Queue::DIAL_METHOD_MANUAL) {
