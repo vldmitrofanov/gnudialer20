@@ -198,7 +198,7 @@ class AsteriskController extends Controller
         }
     }
 
-    public function callLeadByID(Request $request)
+    public function callLeadByID_AMI(Request $request)
     {
         $request->validate([
             'agent' => 'required',

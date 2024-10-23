@@ -253,6 +253,7 @@ const threeWayStatus = ref(null)
 const manualDial = ref(false)
 const manualDialProgress = ref(false)
 const hasManualDialing = computed(() => queue.value?.dial_method === 1)
+const awaitingChannel = ref(null)
 
 defaultDate.value.setDate(defaultDate.value.getDate() + 1);
 defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
@@ -295,37 +296,10 @@ const handleManualDialing = async () => {
         message.error("No Campaign selected")
         return
     }
-
-    /*const dialNumber = lead.value.phone;
-    const confBridgeId = bridge.value.name;
-    const dialprefix = queue.value?.queue_settings?.find(v=>v.parameter=="dialprefix")?.value
-    const cid = queue.value?.queue_settings?.find(v=>v.parameter=="callerid")?.value
-    const trunk = queue.value?.queue_settings?.find(v=>v.parameter=="trunk")
-    if (!trunk) {
-        message.error("Trunk not found")
-        return
-    }
-    const channel = trunk.value.replace('_EXTEN_', dialprefix + dialNumber);
-    const context = "join_confbridge";
-    const exten = "s";
-    const priority = "1";
-
-    // Create the AMI command
-    let amiCommand = "Action: Originate\r\n";
-    amiCommand += "Channel: " + channel + "\r\n";
-    amiCommand += "Context: " + context + "\r\n";
-    amiCommand += "Exten: " + exten + "\r\n";
-    amiCommand += "Priority: " + priority + "\r\n";
-    amiCommand += "CallerID: " + cid + "\r\n";
-    amiCommand += "Timeout: 30000\r\n";
-    amiCommand += "Variable: CONF_BRIDGE_ID=" + confBridgeId + "\r\n";
-    amiCommand += "Async: true\r\n\r\n";
-    */
-    // const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
     manualDialProgress.value = true
     try {
         const { data,
-            error } = await useFetch(`/api/asterisk/call`, {
+            error } = await useFetch(`/api/asterisk/call-ari`, {
                 method: 'POST',
                 baseURL: config.public.apiBaseUrl,
                 headers: {
@@ -345,7 +319,7 @@ const handleManualDialing = async () => {
             message.error(error.value);
             return null
         } else {
-            console.log(data)
+            console.log('MANUAL CALL DATA',data)
         }
     } catch (e) {
         // Handle unexpected errors

@@ -74,7 +74,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/agent/pause', [\App\Http\Controllers\AsteriskController::class, 'setAgentPause']);
         Route::post('/agent/available', [\App\Http\Controllers\AsteriskController::class, 'setAgentAvailable']);
         Route::get('/agent/status', [\App\Http\Controllers\AsteriskController::class, 'getAgentStatus']);
-        Route::post('/call', [\App\Http\Controllers\AsteriskController::class,'callLeadByID']);
+        Route::post('/call-ari', [\App\Http\Controllers\AsteriskController::class,'callLeadByID_ARI']);
+        Route::post('/call-ami', [\App\Http\Controllers\AsteriskController::class,'callLeadByID_AMI']);
         Route::post('/call/hangup', [\App\Http\Controllers\AsteriskController::class, 'callHangup']);
         Route::post('/custom/user-action', [\App\Http\Controllers\AsteriskController::class, 'userAction']);
         Route::post('/bridge-3way' , [\App\Http\Controllers\AsteriskController::class, 'bridge3way']);
