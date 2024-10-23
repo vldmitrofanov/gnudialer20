@@ -198,7 +198,7 @@ class AsteriskController extends Controller
         }
     }
 
-    public function callLeadByID_AMI(Request $request)
+    public function callLeadByID(Request $request)
     {
         $request->validate([
             'agent' => 'required',
@@ -289,7 +289,7 @@ class AsteriskController extends Controller
             return response()->json(['status' => null], 422);
         }
     }
-    public function callLeadByID(Request $request)
+    public function callLeadByID_ARI(Request $request)
     {
         $request->validate([
             'agent' => 'required',
