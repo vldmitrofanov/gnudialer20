@@ -8,7 +8,7 @@ use App\Services\AsteriskARIService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\MoveLineToNewBridge;
-use ARICallPayload;
+use App\GnuDialer\Extra\ARICallPayload;
 
 class AsteriskController extends Controller
 {

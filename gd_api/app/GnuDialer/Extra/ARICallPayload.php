@@ -1,4 +1,5 @@
 <?php
+namespace App\GnuDialer\Extra;
 class ARICallPayload
 {
     public $endpoint;    // SIP or PJSIP endpoint (e.g., PJSIP/1000)
