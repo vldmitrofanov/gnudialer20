@@ -374,7 +374,7 @@ class AsteriskController extends Controller
             ['CONF_BRIDGE_ID' =>  $confBridgeId]
         );
         $this->ariService->setServer($serverId);
-        $this->ariService->createChannel($pl);
+        $resp = $this->ariService->createChannel($pl);
         //$this->amiService->setServer($serverId);
         //$result = $this->amiService->sendCommand($amiCommand, "Response: Success|Response: Error");
         //if (strpos(serialize($result), 'Response: Success') !== false) {
@@ -385,7 +385,7 @@ class AsteriskController extends Controller
                 'agent' => $agent,
                 'lastupdated' => DB::raw('NOW()')
             ]);
-        return response()->json(['status' => 'OK'], 200);
+        return response()->json(['status' => 'OK', 'response' => $resp], 200);
         // } else {
         //      return response()->json(['status' => null], 422);
         // }
