@@ -278,10 +278,12 @@ class AsteriskController extends Controller
         $result = $this->amiService->sendCommand($amiCommand, "Response: Success|Response: Error");
         if (strpos(serialize($result), 'Response: Success') !== false) {
             //$status =  $this->amiService->joinBridge($bridge, $result['channel']);
-            $lead->update([
-                'agent' => $agent,
-                'lastupdated' => DB::raw('NOW()')
-            ]);
+            DB::table($table_name)
+                ->where('id', $leadId) // Assuming you have an `id` field for identifying the lead
+                ->update([
+                    'agent' => $agent,
+                    'lastupdated' => DB::raw('NOW()')
+                ]);
             return response()->json(['status' => 'OK'], 200);
         } else {
             return response()->json(['status' => null], 422);
@@ -373,18 +375,20 @@ class AsteriskController extends Controller
         );
         $this->ariService->setServer($serverId);
         $this->ariService->createChannel($pl);
-       //$this->amiService->setServer($serverId);
+        //$this->amiService->setServer($serverId);
         //$result = $this->amiService->sendCommand($amiCommand, "Response: Success|Response: Error");
         //if (strpos(serialize($result), 'Response: Success') !== false) {
-            //$status =  $this->amiService->joinBridge($bridge, $result['channel']);
-            $lead->update([
+        //$status =  $this->amiService->joinBridge($bridge, $result['channel']);
+        DB::table($table_name)
+            ->where('id', $leadId) // Assuming you have an `id` field for identifying the lead
+            ->update([
                 'agent' => $agent,
                 'lastupdated' => DB::raw('NOW()')
             ]);
-            return response()->json(['status' => 'OK'], 200);
-       // } else {
-      //      return response()->json(['status' => null], 422);
-       // }
+        return response()->json(['status' => 'OK'], 200);
+        // } else {
+        //      return response()->json(['status' => null], 422);
+        // }
     }
 
     public function leave3way(Request $request)
