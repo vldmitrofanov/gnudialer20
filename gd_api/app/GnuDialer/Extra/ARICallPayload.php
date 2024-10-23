@@ -14,7 +14,7 @@ class ARICallPayload
         $this->extension = $extension;
         $this->context = $context;
         $this->priority = $priority;
-        $this->variables = $variables;
+        $this->variables = array_map('strval', $variables);
     }
 
     public function toArray()
