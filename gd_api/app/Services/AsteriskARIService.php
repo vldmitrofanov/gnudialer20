@@ -189,20 +189,14 @@ class AsteriskARIService
     public function createChannel(ARICallPayload $payload)
     {
         $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}&app=my_app";
-        $jsonPayload = json_encode([
-            'endpoint' => $payload->endpoint,
-            'extension' => $payload->extension,
-            'context' => $payload->context,
-            'priority' => $payload->priority,
-            'variables' => $payload->variables
-        ]);
+        $data = $payload->toArray();
         $ch = curl_init($url);
 
         // Set cURL options
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response
         curl_setopt($ch, CURLOPT_POST, true);           // Use POST method
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_POSTFIELDS,  $jsonPayload);
+        curl_setopt($ch, CURLOPT_POSTFIELDS,  json_encode($data));
 
         $response = curl_exec($ch);
 

@@ -371,6 +371,7 @@ class AsteriskController extends Controller
             $exten,
             $context,
             $priority,
+            $cid,
             ['CONF_BRIDGE_ID' => (string)$confBridgeId]
         );
         $this->ariService->setServer($serverId);
