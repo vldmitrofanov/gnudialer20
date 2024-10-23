@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Server;
 use App\GnuDialer\Extra\ARICallPayload;
+use App\GnuDialer\Extra\ARIRedirectPayload;
 use Illuminate\Support\Facades\Log;
 
 class AsteriskARIService
@@ -189,6 +190,34 @@ class AsteriskARIService
     public function createChannel(ARICallPayload $payload)
     {
         $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}";
+        $data = $payload->toArray();
+        $ch = curl_init($url);
+
+        // Set cURL options
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response
+        curl_setopt($ch, CURLOPT_POST, true);           // Use POST method
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS,  json_encode($data));
+
+        $response = curl_exec($ch);
+
+        // Check for errors
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return 'Curl error: ' . $error;
+        }
+    
+        // Close cURL session
+        curl_close($ch);
+    
+        // Return the response
+        return $response;
+    }
+
+    public function redirectChannel(ARIRedirectPayload $payload)
+    {
+        $url = "{$this->proto}://{$this->host}/ari/channels/$payload->channel/redirect?api_key={$this->username}:{$this->secret}";
         $data = $payload->toArray();
         $ch = curl_init($url);
 

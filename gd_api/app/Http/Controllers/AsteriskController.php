@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\MoveLineToNewBridge;
 use App\GnuDialer\Extra\ARICallPayload;
+use App\GnuDialer\Extra\ARIRedirectPayload;
 
 class AsteriskController extends Controller
 {
@@ -354,18 +355,6 @@ class AsteriskController extends Controller
         $exten = "s";
         $priority = "1";
 
-        // Create the AMI command
-        $amiCommand = "Action: Originate\r\n";
-        $amiCommand .= "Channel: " . $channel . "\r\n";
-        $amiCommand .= "Context: " . $context . "\r\n";
-        $amiCommand .= "Exten: " . $exten . "\r\n";
-        $amiCommand .= "Priority: " . $priority . "\r\n";
-        $amiCommand .= "CallerID: " . $cid . "\r\n";
-        $amiCommand .= "Timeout: 30000\r\n";
-        $amiCommand .= "Variable: CONF_BRIDGE_ID=" . $confBridgeId . "\r\n";
-        $amiCommand .= "Async: true\r\n\r\n";
-
-
         $pl = new ARICallPayload(
             $channel,
             $exten,
@@ -442,5 +431,53 @@ class AsteriskController extends Controller
         MoveLineToNewBridge::dispatch($threewayChannel, $leadId, $newConfBridgeId, $campaignCode, $agent, $serverId);
 
         return response()->json(['status' => 'OK'], 200);
+    }
+
+    public function toggleHold(Request $request)
+    {
+        $request->validate([
+            'agent' => 'required',
+            'queue' => 'nullable|string',
+            'server_id' => 'required|integer',
+            'lead_id' => 'nullable',
+            'bridge' => 'nullable',
+            'channel' => 'required|string',
+            'action' => 'required'
+        ]);
+        /*      $actionCommand = ''
+    if (!isChannel2OnHold.value) {
+        $actionCommand = "Action: Redirect\r\n";
+        $actionCommand += `Channel: ${customerChannel.value?.name}\r\n`;
+        $actionCommand += "Context: gnudialer_hold\r\n";
+        $actionCommand += "Exten: s\r\n";
+        $actionCommand += "Priority: 1\r\n";
+    } else if (!threeWayStatus.value) {
+        $actionCommand = "Action: Redirect\r\n";
+        $actionCommand += `Channel: ${customerChannel.value?.name}\r\n`;  
+        $actionCommand += "Context: gnudialer_bridge\r\n";     
+        $actionCommand += "Exten: s\r\n";                     
+        $actionCommand += "Priority: 1\r\n";                  
+        $actionCommand += `Setvar: BRIDGE_ID=${bridge.value.id}\r\n`;
+    }*/
+
+        $channel = $request->channel;
+        $action = $request->action;
+        $context = $action == 'on' ? "gnudialer_hold" : "gnudialer_bridge";
+        $exten = "s";
+        $priority = "1";
+        $confBridgeId = $request->bridge;
+        $serverId = $request->server_id;
+
+
+        $pl = new ARIRedirectPayload(
+            $channel,
+            $exten,
+            $context,
+            $priority,
+            ['CONF_BRIDGE_ID' => (string)$confBridgeId]
+        );
+        $this->ariService->setServer($serverId);
+        $resp = $this->ariService->redirectChannel($pl);
+        return response()->json(['status' => 'OK', 'response' => $resp], 200);
     }
 }

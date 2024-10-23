@@ -156,33 +156,36 @@
                     <div class="sticky-form">
                         <div class="itrretyi">
                             <span class="campaign-name">{{ queue?.campaign?.name }}</span>
-                            <a-button v-if="manualDial" @click="handleManualDialing"
-                                :loading="manualDialProgress" :disabled="!allButtonsDisabled">Dial</a-button>
+                            <a-button v-if="manualDial" @click="handleManualDialing" :loading="manualDialProgress"
+                                :disabled="!allButtonsDisabled">Dial</a-button>
                         </div>
                         <a-form layout="inline">
                             <a-space wrap>
-                            <a-form-item>
-                                <a-input-group compact>
-                                    <a-select v-model:value="searchBy" style="width: 100px;" :disabled="running">
-                                        <a-select-option value="id">ID</a-select-option>
-                                        <a-select-option value="phone">Phone</a-select-option>
-                                    </a-select>
-                                    <a-select v-model:value="selectedQueueId" style="width: 130px;" :disabled="running">
-                                        <a-select-option v-for="ql in queues" :key="ql.id" :value="ql.id">
-                                            {{ ql.campaign?.name }}
-                                        </a-select-option>
-                                    </a-select>
-                                    <a-input v-model:value="searchTerm" :placeholder="`Enter ${searchBy}`"
-                                        style="width: 200px;" @keypress.enter="handleSearch" :disabled="running" />
-                                    <a-button type="primary" @click="handleSearch" :disabled="running">
-                                        <SearchOutlined /> <!-- Use the imported icon -->
-                                    </a-button>
-                                </a-input-group>
-                            </a-form-item>
-                            <a-button color="primary" variant="filled" class="ml2" @click="GetNextLead" :disabled="running || manualDialProgress || !allButtonsDisabled" v-if="hasManualDialing">
-                                Get Next Lead
-                            </a-button>
-                        </a-space>
+                                <a-form-item>
+                                    <a-input-group compact>
+                                        <a-select v-model:value="searchBy" style="width: 100px;" :disabled="running">
+                                            <a-select-option value="id">ID</a-select-option>
+                                            <a-select-option value="phone">Phone</a-select-option>
+                                        </a-select>
+                                        <a-select v-model:value="selectedQueueId" style="width: 130px;"
+                                            :disabled="running">
+                                            <a-select-option v-for="ql in queues" :key="ql.id" :value="ql.id">
+                                                {{ ql.campaign?.name }}
+                                            </a-select-option>
+                                        </a-select>
+                                        <a-input v-model:value="searchTerm" :placeholder="`Enter ${searchBy}`"
+                                            style="width: 200px;" @keypress.enter="handleSearch" :disabled="running" />
+                                        <a-button type="primary" @click="handleSearch" :disabled="running">
+                                            <SearchOutlined /> <!-- Use the imported icon -->
+                                        </a-button>
+                                    </a-input-group>
+                                </a-form-item>
+                                <a-button color="primary" variant="filled" class="ml2" @click="GetNextLead"
+                                    :disabled="running || manualDialProgress || !allButtonsDisabled"
+                                    v-if="hasManualDialing">
+                                    Get Next Lead
+                                </a-button>
+                            </a-space>
                         </a-form>
                     </div>
                     <LeadForm ref="leadFormRef" v-if="lead" :lead="lead" :schema="leadSchema"
@@ -199,8 +202,8 @@
             </a-tabs>
             <div v-if="DEBUG" class="debug-panel">Agent channel: {{ agentChannel?.name }} | customerChannel {{
                 customerChannel?.name }} |
-                onHold: {{ isChannel2OnHold }} | bridge: {{ bridge?.namw }} [{{ bridge?.id }}] | leadCampaign {{
-                    leadCampaign }} | 3way: {{ threeWayChannel?.name }}
+                onHold: {{ isChannel2OnHold }} | bridge: {{ bridge?.name }} [{{ bridge?.id }}] | leadCampaign {{
+                    leadCampaign }} | 3way: {{ threeWayChannel?.name }} | Awaiting Channel: {{ awaitingChannel?.name }}
             </div>
         </a-col>
     </a-row>
@@ -287,6 +290,7 @@ const GetNextLead = async () => {
         manualDialProgress.value = false;
     }
 }
+
 const handleManualDialing = async () => {
     if (!lead.value) {
         message.error("No lead selected")
@@ -319,14 +323,22 @@ const handleManualDialing = async () => {
             message.error(error.value);
             return null
         } else {
-            console.log('MANUAL CALL DATA',data)
+            awaitingChannel.value = JSON.parse(data.value.response)
         }
     } catch (e) {
         // Handle unexpected errors
         console.error('Unexpected error: ', e);
         message.error('Call failed');
     } finally {
-        manualDialProgress.value = false;
+        setTimeout(() => {
+            if (manualDialProgress.value) {
+                manualDialProgress.value = false;
+                message.error("Call failed")
+                awaitingChannel.value = null
+                handleDisposition(2)
+            }
+
+        }, 40 * 1000)
     }
 
 }
@@ -372,22 +384,11 @@ const toggleHold = async () => {
         message.error("No channel found to put on hold")
         return
     }
-    let actionCommand = ''
-    if (!isChannel2OnHold.value) {
-        actionCommand = "Action: Redirect\r\n";
-        actionCommand += `Channel: ${customerChannel.value?.name}\r\n`;
-        actionCommand += "Context: gnudialer_hold\r\n";
-        actionCommand += "Exten: s\r\n";
-        actionCommand += "Priority: 1\r\n";
-    } else if (!threeWayStatus.value) {
-        actionCommand = "Action: Redirect\r\n";
-        actionCommand += `Channel: ${customerChannel.value?.name}\r\n`;  // Customer channel currently on hold
-        actionCommand += "Context: gnudialer_bridge\r\n";      // Context to handle the bridge
-        actionCommand += "Exten: s\r\n";                     // Extension to handle bridging
-        actionCommand += "Priority: 1\r\n";                  // Priority in the dialplan
-        actionCommand += `Setvar: BRIDGE_ID=${bridge.value.id}\r\n`;
-    }
-    const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
+    let action = 'off'
+    if(!isChannel2OnHold.value){
+        action = 'on'
+    } 
+    const { data, error } = await useFetch(`/api/asterisk/hold-ari`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
         headers: {
@@ -396,7 +397,12 @@ const toggleHold = async () => {
         },
         body: {
             server_id: serverData.value?.id,
-            action: actionCommand
+            channel: customerChannel.value?.name,
+            agent: agent.value.id,
+            bridge: bridge.value?.name,
+            action: action,
+            queue: queue.value?.campaign?.code,
+            lead_id: lead.value?.id
         }
     })
     if (error.value) {
@@ -408,6 +414,7 @@ const toggleHold = async () => {
     }
 
 }
+
 const handleCBDateSelected = () => {
     if ((!cb_datetime.value || cb_datetime.value == '')) {
         message.error("Please select CB date")
@@ -416,6 +423,7 @@ const handleCBDateSelected = () => {
     triggerFormSubmit()
     isCBModalVisible.value = false
 }
+
 const formatDateToSQL = (date) => {
     if (!date) return null;
 
@@ -556,6 +564,12 @@ const initiateWebsocket = (server) => {
                     getAgentStatus()
                 }
                 break;
+            case "Dial":
+                if (data.dialstatus === "CONGESTION") {
+                    console.log('congestion')
+                    onCongestion(data)
+                }
+                break;
         }
     };
 
@@ -572,6 +586,16 @@ const initiateWebsocket = (server) => {
         }
         connected.value = false;  // Update connection status on close
     };
+}
+
+const onCongestion = (data) => {
+    console.log('onCongestion', data.peer?.name, awaitingChannel.value?.name)
+    if (awaitingChannel.value && data.peer?.name === awaitingChannel.value.name) {
+        handleDisposition(2)
+        manualDialProgress.value = false;
+        message.error("Call failed")
+        awaitingChannel.value = null
+    }
 }
 
 const handleDisposition = async (dispo) => {
@@ -641,8 +665,8 @@ const setAvailable = async () => {
             Authorization: `Bearer ${authToken}`
         },
         body: {
-            server_id: serverId,
-            agent: agentId,
+            server_id: serverData.value?.id,
+            agent: agent.value?.id,
         }
     })
 
@@ -753,6 +777,8 @@ const onBringePeer = (data) => {
             getLead(campaign, leadId)
         } else {
             message.success('Other line connected')
+            manualDialProgress.value = false;
+            awaitingChannel.value = null
         }
 
         allButtonsDisabled.value = false
@@ -1000,6 +1026,7 @@ const handle3WayDial = async (threeWayId) => {
         console.log('3__Way__Response', data)
     }
 }
+
 const selectedQueueId = ref(null)
 const router = useRouter()
 watch(selectedQueueId, (newId) => {
