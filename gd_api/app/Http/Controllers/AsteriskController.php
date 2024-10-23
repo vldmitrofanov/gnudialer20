@@ -444,50 +444,36 @@ class AsteriskController extends Controller
             'channel' => 'required|string',
             'action' => 'required'
         ]);
-        /*      $actionCommand = ''
-    if (!isChannel2OnHold.value) {
-        $actionCommand = "Action: Redirect\r\n";
-        $actionCommand += `Channel: ${customerChannel.value?.name}\r\n`;
-        $actionCommand += "Context: gnudialer_hold\r\n";
-        $actionCommand += "Exten: s\r\n";
-        $actionCommand += "Priority: 1\r\n";
-    } else if (!threeWayStatus.value) {
-        $actionCommand = "Action: Redirect\r\n";
-        $actionCommand += `Channel: ${customerChannel.value?.name}\r\n`;  
-        $actionCommand += "Context: gnudialer_bridge\r\n";     
-        $actionCommand += "Exten: s\r\n";                     
-        $actionCommand += "Priority: 1\r\n";                  
-        $actionCommand += `Setvar: BRIDGE_ID=${bridge.value.id}\r\n`;
-    }*/
+      
     $serverId = $request->server_id;
-    $channelId = null;
+    //$channelId = null;
         $channelName = $request->channel;
-        $this->ariService->setServer($serverId);
-        $allChannels = $this->ariService->getAllChannels();
-        foreach($allChannels as $ch) {
-            if($ch['name']==$channelName) {
-                $channelId = $ch['id'];
-            }
-        }
+        //$this->ariService->setServer($serverId);
+        //$allChannels = $this->ariService->getAllChannels();
+        //foreach($allChannels as $ch) {
+       //     if($ch['name']==$channelName) {
+       //         $channelId = $ch['id'];
+       //     }
+       // }
        
-        if(empty($channelId)){
-            return response()->json(['message' => 'Channel not found'], 422);
-        }
+       // if(empty($channelId)){
+       //     return response()->json(['message' => 'Channel not found'], 422);
+       // }
         $action = $request->action;
         $context = $action == 'on' ? "gnudialer_hold" : "gnudialer_bridge";
         $exten = "s";
         $priority = "1";
         $confBridgeId = $request->bridge;
-        
-        $pl = new ARIRedirectPayload(
-            $channelId,
-            $exten,
-            $context,
-            $priority,
-            ['CONF_BRIDGE_ID' => (string)$confBridgeId]
-        );
-        
-        $resp = $this->ariService->redirectChannel($pl);
-        return response()->json(['status' => 'OK', 'response' => $resp], 200);
+        $actionCommand = '';
+        $actionCommand .= "Action: Redirect\r\n";
+        $actionCommand .= "Channel: {$channelName}\r\n";  
+        $actionCommand .= "Context: {$context}\r\n";     
+        $actionCommand .= "Exten: {$exten}\r\n";                     
+        $actionCommand .= "Priority: {$priority}\r\n";                  
+        $actionCommand .= "Setvar: BRIDGE_ID={$confBridgeId}\r\n\r\n";
+
+        $this->amiService->setServer($serverId);
+        $result = $this->amiService->sendCommand($actionCommand, "\r\n\r\n");
+        return response()->json(['status' => 'OK', 'response' => $result], 200);
     }
 }
