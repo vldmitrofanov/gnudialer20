@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
 use App\Models\Server;
+use ARICallPayload;
 use Illuminate\Support\Facades\Log;
 
 class AsteriskARIService
@@ -183,5 +184,38 @@ class AsteriskARIService
 
         // Return the array of bridges
         return $channels;
+    }
+
+    public function createChannel(ARICallPayload $payload)
+    {
+        $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}&app=my_app";
+        $data = [
+            'endpoint' => $payload->endpoint,
+            'extension' => $payload->extension,
+            'context' => $payload->context,
+            'priority' => $payload->priority
+        ];
+        $ch = curl_init($url);
+
+        // Set cURL options
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response
+        curl_setopt($ch, CURLOPT_POST, true);           // Use POST method
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+
+        $response = curl_exec($ch);
+
+        // Check for errors
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return 'Curl error: ' . $error;
+        }
+    
+        // Close cURL session
+        curl_close($ch);
+    
+        // Return the response
+        return $response;
     }
 }

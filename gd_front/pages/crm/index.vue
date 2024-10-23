@@ -157,7 +157,7 @@
                         <div class="itrretyi">
                             <span class="campaign-name">{{ queue?.campaign?.name }}</span>
                             <a-button v-if="manualDial" @click="handleManualDialing"
-                                :loading="manualDialProgress">Dial</a-button>
+                                :loading="manualDialProgress" :disabled="!allButtonsDisabled">Dial</a-button>
                         </div>
                         <a-form layout="inline">
                             <a-space wrap>
@@ -179,7 +179,7 @@
                                     </a-button>
                                 </a-input-group>
                             </a-form-item>
-                            <a-button color="primary" variant="filled" class="ml2" @click="GetNextLead" :disabled="running || manualDialProgress" v-if="hasManualDialing">
+                            <a-button color="primary" variant="filled" class="ml2" @click="GetNextLead" :disabled="running || manualDialProgress || !allButtonsDisabled" v-if="hasManualDialing">
                                 Get Next Lead
                             </a-button>
                         </a-space>
@@ -275,7 +275,7 @@ const GetNextLead = async () => {
         } else {
             lead.value = data.value?.lead
             leadSchema.value = data.value?.schema
-            //leadCampaign.value = campaign
+            leadCampaign.value = queue.value?.campaign?.code
             manualDial.value = true
         }
     } catch (e) {
