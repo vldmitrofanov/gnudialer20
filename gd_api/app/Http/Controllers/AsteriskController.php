@@ -459,24 +459,34 @@ class AsteriskController extends Controller
         $actionCommand += "Priority: 1\r\n";                  
         $actionCommand += `Setvar: BRIDGE_ID=${bridge.value.id}\r\n`;
     }*/
-
-        $channel = $request->channel;
+    $serverId = $request->server_id;
+    $channelId = null;
+        $channelName = $request->channel;
+        $this->ariService->setServer($serverId);
+        $allChannels = $this->ariService->getAllChannels();
+        foreach($allChannels as $ch) {
+            if($ch['name']==$channelName) {
+                $channelId = $ch['id'];
+            }
+        }
+       
+        if(empty($channelId)){
+            return response()->json(['message' => 'Channel not found'], 422);
+        }
         $action = $request->action;
         $context = $action == 'on' ? "gnudialer_hold" : "gnudialer_bridge";
         $exten = "s";
         $priority = "1";
         $confBridgeId = $request->bridge;
-        $serverId = $request->server_id;
-
-
+        
         $pl = new ARIRedirectPayload(
-            $channel,
+            $channelId,
             $exten,
             $context,
             $priority,
             ['CONF_BRIDGE_ID' => (string)$confBridgeId]
         );
-        $this->ariService->setServer($serverId);
+        
         $resp = $this->ariService->redirectChannel($pl);
         return response()->json(['status' => 'OK', 'response' => $resp], 200);
     }
