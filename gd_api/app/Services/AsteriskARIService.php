@@ -188,7 +188,7 @@ class AsteriskARIService
 
     public function createChannel(ARICallPayload $payload)
     {
-        $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}&app=my_app";
+        $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}";
         $data = $payload->toArray();
         $ch = curl_init($url);
 
