@@ -24,7 +24,7 @@ class ARICallPayload
             'extension' => $this->extension,
             'context' => $this->context,
             'priority' => $this->priority,
-            'variables' => json_encode($this->variables),
+            'variables' => $this->variables,
         ];
     }
 }
