@@ -3,7 +3,7 @@
   <a-layout style="min-height: 100vh">
     <!-- Header: Full width -->
     <a-layout-header class="site-layout-background"
-      style="padding: 0; background: #001529; width: 100vw; position: fixed; z-index: 1; top: 0; left: 0; display: flex;justify-content: space-between;">
+      style="padding: 0; background: #001529; width: 100vw; position: fixed; z-index: 1; top: 0; left: 0; display: flex;justify-content: space-between;align-items: center;padding: 0 40px">
       <div style="color: white; text-align: center; font-size: 20px; line-height: 64px;">
         <NuxtLink to="/admin">Admin Panel</NuxtLink>
       </div>
