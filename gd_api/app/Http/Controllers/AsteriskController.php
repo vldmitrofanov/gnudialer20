@@ -460,7 +460,7 @@ class AsteriskController extends Controller
        //     return response()->json(['message' => 'Channel not found'], 422);
        // }
         $action = $request->action;
-        $context = $action == 'on' ? "gnudialer_hold" : "gnudialer_bridge";
+        $context = $action == 'on' ? "gnudialer_hold" : "join_confbridge";
         $exten = "s";
         $priority = "1";
         $confBridgeId = $request->bridge;
