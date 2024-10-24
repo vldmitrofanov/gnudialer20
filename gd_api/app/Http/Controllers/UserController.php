@@ -25,9 +25,17 @@ class UserController extends Controller
         ]);
     }
 
-    public function me (Request $request) {
+    public function me(Request $request)
+    {
         $user = $request->user();
         $user->load('agents');
         return new UserAgentResource($user);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete(); // Revoke the token
+
+        return response()->json(['message' => 'Logged out successfully.']);
     }
 }

@@ -156,7 +156,7 @@
                     <div class="sticky-form">
                         <div class="itrretyi">
                             <span class="campaign-name">{{ queue?.campaign?.name }}</span>
-                            <a-button v-if="manualDial" @click="handleManualDialing" :loading="manualDialProgress"
+                            <a-button v-if="manualDial && lead" @click="handleManualDialing" :loading="manualDialProgress"
                                 :disabled="!allButtonsDisabled">Dial</a-button>
                         </div>
                         <a-form layout="inline">
@@ -779,6 +779,9 @@ const onBringePeer = (data) => {
             message.success('Other line connected')
             manualDialProgress.value = false;
             awaitingChannel.value = null
+            if(!customerChannel.value) {
+                customerChannel.value = data.channel
+            }
         }
 
         allButtonsDisabled.value = false
@@ -1177,10 +1180,11 @@ onMounted(async () => {
 
     .itrretyi {
         display: flex;
-        gap: 10px;
-
+        gap: 20px;
+        align-items: center;
         .campaign-name {
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 20px;
         }
     }
 }
