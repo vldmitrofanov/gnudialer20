@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AgentActiveBridgeResource;
 use App\Http\Resources\AgentResource;
 use App\Http\Resources\AgentShortResource;
+use App\Models\ConfBridge;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -88,5 +90,12 @@ class AgentController extends Controller
             $newAgent->save();
         }
         return new \App\Http\Resources\UserResource($newUser);
+    }
+
+    public function getActiveConfBridges(Request $request) {
+        $res = ConfBridge::where('online',1)
+            ->with(['agent', 'agent.queues', 'agent.queues.campaign', 'agent.user'])
+            ->get();
+        return AgentActiveBridgeResource::collection($res);
     }
 }

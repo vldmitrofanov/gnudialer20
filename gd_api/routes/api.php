@@ -35,10 +35,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
             });
 
             Route::group(['prefix' => 'agents'], function () {
+                Route::get('/active-conf-bridges', [\App\Http\Controllers\Admin\AgentController::class, 'getActiveConfBridges']);
                 Route::get('/', [\App\Http\Controllers\Admin\AgentController::class, 'index']);
                 Route::post('/', [\App\Http\Controllers\Admin\AgentController::class, 'create']);
                 Route::put('/{agent_id}', [\App\Http\Controllers\Admin\AgentController::class, 'update']);
-                Route::delete('/{agent_id}', [\App\Http\Controllers\Admin\AgentController::class, 'delete']);
+                Route::delete('/{agent_id}', [\App\Http\Controllers\Admin\AgentController::class, 'delete']);              
             });
 
             Route::group(['prefix' => 'queues'], function () {
