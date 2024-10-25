@@ -315,7 +315,8 @@ const handleManualDialing = async () => {
                     queue: queue.value?.campaign?.code,
                     agent: agent.value?.id,
                     lead_id: lead.value?.id,
-                    bridge: bridge.value?.name
+                    bridge: bridge.value?.name,
+                    create_disposition: true
                 }
             })
         if (error.value) {

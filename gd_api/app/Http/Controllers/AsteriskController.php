@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Jobs\MoveLineToNewBridge;
 use App\GnuDialer\Extra\ARICallPayload;
 use App\GnuDialer\Extra\ARIRedirectPayload;
+use App\Models\Disposition;
 
 class AsteriskController extends Controller
 {
@@ -375,6 +376,14 @@ class AsteriskController extends Controller
                 'agent' => $agent,
                 'lastupdated' => DB::raw('NOW()')
             ]);
+            if($request->create_disposition){
+                Disposition::create([
+                    'agent_id' => $agent,
+                    'campaign_id' => $campaign->id,
+                    'lead_id' => $leadId,
+                    'start' => \Carbon\Carbon::now()->toDateTimeString()
+                ]);
+            }
         return response()->json(['status' => 'OK', 'response' => $resp], 200);
         // } else {
         //      return response()->json(['status' => null], 422);
