@@ -94,8 +94,11 @@ class AgentController extends Controller
 
     public function getActiveConfBridges(Request $request) {
         $res = ConfBridge::where('online',1)
-            ->with(['agent', 'agent.queues', 'agent.queues.campaign', 'agent.user'])
-            ->get();
+            ->with(['agent', 'agent.queues', 'agent.queues.campaign', 'agent.user']);
+        if(!empty($request->server_id)){
+            $res = $res->where('server_id',$request->server_id);
+        }
+        $res = $res->orderBy('agent_id','asc')->get();
         return AgentActiveBridgeResource::collection($res);
     }
 }
