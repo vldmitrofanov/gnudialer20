@@ -12,23 +12,23 @@ use Illuminate\Queue\SerializesModels;
 class AmiCommandAsync implements ShouldQueue
 {
     use Queueable;
-    private $amiService, $payload, $endLine;
+    private $serverId, $payload, $endLine;
     /**
      * Create a new job instance.
      */
     public function __construct( $serverId, $payload, $endLine)
     {
-        $this->amiService = new AsteriskAMIService();
         $this->payload = $payload;
         $this->endLine = $endLine;
-        $this->amiService->setServer($serverId);
+        $this->serverId = $serverId;
     }
 
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(AsteriskAMIService $amiService): void
     {
-        $this->amiService->sendCommand($this->payload, $this->endLine);
+        $amiService->setServer($this->serverId);
+        $amiService->sendCommand($this->payload, $this->endLine);
     }
 }
