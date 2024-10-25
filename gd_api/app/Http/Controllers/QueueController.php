@@ -54,6 +54,7 @@ class QueueController extends Controller
         // Example SQL query using the concatenated filters
         $lead = $stmt
             ->whereRaw($rawQuery)
+            ->inRandomOrder()
             ->first();
         if (!empty($lead)) {
             DB::table($table_name)
