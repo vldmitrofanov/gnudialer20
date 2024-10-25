@@ -332,6 +332,7 @@ class AsteriskAMIService
 
         return $this->sendCommand($command, "\r\n");
     }
+    
 
     public function __destruct()
     {

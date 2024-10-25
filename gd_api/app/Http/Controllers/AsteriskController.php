@@ -470,10 +470,10 @@ class AsteriskController extends Controller
         $actionCommand .= "Priority: {$priority}\r\n";
         $actionCommand .= "Setvar: BRIDGE_ID={$confBridgeId}\r\n\r\n";
 
-        //$this->amiService->setServer($serverId);
-        //$result = $this->amiService->sendCommand($actionCommand, "\r\n\r\n");
+        $this->amiService->setServer($serverId);
+        $result = $this->amiService->sendCommand($actionCommand, "\r\n\r\n", true);
 
-        AmiCommandAsync::dispatch($serverId, $actionCommand, "\r\n\r\n");
+        //AmiCommandAsync::dispatch($serverId, $actionCommand, "\r\n\r\n");
         return response()->json(['status' => 'OK'], 200);
     }
 }

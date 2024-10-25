@@ -516,7 +516,10 @@ const initiateWebsocket = (server) => {
                         threeWayStatus.value = { channel3w: data.channel.name, channel: customerChannel.value, complete: false }
                         allButtonsDisabled.value = true
                     } else {
-                        customerChannel.value = { name: data.channel.name }
+                        if (data.channel?.name ) {
+                            customerChannel.value = { name: data.channel.name }
+                        }
+
                     }
 
                 } else if (customerChannel.value && threeWayStatus.value && (data.value?.includes(customerChannel.value.name) || data.value?.includes(threeWayStatus.value.name))) {
@@ -623,6 +626,7 @@ const handleDisposition = async (dispo) => {
     }
     triggerFormSubmit()
     gdialDispo(dispo)
+    isChannel2OnHold.value = false
     if (!pauseAfterCall.value) {
         setOnWait()
     } else {
