@@ -156,8 +156,8 @@
                     <div class="sticky-form">
                         <div class="itrretyi">
                             <span class="campaign-name">{{ queue?.campaign?.name }}</span>
-                            <a-button v-if="manualDial && lead" @click="handleManualDialing" :loading="manualDialProgress"
-                                :disabled="!allButtonsDisabled">Dial</a-button>
+                            <a-button v-if="manualDial && lead" @click="handleManualDialing"
+                                :loading="manualDialProgress" :disabled="!allButtonsDisabled">Dial</a-button>
                         </div>
                         <a-form layout="inline">
                             <a-space wrap>
@@ -386,10 +386,10 @@ const toggleHold = async () => {
         return
     }
     let action = 'off'
-    if(!isChannel2OnHold.value){
+    if (!isChannel2OnHold.value) {
         action = 'on'
-    } 
-    const { data, error } = await useFetch(`/api/asterisk/hold-ari`, {
+    }
+    const { data, error } = await useFetch(`/api/asterisk/hold-ami`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
         headers: {
@@ -559,10 +559,15 @@ const initiateWebsocket = (server) => {
                         console.log('ENTERED_BRIDGE', data.bridge)
                     }
                     if (data.bridge) {
-                        customerChannel.value
+                        //customerChannel.value
                         bridge.value = { name: data.bridge.id }
                     }
                     getAgentStatus()
+                } else if (awaitingChannel.value?.name && data.channel?.name?.includes(awaitingChannel.value.name)) {
+                    customerChannel.value = data.channel
+                    awaitingChannel.value = null
+                    manualDialProgress.value = false;
+                    message.success("Call connected")
                 }
                 break;
             case "Dial":
@@ -780,7 +785,7 @@ const onBringePeer = (data) => {
             message.success('Other line connected')
             manualDialProgress.value = false;
             awaitingChannel.value = null
-            if(!customerChannel.value) {
+            if (!customerChannel.value) {
                 customerChannel.value = data.channel
             }
         }
@@ -791,9 +796,21 @@ const onBringePeer = (data) => {
 }
 
 const getLead = async (campaign, leadId) => {
-    if (!campaign || !leadId) {
-        message.error('No campaign found');
-        return;
+    if (!campaign || !queue.value) {
+        if (!campaign && queue.value) {
+            campaign = queue.value?.campaign?.code
+        } else {
+            message.error('No campaign found');
+            return
+        }
+    }
+    if (!leadId) {
+        if (!lead.value) {
+            message.error('No lead found');
+            return;
+        } else {
+            leadId = lead.value.id
+        }
     }
     lead.value = null
     const { data, error } = await useFetch(`/api/leads?campaign=${campaign}&lead_id=${leadId}`, {
@@ -1183,6 +1200,7 @@ onMounted(async () => {
         display: flex;
         gap: 20px;
         align-items: center;
+
         .campaign-name {
             font-weight: 600;
             font-size: 20px;

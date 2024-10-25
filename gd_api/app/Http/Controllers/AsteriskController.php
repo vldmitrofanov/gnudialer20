@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Jobs\MoveLineToNewBridge;
 use App\GnuDialer\Extra\ARICallPayload;
 use App\GnuDialer\Extra\ARIRedirectPayload;
+use App\Jobs\AmiCommandAsync;
 use App\Models\Disposition;
 
 class AsteriskController extends Controller
@@ -376,14 +377,14 @@ class AsteriskController extends Controller
                 'agent' => $agent,
                 'lastupdated' => DB::raw('NOW()')
             ]);
-            if($request->create_disposition){
-                Disposition::create([
-                    'agent_id' => $agent,
-                    'campaign_id' => $campaign->id,
-                    'lead_id' => $leadId,
-                    'start' => \Carbon\Carbon::now()->toDateTimeString()
-                ]);
-            }
+        if ($request->create_disposition) {
+            Disposition::create([
+                'agent_id' => $agent,
+                'campaign_id' => $campaign->id,
+                'lead_id' => $leadId,
+                'start' => \Carbon\Carbon::now()->toDateTimeString()
+            ]);
+        }
         return response()->json(['status' => 'OK', 'response' => $resp], 200);
         // } else {
         //      return response()->json(['status' => null], 422);
@@ -453,21 +454,9 @@ class AsteriskController extends Controller
             'channel' => 'required|string',
             'action' => 'required'
         ]);
-      
-    $serverId = $request->server_id;
-    //$channelId = null;
+
+        $serverId = $request->server_id;
         $channelName = $request->channel;
-        //$this->ariService->setServer($serverId);
-        //$allChannels = $this->ariService->getAllChannels();
-        //foreach($allChannels as $ch) {
-       //     if($ch['name']==$channelName) {
-       //         $channelId = $ch['id'];
-       //     }
-       // }
-       
-       // if(empty($channelId)){
-       //     return response()->json(['message' => 'Channel not found'], 422);
-       // }
         $action = $request->action;
         $context = $action == 'on' ? "gnudialer_hold" : "join_confbridge";
         $exten = "s";
@@ -475,14 +464,16 @@ class AsteriskController extends Controller
         $confBridgeId = $request->bridge;
         $actionCommand = '';
         $actionCommand .= "Action: Redirect\r\n";
-        $actionCommand .= "Channel: {$channelName}\r\n";  
-        $actionCommand .= "Context: {$context}\r\n";     
-        $actionCommand .= "Exten: {$exten}\r\n";                     
-        $actionCommand .= "Priority: {$priority}\r\n";                  
+        $actionCommand .= "Channel: {$channelName}\r\n";
+        $actionCommand .= "Context: {$context}\r\n";
+        $actionCommand .= "Exten: {$exten}\r\n";
+        $actionCommand .= "Priority: {$priority}\r\n";
         $actionCommand .= "Setvar: BRIDGE_ID={$confBridgeId}\r\n\r\n";
 
         $this->amiService->setServer($serverId);
-        $result = $this->amiService->sendCommand($actionCommand, "\r\n\r\n");
-        return response()->json(['status' => 'OK', 'response' => $result], 200);
+        //$result = $this->amiService->sendCommand($actionCommand, "\r\n\r\n");
+
+        AmiCommandAsync::dispatch($this->amiService, $actionCommand, "\r\n\r\n");
+        return response()->json(['status' => 'OK'], 200);
     }
 }
