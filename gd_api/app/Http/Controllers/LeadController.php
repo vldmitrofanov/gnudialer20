@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\UserAgentResource;
+use App\Models\Agent;
 use App\Models\CampaignFormSchema;
 use App\Models\Disposition;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +30,7 @@ class LeadController extends Controller
         ]);
     }
 
-    public function updateLead(Request $request) 
+    public function updateLead(Request $request)
     {
         $request->validate([
             'lead' => 'required',
@@ -40,12 +41,12 @@ class LeadController extends Controller
         ]);
 
         $data = $request->lead;
-        if(!is_array($data)) {
+        if (!is_array($data)) {
             abort(422);
         }
-        if(isset($data['phone'])){
+        if (isset($data['phone'])) {
             unset($data['phone']);
-        }      
+        }
         $campaignCode = $request->campaign;
         $leadId = $request->lead['id'];
         $agentId = $request->agent;
@@ -56,20 +57,20 @@ class LeadController extends Controller
         $data['lastupdated'] = $now_string;
         $data['agent'] = $agentId;
         $data['disposition'] = $dispo;
-        if(!empty($request->cb_datetime)){
+        if (!empty($request->cb_datetime)) {
             $data['cb_datetime'] = \Carbon\Carbon::parse($request->cb_datetime)->toDateTimeString();
         }
         DB::table($table_name)->where('id', $leadId)->update($data);
-        $campaign = Campaign::where('code',$campaignCode)->first();
-        Disposition::where('call_ended',0)
-        ->where('agent_id', $agentId)
-        ->where('lead_id', $leadId)
-        ->where('campaign_id',$campaign->id)
-        ->update([
-            'disposition' => $dispo,
-            'end' => $now_string,
-            'call_ended' => 1
-        ]);
+        $campaign = Campaign::where('code', $campaignCode)->first();
+        Disposition::where('call_ended', 0)
+            ->where('agent_id', $agentId)
+            ->where('lead_id', $leadId)
+            ->where('campaign_id', $campaign->id)
+            ->update([
+                'disposition' => $dispo,
+                'end' => $now_string,
+                'call_ended' => 1
+            ]);
         return response()->json([
             'message' => 'Resource updated successfully',
         ], 201);
@@ -97,6 +98,37 @@ class LeadController extends Controller
         $schema = CampaignFormSchema::where('table_name', $table_name)->first();
         return response()->json([
             'lead' => $lead,
+            'schema' => $schema?->schema
+        ]);
+    }
+
+    public function callbacks(Request $request)
+    {
+        $request->validate([
+            'campaign' => 'required',
+            'server_id' => 'nullable',
+            'phone' => 'nullable',
+        ]);
+        $campaign = $request->campaign;
+        $serverId = $request->server_id;
+        $userId = $request->user()->id;
+
+        $agent = Agent::whereHas('server', function ($q1) use ($serverId) {
+            $q1->where('id', $serverId);
+        })->whereHas('user', function ($q2) use ($userId) {
+            $q2->where('id', $userId);
+        })->first();
+
+        if (empty($agent)) {
+            abort(401);
+        }
+
+        $table_name = 'campaign_' . $campaign;
+        $leads = DB::table($table_name)->where('agent', $agent->id)->where('disposition','0')->whereRaw('cb_datetime > NOW()');
+        $leads = $leads->paginate(500);
+        $schema = CampaignFormSchema::where('table_name', $table_name)->first();
+        return response()->json([
+            'leads' => $leads,
             'schema' => $schema?->schema
         ]);
     }

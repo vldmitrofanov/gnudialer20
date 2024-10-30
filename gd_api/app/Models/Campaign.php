@@ -31,4 +31,9 @@ class Campaign extends Model
     {
         return $this->hasMany(ThreeWay::class);
     }
+
+    public function scripts() 
+    {
+        return $this->hasMany(Script::class);
+    }
 }
