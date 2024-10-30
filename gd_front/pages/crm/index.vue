@@ -151,8 +151,8 @@
 
         <!-- Right Pane: Form with Tabs -->
         <a-col :span="19" class="right-pane">
-            <a-tabs :default-active-key="tabActiveKey">
-                <a-tab-pane key="1" tab="Main">
+            <a-tabs :default-active-key="1" :active-key="tabActiveKey" @change="handleTabChange">
+                <a-tab-pane :key="1" tab="Main">
                     <div class="sticky-form">
                         <div class="itrretyi">
                             <span class="campaign-name">{{ queue?.campaign?.name }}</span>
@@ -195,39 +195,27 @@
                     <!-- Content for the Notes tab -->
                     <a-textarea rows="4" placeholder="Add notes about the lead" />
                 </a-tab-pane>
-                <a-tab-pane :key="3" tab="My Callbacks">
+                <a-tab-pane :key="3" tab="My Callbacks" :disabled="running || !queue">
                     <!-- Content for the Notes tab -->
-                    <h3 style="margin: 10px 0 20px;">Campaign list</h3>
-  <a-table :dataSource="callbacks?.data" :columns="callbackColumns">
-      <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'name'">
-    
-                  {{ record.name }}
-   
-          </template>
-          <template v-else-if="column.key === 'status'">
-              <span>
-                  <a-tag :color="parseInt(record.status) === 1 ? 'green' : 'grey'">
-                      {{ `${parseInt(record.status) === 1 ? 'Active' : 'Inactive'}` }}
-                  </a-tag>
-              </span>
-          </template>
-          <template v-else-if="column.key === 'running'">
-              <span v-for="q in record.queues">
-                  {{ `ServerID:${q.server_id}` }} <a-tag  :color="parseInt(q.status) === 1 ? 'green' : 'volcano'">
-                       {{ `${parseInt(q.status) === 1 ? 'Running' : 'Paused'}` }}
-                  </a-tag>
-              </span>
-          </template>
-          <template v-else-if="column.key === 'leads'">
-              <NuxtLink :to="`/admin/leads/${record.code}`">
-                  Show leads
-              </NuxtLink>
-          </template>
-      </template>
-  </a-table>
+                    <div class="sticky-form">
+                        <h3 style="margin: 10px 0 20px;">My Callbacks</h3>
+                        <div style="position: relative;">
+                            <a-select v-model:value="selectedQueueId" style="width: 130px;" :disabled="running">
+                                <a-select-option v-for="ql in queues" :key="ql.id" :value="ql.id">
+                                    {{ ql.campaign?.name }}
+                                </a-select-option>
+                            </a-select>
+                        </div>
+                    </div>
+                    <a-table :dataSource="callbacks?.data" :columns="callbacksSchema">
+                        <template #bodyCell="{ column, record }">
+                            <template v-if="column.key === 'phone'">
+                                <a-button @click="bringCallback(record)">Browse</a-button>
+                            </template>
+                        </template>
+                    </a-table>
                 </a-tab-pane>
-                <a-tab-pane :key="4" tab="History">
+                <a-tab-pane :key="4" tab="History" disabled>
                     <!-- Content for the History tab -->
                     <p>Call history and other interactions with the lead.</p>
                 </a-tab-pane>agentStatus
@@ -253,6 +241,9 @@ import { useFetch, useCookie, useRuntimeConfig } from '#app'
 import { SearchOutlined } from '@ant-design/icons-vue';
 const DEBUG = true
 const tabActiveKey = ref(1)
+const handleTabChange = (key) => {
+    tabActiveKey.value = key;
+}
 const config = useRuntimeConfig()
 const authToken = useCookie('auth_token').value
 const isCBModalVisible = ref(false)
@@ -551,7 +542,7 @@ const initiateWebsocket = (server) => {
                         threeWayStatus.value = { channel3w: data.channel.name, channel: customerChannel.value, complete: false }
                         allButtonsDisabled.value = true
                     } else {
-                        if (data.channel?.name ) {
+                        if (data.channel?.name) {
                             customerChannel.value = { name: data.channel.name }
                         }
 
@@ -884,6 +875,10 @@ const handleSelectQueue = (ql) => {
 }
 
 const togglePause = async () => {
+    if (!running.value) {
+        tabActiveKey.value = 1
+    }
+
     const serverId = serverData.value.id
     const agentId = agent.value?.id
     const queueCode = queue.value?.campaign?.code
@@ -1087,8 +1082,8 @@ const handle3WayDial = async (threeWayId) => {
     }
 }
 
-const fetchCallbacks = async() => {
-    const { data, error } = await useFetch(`/api/leads/callbacks?server_id=${serverData.value?.id}&campaign_id=${queue.value?.campaign.code}`, {
+const fetchCallbacks = async () => {
+    const { data, error } = await useFetch(`/api/leads/callbacks?server_id=${serverData.value?.id}&campaign=${queue.value?.campaign.code}`, {
         baseURL: config.public.apiBaseUrl,
         headers: {
             Accept: `application/json`,
@@ -1103,19 +1098,36 @@ const fetchCallbacks = async() => {
         if (DEBUG) {
             console.log('Fetched data:', data.value)
         }
-        callbacks.value = data.value.leads
-        if(DEBUG){
-            console.log('callbacks.value',callbacks.value)
+        callbacks.value = data.value?.leads
+        if (DEBUG) {
+            console.log('callbacks.value', callbacks.value)
         }
-        callbacksSchema.value = data.value?.schema
+        callbacksSchema.value = data.value?.schema?.map(v => {
+            return {
+                title: v.label,
+                dataIndex: v.name,
+                key: v.name,
+            }
+        })
+        if (!lead.value) {
+            leadSchema.value = data.value?.schema
+        }
     }
+}
+
+const bringCallback = (cbLead) => {
+    console.log(cbLead)
+    lead.value = cbLead
+    tabActiveKey.value = 1
+    manualDial.value = true
+    leadCampaign.value = queue.value?.campaign?.code
 }
 
 const selectedQueueId = ref(null)
 const router = useRouter()
 watch(selectedQueueId, (newId) => {
     queue.value = queues.value.find(queue => queue.id === newId) || null;
-    if(queue.value){
+    if (queue.value) {
         fetchCallbacks()
     }
 }, { immediate: true })
