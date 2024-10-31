@@ -239,6 +239,8 @@
 import { message } from 'ant-design-vue';
 import { useFetch, useCookie, useRuntimeConfig } from '#app'
 import { SearchOutlined } from '@ant-design/icons-vue';
+import dayjs from 'dayjs';
+
 const DEBUG = true
 const tabActiveKey = ref(1)
 const handleTabChange = (key) => {
@@ -447,23 +449,28 @@ const handleCBDateSelected = () => {
         message.error("Please select CB date")
         return
     }
-    triggerFormSubmit()
     isCBModalVisible.value = false
+    handleDisposition(0)
 }
 
 const formatDateToSQL = (date) => {
     if (!date) return null;
 
-    const padZero = (num) => (num < 10 ? '0' + num : num);
+    if (dayjs.isDayjs(date)) {
+        // If it's a Day.js object, use Day.js formatting
+        return date.format('YYYY-MM-DD HH:mm:ss');
+    } else if (date instanceof Date) {
+        const padZero = (num) => (num < 10 ? '0' + num : num);
 
-    const year = date.getFullYear();
-    const month = padZero(date.getMonth() + 1); // Months are zero-based
-    const day = padZero(date.getDate());
-    const hours = padZero(date.getHours());
-    const minutes = padZero(date.getMinutes());
-    const seconds = padZero(date.getSeconds());
+        const year = date.getFullYear();
+        const month = padZero(date.getMonth() + 1); // Months are zero-based
+        const day = padZero(date.getDate());
+        const hours = padZero(date.getHours());
+        const minutes = padZero(date.getMinutes());
+        const seconds = padZero(date.getSeconds());
 
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
 };
 
 const handleSearch = async () => {
