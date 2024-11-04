@@ -70,7 +70,7 @@ std::vector<std::string> DBConnection::getCampaigns(u_long serverId)
                 "JOIN queues ON campaigns.id = queues.campaign_id "
                 "WHERE campaigns.status = 1 "
                 "AND queues.server_id = ? "
-                "AND queues.dial_method = 6"));
+                "AND (queues.dial_method = 6 OR queues.dial_method = 3)"));
         pstmt->setUInt64(1, serverId); 
         std::shared_ptr<sql::ResultSet> res(pstmt->executeQuery());
 
