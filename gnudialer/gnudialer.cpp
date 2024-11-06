@@ -215,8 +215,7 @@ void doAriRedirect(const std::string &channel,
 				   const std::string &agent,
 				   const std::string &campaign,
 				   const std::string &leadid,
-				   const bool &doChangeCallerId,
-				   AgentList &TheAgents)
+				   const bool &doChangeCallerId)
 {
 	std::string ariHost = getMainHost();
 	std::string ariUser = getAriUser();
@@ -320,6 +319,8 @@ void doAriRedirect(const std::string &channel,
 			AsteriskManager << "Priority: 1\r\n";
 			AsteriskManager << "Exten: " + bridgeName + "\r\n";					  // Priority in dialplan
 			AsteriskManager << "Variable: CONF_BRIDGE_ID=" + bridgeName + "\r\n"; // Pass the ConfBridge ID as a variable
+			AsteriskManager << "Variable: CAMPAIGN_NAME=" + campaign + "\r\n"; 
+			AsteriskManager << "Variable: LEAD_ID=" + leadid + "\r\n"; // Pass the ConfBridge ID as a variable
 			AsteriskManager << "\r\n";
 			AsteriskManager >> response;
 			std::cout << "ConfBridge Response: " << response << std::endl;
@@ -1658,7 +1659,8 @@ int main(int argc, char **argv)
 											pid = fork();
 											if (pid == 0)
 											{
-												doAriRedirect(theChannel, tempStringAgent, tempCloserCam, theLeadid, true, TheAgents);
+												TheAgents.where(atoi(tempStringAgent.c_str())).SetOnCall();
+												doAriRedirect(theChannel, tempStringAgent, tempCloserCam, theLeadid, true);
 												exit(0);
 											}
 											if (pid == -1)
@@ -1678,7 +1680,7 @@ int main(int argc, char **argv)
 										pid = fork();
 										if (pid == 0)
 										{
-											doAriRedirect(theChannel, "699", tempCloserCam, theLeadid, true, TheAgents);
+											doAriRedirect(theChannel, "699", tempCloserCam, theLeadid, true);
 											exit(0);
 										}
 										if (pid == -1)
@@ -1880,7 +1882,7 @@ int main(int argc, char **argv)
 										{
 											if (isNone == false)
 											{
-												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, true, TheAgents);
+												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, true);
 												exit(0);
 											}
 										}
@@ -1898,7 +1900,7 @@ int main(int argc, char **argv)
 										pid = fork();
 										if (pid == 0)
 										{
-											doAriRedirect(theChannel, "699", theCampaign, theLeadid, true, TheAgents);
+											doAriRedirect(theChannel, "699", theCampaign, theLeadid, true);
 											// doHangupCall(theChannel,theAgent,managerUser,managerPass);
 											exit(0);
 										}
@@ -1947,7 +1949,7 @@ int main(int argc, char **argv)
 										{
 											if (isNone == false)
 											{
-												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, false, TheAgents);
+												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, false);
 												exit(0);
 											}
 										}

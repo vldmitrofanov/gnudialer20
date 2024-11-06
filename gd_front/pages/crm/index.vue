@@ -151,7 +151,7 @@
 
         <!-- Right Pane: Form with Tabs -->
         <a-col :span="19" class="right-pane">
-            <a-tabs :default-active-key="1" :active-key="tabActiveKey" @change="handleTabChange">
+            <a-tabs :active-key="tabActiveKey" @change="handleTabChange">
                 <a-tab-pane :key="1" tab="Main">
                     <div class="sticky-form">
                         <div class="itrretyi">
@@ -836,6 +836,8 @@ const getLead = async (campaign, leadId) => {
     if (!campaign || !queue.value) {
         if (!campaign && queue.value) {
             campaign = queue.value?.campaign?.code
+        } else if(campaign && !queue.value) {
+            queue.value = queues.value?.find(v=> v.campaign?.code === campaign)
         } else {
             message.error('No campaign found');
             return
@@ -1040,7 +1042,7 @@ const fetchServerData = async (id) => {
 const runContinue = async () => {
     const serverId = serverData.value.id
     const agentId = agent.value?.id
-    const { data, error, pending, onError } = await useFetch(`/api/asterisk/agent/available`, {
+    const { data, error, pending } = await useFetch(`/api/asterisk/agent/available`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
         headers: {
@@ -1052,11 +1054,10 @@ const runContinue = async () => {
             agent: agentId
         }
     })
-    onError((fetchError) => {
-        message.error(fetchError);
-        return
-    });
-    if (!error.value) {
+    if (error.value) {
+        message.error(error.value.message || 'An error occurred while fetching data');
+        return;
+    } else {
         console.log('runContinue', data)
     }
 }
