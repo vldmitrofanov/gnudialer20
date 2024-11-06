@@ -319,7 +319,7 @@ void doAriRedirect(const std::string &channel,
 			AsteriskManager << "Priority: 1\r\n";
 			AsteriskManager << "Exten: " + bridgeName + "\r\n";					  // Priority in dialplan
 			AsteriskManager << "Variable: CONF_BRIDGE_ID=" + bridgeName + "\r\n"; // Pass the ConfBridge ID as a variable
-			AsteriskManager << "Variable: CAMPAIGN_NAME=" + campaign + "\r\n"; 
+			AsteriskManager << "Variable: CAMPAIGN_NAME=" + campaign + "\r\n";
 			AsteriskManager << "Variable: LEAD_ID=" + leadid + "\r\n"; // Pass the ConfBridge ID as a variable
 			AsteriskManager << "\r\n";
 			AsteriskManager >> response;
@@ -1654,14 +1654,18 @@ int main(int argc, char **argv)
 											TheAgents.where(atoi(tempStringAgent.c_str())).SetLeadId(theLeadid);
 											TheAgents.where(atoi(tempStringAgent.c_str())).SetOnWait(false, true, TheAgents);
 
-											std::cout << theCampaign << ": theLeadid - " << theLeadid << std::endl;
+											std::cout << "[D] gnudialer.cpp " << theCampaign << ": theLeadid - " << theLeadid << std::endl;
 
 											pid = fork();
 											if (pid == 0)
 											{
-												TheAgents.where(atoi(tempStringAgent.c_str())).SetOnCall();
 												doAriRedirect(theChannel, tempStringAgent, tempCloserCam, theLeadid, true);
 												exit(0);
+											}
+											else if (pid > 0)
+											{
+												// Parent process
+												TheAgents.where(atoi(tempStringAgent.c_str())).SetOnCall();
 											}
 											if (pid == -1)
 											{
@@ -1882,9 +1886,17 @@ int main(int argc, char **argv)
 										{
 											if (isNone == false)
 											{
-												TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnCall();
+
 												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, true);
 												exit(0);
+											}
+											else if (pid > 0)
+											{
+												// Parent process
+												if (isNone == false)
+												{
+													TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnCall();
+												}
 											}
 										}
 
@@ -1949,10 +1961,18 @@ int main(int argc, char **argv)
 										if (pid == 0)
 										{
 											if (isNone == false)
-											{   
+											{
 												TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnCall();
 												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, false);
 												exit(0);
+											}
+										}
+										else if (pid > 0)
+										{
+											// Parent process
+											if (!isNone)
+											{
+												TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnCall();
 											}
 										}
 										if (pid == -1)
@@ -1975,12 +1995,14 @@ int main(int argc, char **argv)
 							}
 							else
 							{
-								if (doColorize){
+								if (doColorize)
+								{
 									std::cout << fg_red << theCampaign << ": Parse ERROR! (QUEUE)" << normal << std::endl;
-								} else {
+								}
+								else
+								{
 									std::cout << theCampaign << ": Parse ERROR! (QUEUE)" << std::endl;
 								}
-								
 							}
 						}
 

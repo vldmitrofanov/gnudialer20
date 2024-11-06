@@ -974,7 +974,7 @@ public:
 				{
 					lowestTime = tempAgentStatus;
 					agentNum = tempAgentNum;
-					std::cout << name << ": Selecting Available Agent: " << agentNum << " lowest time: " << lowestTime << std::endl;
+					std::cout << "[DEBUG] queue.h " << name << ": Selecting Available Agent: " << agentNum << " lowest time: " << lowestTime << std::endl;
 				}
 			}
 		}
