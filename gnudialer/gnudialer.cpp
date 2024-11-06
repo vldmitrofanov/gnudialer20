@@ -1882,6 +1882,7 @@ int main(int argc, char **argv)
 										{
 											if (isNone == false)
 											{
+												TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnCall();
 												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, true);
 												exit(0);
 											}
@@ -1948,7 +1949,8 @@ int main(int argc, char **argv)
 										if (pid == 0)
 										{
 											if (isNone == false)
-											{
+											{   
+												TheAgents.where(atoi(tempQueueAgent.c_str())).SetOnCall();
 												doAriRedirect(theChannel, tempQueueAgent, theCampaign, theLeadid, false);
 												exit(0);
 											}
