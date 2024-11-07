@@ -763,6 +763,8 @@ const hangup = async () => {
         console.error('Error during hangup: ', error.value)
         message.error(error.value);
         return null
+    } else {
+        customerChannel.value = null
     }
 }
 

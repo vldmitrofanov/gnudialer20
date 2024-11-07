@@ -257,7 +257,7 @@ class AsteriskAMIService
     {
         $command = "Action: Hangup\r\n";
         $command .= "Channel: {$channel}\r\n\r\n";
-        return $this->sendCommand($command, "\r\n");
+        return $this->sendCommand($command, "\r\n", true);
     }
 
     public function logout()
