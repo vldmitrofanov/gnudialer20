@@ -17,7 +17,7 @@ return new class extends Migration
                 id CHAR(36) PRIMARY KEY DEFAULT (UUID()), 
                 phone VARCHAR(20) NOT NULL,
                 campaign VARCHAR(50) NOT NULL,
-                leadid VARCHAR(50),
+                leadid BIGINT UNSIGNED,
                 callerid VARCHAR(50),
                 usecloser BOOLEAN,
                 dspmode VARCHAR(20),
