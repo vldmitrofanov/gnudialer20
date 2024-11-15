@@ -29,7 +29,7 @@
     "language": "en"
   },
   "asterisk_id": "02:42:c3:6d:d8:07",
-  "application": "my_app"
+  "application": "gnudialer_stasis_app"
 }
 
 ## when channel left bridge
@@ -74,5 +74,5 @@
     "language": "en"
   },
   "asterisk_id": "02:42:c3:6d:d8:07",
-  "application": "my_app"
+  "application": "gnudialer_stasis_app"
 }

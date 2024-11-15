@@ -18,14 +18,14 @@ class Server1Seeder extends Seeder
                 'proto' => 'ws',
                 'password' => 'secret123',
                 'host' => '127.0.0.1:8088',
-                'app_name' => 'my_app'
+                'app_name' => 'gnudialer_stasis_app'
             ],
             'ari' => [
                 'user' => 'apiuser',
                 'proto' => 'http',
                 'password' => 'secret123',
                 'host' => '127.0.0.1:8088',
-                'app_name' => 'my_app'
+                'app_name' => 'gnudialer_stasis_app'
             ],
             'ami' => [
                 'host' => '127.0.0.1',

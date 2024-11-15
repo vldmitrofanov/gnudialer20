@@ -8,3 +8,27 @@ Method 2:	CRM Dispo - Agent simply clicks the button for the dispo they wish.
 
 
 
+//                -8 == Burned (We give up)      ---o
+//                -7 == Disconnected Number         | -- Don't get called back
+//                -6 == Fax Machine              ---o
+//                -5 == Network Congestion ---o
+//                -4 == Busy                  |
+//                -3 == Voicemail             | -- Get called back ---o
+//                -2 == No Answer             |                       |
+//                -1 == Undefined*         ---o                       |
+//                                                                    |
+//                1 == Not Yet Called** -- Get called back -----------|
+//                                                                    |
+//                0 == Callback  ---o                                 |
+//                2 == No Answer    |                                 |
+//                3 == Voicemail    | -- Get called back -------------o
+//                4 == Busy         |
+//                5 == Fast Busy ---o
+//                6 == Fax Machine           ---o
+//                7 == Disconnected Number      |
+//                8 == Do Not Call              | -- Don't count as contacts
+//                9 == Invalid Lead             |
+//                10 == No Sale***           ---o
+//                11 == No Sale***    ---o These both...
+//                12 == Sale          ---o count as contacts
+

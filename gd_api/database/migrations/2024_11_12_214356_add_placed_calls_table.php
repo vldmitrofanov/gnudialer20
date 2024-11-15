@@ -19,16 +19,16 @@ return new class extends Migration
                 campaign VARCHAR(50) NOT NULL,
                 leadid BIGINT UNSIGNED,
                 callerid VARCHAR(50),
-                usecloser BOOLEAN,
+                usecloser BOOLEAN NOT NULL DEFAULT FALSE,
                 dspmode VARCHAR(20),
                 trunk VARCHAR(50),
                 dialprefix VARCHAR(10),
                 transfer VARCHAR(50),
-                timeout_sec SMALLINT,
+                timeout SMALLINT,
                 api_id VARCHAR(50),
                 server_id BIGINT UNSIGNED NOT NULL,
-                called BOOLEAN DEFAULT false,
-                answered BOOLEAN DEFAULT false,
+                called BOOLEAN NOT NULL DEFAULT false,
+                answered BOOLEAN NOT NULL DEFAULT false,
                 placed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         ");
