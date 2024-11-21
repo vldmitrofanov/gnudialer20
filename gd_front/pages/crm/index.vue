@@ -285,6 +285,7 @@ const hasManualDialing = computed(() => queue.value?.dial_method === 1)
 const awaitingChannel = ref(null)
 const callbacks = ref([])
 const callbacksSchema = ref([])
+const { fetchCurrentUser } = useAuth();
 
 defaultDate.value.setDate(defaultDate.value.getDate() + 1);
 defaultDate.value.setHours(12, 0, 0, 0); // Noon (12:00)
@@ -331,7 +332,7 @@ const handleManualDialing = async () => {
     manualDialProgress.value = true
     try {
         const { data,
-            error } = await useFetch(`/api/asterisk/call-ari`, {
+            error } = await useFetch(`/api/asterisk/ari/call`, {
                 method: 'POST',
                 baseURL: config.public.apiBaseUrl,
                 headers: {
@@ -383,7 +384,7 @@ const handleLeave3way = async () => {
     }
     try {
         const { data,
-            error } = await useFetch(`/api/asterisk/leave-3way`, {
+            error } = await useFetch(`/api/asterisk/ami/leave-3way`, {
                 method: 'POST',
                 baseURL: config.public.apiBaseUrl,
                 headers: {
@@ -417,7 +418,7 @@ const toggleHold = async () => {
     if (!isChannel2OnHold.value) {
         action = 'on'
     }
-    const { data, error } = await useFetch(`/api/asterisk/hold-ami`, {
+    const { data, error } = await useFetch(`/api/asterisk/ari/hold`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
         headers: {
@@ -426,9 +427,9 @@ const toggleHold = async () => {
         },
         body: {
             server_id: serverData.value?.id,
-            channel: customerChannel.value?.name,
+            channel_id: customerChannel.value?.id,
             agent: agent.value.id,
-            bridge: bridge.value?.name,
+            bridge_id: bridge.value?.id,
             action: action,
             queue: queue.value?.campaign?.code,
             lead_id: lead.value?.id
@@ -676,7 +677,7 @@ const gdialDispo = async (dispo) => {
     actionCommand += `Header4: Campaign: ${queue.value?.campaign?.code}\r\n`
     actionCommand += `Header5: Leadid: ${lead.value?.id}\r\n`
     actionCommand += `Header6: Channel: ${customerChannel.value?.name}\r\n`
-    const { data, error } = await useFetch(`/api/asterisk/custom/user-action`, {
+    const { data, error } = await useFetch(`/api/asterisk/ami/custom/user-action`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
         headers: {
@@ -747,7 +748,7 @@ const setOnWait = async () => {
 }
 
 const hangup = async () => {
-    const { data, error } = await useFetch(`/api/asterisk/call/hangup`, {
+    const { data, error } = await useFetch(`/api/asterisk/ari/call/hangup`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
         headers: {
@@ -756,7 +757,7 @@ const hangup = async () => {
         },
         body: {
             server_id: serverData.value?.id,
-            channel: customerChannel.value?.name
+            channel_id: customerChannel.value?.id
         }
     })
     if (error.value) {
@@ -986,7 +987,7 @@ const getAgentStatus = async () => {
     const serverId = serverData.value.id
     const queueName = queue?.value?.campaign?.code || ''
     const agentId = agent.value?.id
-    const { data, error } = await useFetch(`/api/asterisk/agent/status?server_id=${serverId}&queue=${queueName}&agent=${agentId}`, {
+    const { data, error } = await useFetch(`/api/asterisk/ari/agent/status?server_id=${serverId}&queue=${queueName}&agent=${agentId}`, {
         baseURL: config.public.apiBaseUrl,
         headers: {
             Accept: `application/json`,
@@ -1067,7 +1068,7 @@ const runContinue = async () => {
 const handle3WayDial = async (threeWayId) => {
     console.log(bridge.value?.name, threeWayId)
     const serverId = serverData.value.id
-    const { data, error, pending, onError } = await useFetch(`/api/asterisk/bridge-3way`, {
+    const { data, error, pending, onError } = await useFetch(`/api/asterisk/ami/bridge-3way`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
         headers: {
@@ -1141,7 +1142,8 @@ watch(selectedQueueId, (newId) => {
         fetchCallbacks()
     }
 }, { immediate: true })
-onMounted(async () => {
+
+const initAll = async() =>{
     const chunk = localStorage.getItem('user')
     console.log('Retrieving user:', chunk)
     if (!chunk) {
@@ -1174,6 +1176,14 @@ onMounted(async () => {
             }
         }
     }
+}
+onMounted(async () => {
+    await fetchCurrentUser()
+    await initAll()
+    // lets watch for user
+    setInterval(async() => {
+        await fetchCurrentUser()
+    }, 1000 * 60 * 10)
 })
 </script>
 

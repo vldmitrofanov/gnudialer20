@@ -39,7 +39,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
                 Route::get('/', [\App\Http\Controllers\Admin\AgentController::class, 'index']);
                 Route::post('/', [\App\Http\Controllers\Admin\AgentController::class, 'create']);
                 Route::put('/{agent_id}', [\App\Http\Controllers\Admin\AgentController::class, 'update']);
-                Route::delete('/{agent_id}', [\App\Http\Controllers\Admin\AgentController::class, 'delete']);              
+                Route::delete('/{agent_id}', [\App\Http\Controllers\Admin\AgentController::class, 'delete']);
             });
 
             Route::group(['prefix' => 'queues'], function () {
@@ -75,14 +75,20 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::group(['prefix' => 'asterisk'], function () {
         Route::post('/agent/pause', [\App\Http\Controllers\AsteriskController::class, 'setAgentPause']);
         Route::post('/agent/available', [\App\Http\Controllers\AsteriskController::class, 'setAgentAvailable']);
-        Route::get('/agent/status', [\App\Http\Controllers\AsteriskController::class, 'getAgentStatus']);
-        Route::post('/call-ari', [\App\Http\Controllers\AsteriskController::class,'callLeadByID_ARI']);
-        Route::post('/call-ami', [\App\Http\Controllers\AsteriskController::class,'callLeadByID_AMI']);
-        Route::post('/hold-ami', [\App\Http\Controllers\AsteriskController::class,'toggleHold']);
-        Route::post('/call/hangup', [\App\Http\Controllers\AsteriskController::class, 'callHangup']);
-        Route::post('/custom/user-action', [\App\Http\Controllers\AsteriskController::class, 'userAction']);
-        Route::post('/bridge-3way' , [\App\Http\Controllers\AsteriskController::class, 'bridge3way']);
-        Route::post('/leave-3way' , [\App\Http\Controllers\AsteriskController::class, 'leave3way']);
+
+        Route::group(['prefix' => 'ami'], function () {
+            Route::post('/call', [\App\Http\Controllers\AsteriskAmiController::class, 'callLeadByID_AMI']);
+            Route::post('/hold', [\App\Http\Controllers\AsteriskAmiController::class, 'toggleHold_AMI']);
+            Route::post('/call/hangup', [\App\Http\Controllers\AsteriskAmiController::class, 'callHangup']);
+            Route::post('/custom/user-action', [\App\Http\Controllers\AsteriskAmiController::class, 'userAction']);
+            Route::post('/bridge-3way', [\App\Http\Controllers\AsteriskAmiController::class, 'bridge3way']);
+            Route::post('/leave-3way', [\App\Http\Controllers\AsteriskAmiController::class, 'leave3way']);
+        });
+        Route::group(['prefix' => 'ari'], function () {
+            Route::post('/call', [\App\Http\Controllers\AsteriskAriController::class, 'callLeadByID']);
+            Route::get('/agent/status', [\App\Http\Controllers\AsteriskAriController::class, 'getAgentStatus']);
+            Route::post('/hold', [\App\Http\Controllers\AsteriskAriController::class, 'toggleHold']);
+        });
     });
 
     Route::group(['prefix' => 'leads'], function () {
@@ -95,5 +101,4 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::group(['prefix' => 'dispositions'], function () {
         Route::post('/', [\App\Http\Controllers\DispositionController::class, 'create']);
     });
-    
 });

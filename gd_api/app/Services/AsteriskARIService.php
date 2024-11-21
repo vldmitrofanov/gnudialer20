@@ -15,6 +15,7 @@ class AsteriskARIService
     protected $proto = 'http';
     protected $username;
     protected $secret;
+    protected $app = 'gnudialer_stasis_app';
 
     public function setServer($server_id)
     {
@@ -38,7 +39,7 @@ class AsteriskARIService
     public function getAllBridges()
     {
         // Construct the ARI URL for listing bridges
-        $url = "{$this->proto}://{$this->host}/ari/bridges?api_key={$this->username}:{$this->secret}&app=gnudialer_stasis_app";
+        $url = "{$this->proto}://{$this->host}/ari/bridges?api_key={$this->username}:{$this->secret}&app={$this->app}";
 
         // Initialize cURL session
         $ch = curl_init();
@@ -76,7 +77,7 @@ class AsteriskARIService
     public function getBridgeById($bridge_id)
     {
         // Construct the ARI URL for listing bridges
-        $url = "{$this->proto}://{$this->host}/ari/bridges/{$bridge_id}?api_key={$this->username}:{$this->secret}&app=gnudialer_stasis_app";
+        $url = "{$this->proto}://{$this->host}/ari/bridges/{$bridge_id}?api_key={$this->username}:{$this->secret}&app={$this->app}";
 
         // Initialize cURL session
         $ch = curl_init();
@@ -114,7 +115,7 @@ class AsteriskARIService
     public function getAllChannels()
     {
         // Construct the ARI URL for listing bridges
-        $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}&app=gnudialer_stasis_app";
+        $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}&app={$this->app}";
 
         // Initialize cURL session
         $ch = curl_init();
@@ -152,7 +153,7 @@ class AsteriskARIService
     public function getChannelById($channel_id)
     {
         // Construct the ARI URL for listing bridges
-        $url = "{$this->proto}://{$this->host}/ari/channels/{$channel_id}?api_key={$this->username}:{$this->secret}&app=gnudialer_stasis_app";
+        $url = "{$this->proto}://{$this->host}/ari/channels/{$channel_id}?api_key={$this->username}:{$this->secret}&app={$this->app}";
 
         // Initialize cURL session
         $ch = curl_init();
@@ -189,7 +190,7 @@ class AsteriskARIService
 
     public function createChannel(ARICallPayload $payload)
     {
-        $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}";
+        $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}&app={$this->app}";
         $data = $payload->toArray();
         $ch = curl_init($url);
 
@@ -207,17 +208,17 @@ class AsteriskARIService
             curl_close($ch);
             return 'Curl error: ' . $error;
         }
-    
+
         // Close cURL session
         curl_close($ch);
-    
+
         // Return the response
         return $response;
     }
 
     public function redirectChannel(ARIRedirectPayload $payload)
     {
-        $url = "{$this->proto}://{$this->host}/ari/channels/$payload->channel/redirect?api_key={$this->username}:{$this->secret}";
+        $url = "{$this->proto}://{$this->host}/ari/channels/$payload->channel/redirect?api_key={$this->username}:{$this->secret}&app={$this->app}";
         $data = $payload->toArray();
         $ch = curl_init($url);
 
@@ -235,10 +236,88 @@ class AsteriskARIService
             curl_close($ch);
             return 'Curl error: ' . $error;
         }
-    
+
         // Close cURL session
         curl_close($ch);
-    
+
+        // Return the response
+        return $response;
+    }
+
+    function putChannelOnHold($channelId)
+    {
+        $url = "{$this->proto}://{$this->host}/ari/channels/$channelId/hold?api_key={$this->username}:{$this->secret}&app={$this->app}";
+        $ch = curl_init($url);
+
+        // Set cURL options
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response
+        curl_setopt($ch, CURLOPT_POST, true);           // Use POST method
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+
+        $response = curl_exec($ch);
+
+        // Check for errors
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return 'Curl error: ' . $error;
+        }
+
+        // Close cURL session
+        curl_close($ch);
+
+        // Return the response
+        return $response;
+    }
+
+    function releaseChannelFromHold($channelId)
+    {
+        $url = "{$this->proto}://{$this->host}/ari/channels/$channelId/hold?api_key={$this->username}:{$this->secret}&app={$this->app}";
+        $ch = curl_init($url);
+
+        // Set cURL options
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE'); // Use DELETE method
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+
+        $response = curl_exec($ch);
+
+        // Check for errors
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return 'Curl error: ' . $error;
+        }
+
+        // Close cURL session
+        curl_close($ch);
+
+        // Return the response
+        return $response;
+    }
+
+    function channelHangup($channelId)
+    {
+        $url = "{$this->proto}://{$this->host}/ari/channels/{$channelId}?api_key={$this->username}:{$this->secret}&app={$this->app}";
+        $ch = curl_init($url);
+
+        // Set cURL options
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE'); // Use DELETE method
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+
+        $response = curl_exec($ch);
+
+        // Check for errors
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return 'Curl error: ' . $error;
+        }
+
+        // Close cURL session
+        curl_close($ch);
+
         // Return the response
         return $response;
     }

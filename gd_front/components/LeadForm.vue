@@ -15,8 +15,6 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
-import { defineEmits, defineProps } from 'vue';
 
 // Props
 const props = defineProps({
