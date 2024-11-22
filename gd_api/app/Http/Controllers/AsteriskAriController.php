@@ -178,12 +178,12 @@ class AsteriskAriController extends Controller
         $this->ariService->setServer($serverId);
 
         $chanVariables = [
-            "LEADID" => $lead->id,
-            "CAMPAIGN"=> $campaignCode,
+            "LEADID" => (string) $lead->id,
+            "CAMPAIGN"=> (string) $campaignCode,
             "DSPMODE" => '',
             "METHOD" => "manual",
             "ISTRANSFER" => "false",
-            "AGENTID" => $agent
+            "AGENTID" => (string) $agent
         ];
         $jsonPayload = [
             "endpoint" => $channel,
