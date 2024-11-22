@@ -22,7 +22,7 @@ class QueueController extends Controller
         $results = Queue::where('server_id', $request->server_id)->whereHas('agents', function ($q) use ($agent_id) {
             $q->where('id', $agent_id);
         })
-            ->with(['campaign', 'campaign.threeWays', 'queueSettings'])
+            ->with(['campaign', 'threeWays', 'queueSettings'])
             ->get();
         return QueueResource::collection($results);
     }

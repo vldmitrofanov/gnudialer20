@@ -230,6 +230,47 @@ class AsteriskAriController extends Controller
         // }
     }
 
+    public function call3Way(Request $request)
+    {
+        $request->validate([
+            'bridge' => 'required',
+            'three_way_id' => 'required',
+        ]);
+        $threeWay = \App\Models\ThreeWay::findOrFail($request->three_way_id);
+        $queue = $threeWay->queue;
+        $bridge = \App\Models\ConfBridge::findOrFail($request->bridge);
+        if (empty($campaign)) {
+            return response()->json(['message' => 'Campaign not found'], 422);
+        }
+        $agent = $bridge->agent_id;
+        $serverId = $queue->server_id;
+        $this->ariService->setServer($serverId);
+        $timeout = 60;
+
+        $chanVariables = [
+            "LEADID" => "",
+            "CAMPAIGN"=> (string) $queue->campaign->code,
+            "DSPMODE" => '',
+            "METHOD" => "3way",
+            "ISTRANSFER" => "false",
+            "AGENTID" => (string) $agent
+        ];
+        $jsonPayload = [
+            "endpoint" => $threeWay->trunk,
+            "extension" =>  $threeWay->extension,
+            "context" => $threeWay->context,
+            "priority" => 1,
+            "callerId" => $threeWay->caller_id,
+            "timeout" => $timeout,
+            "variables" => $chanVariables
+        ];
+
+        //$resp = $this->ariService->createChannel($pl);
+        
+        $resp = $this->ariService->manualCall($jsonPayload);
+        return response()->json(['status' => 'OK', 'response' => $resp], 200);
+    }
+
     public function leave3way(Request $request)
     {
         $request->validate([

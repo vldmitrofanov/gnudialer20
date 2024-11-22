@@ -57,4 +57,9 @@ class Queue extends Model
     {
         return $this->belongsToMany(ConfBridge::class, 'conf_bridge_queue');
     }
+
+    public function threeWays() 
+    {
+        return $this->hasMany(ThreeWay::class);
+    }
 }

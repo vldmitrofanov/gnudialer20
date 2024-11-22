@@ -15,6 +15,11 @@ class ThreeWay extends Model
         'trunk',
         'context',
         'caller_id',
-        'campaign_id'
+        'queue_id'
     ];
+
+    public function queue()
+    {
+        return $this->belongsTo(Queue::class);
+    }
 }

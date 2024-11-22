@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('trunk')->nullable();
             $table->string('context')->nullable();
             $table->string('caller_id')->nullable();
-            $table->foreignId('campaign_id')->nullable()->index()->constrained()->onDelete('cascade');
+            $table->foreignId('queue_id')->nullable()->index()->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

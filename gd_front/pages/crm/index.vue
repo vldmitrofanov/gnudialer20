@@ -134,7 +134,7 @@
                 <div v-else>
                     <a-col :span="24">3Way transfer:</a-col>
                     <div v-if="!threeWayStatus">
-                        <a-col :span="12" v-for="threeWay in queue?.campaign?.three_ways">
+                        <a-col :span="12" v-for="threeWay in queue?.three_ways">
                             <a-button block class="three-way-button" :disabled="allButtonsDisabled"
                                 @click=handle3WayDial(threeWay.id)>
                                 {{ threeWay.name }}
@@ -1070,7 +1070,7 @@ const runContinue = async () => {
 const handle3WayDial = async (threeWayId) => {
     console.log(bridge.value?.name, threeWayId)
     const serverId = serverData.value.id
-    const { data, error, pending, onError } = await useFetch(`/api/asterisk/ami/bridge-3way`, {
+    const { data, error, pending, onError } = await useFetch(`/api/asterisk/ari/call/3way`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
         headers: {

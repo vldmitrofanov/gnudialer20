@@ -89,6 +89,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
             Route::get('/agent/status', [\App\Http\Controllers\AsteriskAriController::class, 'getAgentStatus']);
             Route::post('/hold', [\App\Http\Controllers\AsteriskAriController::class, 'toggleHold']);
             Route::post('/call/hangup', [\App\Http\Controllers\AsteriskAriController::class, 'callHangup']);
+            Route::post('/call/3way', [\App\Http\Controllers\AsteriskAriController::class, 'call3Way']);
         });
     });
 
