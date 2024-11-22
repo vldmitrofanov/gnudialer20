@@ -748,6 +748,7 @@ const setOnWait = async () => {
 }
 
 const hangup = async () => {
+    console.log('HANGUP channel ID: ', customerChannel.value)
     const { data, error } = await useFetch(`/api/asterisk/ari/call/hangup`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
@@ -757,7 +758,8 @@ const hangup = async () => {
         },
         body: {
             server_id: serverData.value?.id,
-            channel_id: customerChannel.value?.id
+            channel_id: customerChannel.value?.id,
+            channel_name: customerChannel.value?.name
         }
     })
     if (error.value) {

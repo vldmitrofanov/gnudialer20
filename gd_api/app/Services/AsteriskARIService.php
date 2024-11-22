@@ -322,7 +322,8 @@ class AsteriskARIService
         return $response;
     }
 
-    function manualCall($data) {
+    function manualCall($data)
+    {
         $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}&app={$this->app}";
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response
@@ -344,5 +345,45 @@ class AsteriskARIService
 
         // Return the response
         return $response;
+    }
+
+    function findChannelByName($channelName)
+    {
+        $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}&app={$this->app}";
+        $ch = curl_init($url);
+
+        // Set cURL options
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+
+        // Execute the GET request
+        $response = curl_exec($ch);
+
+        // Check for errors
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            throw new \Exception('Curl error: ' . $error);
+        }
+
+        // Close cURL session
+        curl_close($ch);
+
+        // Decode the response
+        $channels = json_decode($response, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \Exception('Failed to decode JSON response: ' . json_last_error_msg());
+        }
+
+        // Search for the channel by name
+        foreach ($channels as $channel) {
+            if (isset($channel['name']) && $channel['name'] === $channelName) {
+                return $channel; // Return the found channel object
+            }
+        }
+
+        // If no channel is found, return null
+        return null;
     }
 }

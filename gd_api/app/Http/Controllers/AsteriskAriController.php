@@ -87,11 +87,22 @@ class AsteriskAriController extends Controller
     public function callHangup(Request $request)
     {
         $request->validate([
-            'channel_id' => 'required',
+            'channel_id' => 'nullable',
+            'channel_name' => 'required_without:channel_id',
             'server_id' => 'required'
         ]);
         $serverId = $request->input('server_id');
         $this->ariService->setServer($serverId);
+        $chId = null;
+        if(empty($request->channel_id)){
+            $ch = $this->ariService->findChannelByName($request->channel_name);
+            $chId = $ch['id'];
+        } else {
+            $chId = $request->channel_id;
+        }
+        if(empty($chId)) {
+            return response()->json(['status' => 'Channel not found'], 400);
+        }
         $status = $this->ariService->channelHangup($request->channel_id);
         return response()->json(['status' => $status], 200);
     }
