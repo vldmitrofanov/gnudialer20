@@ -103,7 +103,7 @@ class AsteriskAriController extends Controller
         if(empty($chId)) {
             return response()->json(['status' => 'Channel not found'], 400);
         }
-        $status = $this->ariService->channelHangup($request->channel_id);
+        $status = $this->ariService->channelHangup($chId);
         return response()->json(['status' => $status], 200);
     }
 
