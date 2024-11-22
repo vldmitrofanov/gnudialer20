@@ -321,4 +321,28 @@ class AsteriskARIService
         // Return the response
         return $response;
     }
+
+    function manualCall($data) {
+        $url = "{$this->proto}://{$this->host}/ari/channels?api_key={$this->username}:{$this->secret}&app={$this->app}";
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response
+        curl_setopt($ch, CURLOPT_POST, true);           // Use POST method
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS,  json_encode($data));
+
+        $response = curl_exec($ch);
+
+        // Check for errors
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return 'Curl error: ' . $error;
+        }
+
+        // Close cURL session
+        curl_close($ch);
+
+        // Return the response
+        return $response;
+    }
 }

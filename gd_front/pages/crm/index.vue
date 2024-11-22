@@ -1010,7 +1010,7 @@ const getAgentStatus = async () => {
         if (data.value?.channels?.length > 0) {
             let fnd = false
             data.value.channels.forEach(v => {
-                if (!fnd) {
+                if (!fnd && v?.connected?.length>1) {
                     const cmpData = parseCampaignString(v?.connected?.name)
                     if (cmpData && cmpData.campaignName && cmpData.leadID) {
                         fnd = true

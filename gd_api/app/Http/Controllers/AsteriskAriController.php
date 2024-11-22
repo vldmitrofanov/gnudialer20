@@ -135,6 +135,7 @@ class AsteriskAriController extends Controller
         $dialprefix = null;
         $cid = null;
         $trunk = null;
+        $timeout = 60;
 
         // Loop through the queue settings
         foreach ($queue->queueSettings as $setting) {
@@ -147,9 +148,10 @@ class AsteriskAriController extends Controller
             if ($setting->parameter === 'trunk') {
                 $trunk = $setting->value;
             }
+            if ($setting->parameter === 'timeout') {
+                $timeout = $setting->value;
+            }
         }
-
-        
 
         // Ensure that $trunk and $dialprefix are set before proceeding
         if ($trunk && $dialprefix) {
@@ -159,6 +161,7 @@ class AsteriskAriController extends Controller
             throw new \Exception('Missing required settings: trunk or dialprefix');
         }
 
+        /*
         $context = "join_confbridge";
         $exten = "s";
         $priority = "1";
@@ -171,12 +174,31 @@ class AsteriskAriController extends Controller
             $cid,
             ['CONF_BRIDGE_ID' => (string)$confBridgeId]
         );
+        */
         $this->ariService->setServer($serverId);
-        $resp = $this->ariService->createChannel($pl);
-        //$this->amiService->setServer($serverId);
-        //$result = $this->amiService->sendCommand($amiCommand, "Response: Success|Response: Error");
-        //if (strpos(serialize($result), 'Response: Success') !== false) {
-        //$status =  $this->amiService->joinBridge($bridge, $result['channel']);
+
+        $chanVariables = [
+            "LEADID" => $lead->id,
+            "CAMPAIGN"=> $campaignCode,
+            "DSPMODE" => '',
+            "METHOD" => "manual",
+            "ISTRANSFER" => "false",
+            "AGENTID" => $agent
+        ];
+        $jsonPayload = [
+            "endpoint" => $channel,
+            "extension" =>  $dialprefix . $dialNumber,
+            "context" => "gdstasis",
+            "priority" => 1,
+            "callerId" => "~" . $campaignCode . "-" .$lead->id. "~",
+            "timeout" => $timeout,
+            "variables" => $chanVariables
+        ];
+
+        //$resp = $this->ariService->createChannel($pl);
+        
+        $resp = $this->ariService->manualCall($jsonPayload);
+
         DB::table($table_name)
             ->where('id', $leadId) // Assuming you have an `id` field for identifying the lead
             ->update([
@@ -249,4 +271,6 @@ class AsteriskAriController extends Controller
 
         return response()->json(['status' => 'OK'], 200);
     }
+
+    
 }
