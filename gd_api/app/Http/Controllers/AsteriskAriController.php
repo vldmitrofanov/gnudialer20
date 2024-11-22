@@ -239,9 +239,6 @@ class AsteriskAriController extends Controller
         $threeWay = \App\Models\ThreeWay::findOrFail($request->three_way_id);
         $queue = $threeWay->queue;
         $bridge = \App\Models\ConfBridge::findOrFail($request->bridge);
-        if (empty($campaign)) {
-            return response()->json(['message' => 'Campaign not found'], 422);
-        }
         $agent = $bridge->agent_id;
         $serverId = $queue->server_id;
         $this->ariService->setServer($serverId);
