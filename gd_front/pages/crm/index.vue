@@ -551,7 +551,7 @@ const initiateWebsocket = (server) => {
                         allButtonsDisabled.value = true
                     } else {
                         if (data.channel?.name) {
-                            customerChannel.value = { name: data.channel.name }
+                            customerChannel.value = data.channel
                         }
 
                     }
@@ -1070,7 +1070,7 @@ const runContinue = async () => {
 const handle3WayDial = async (threeWayId) => {
     console.log(bridge.value?.name, threeWayId)
     const serverId = serverData.value.id
-    const { data, error, pending, onError } = await useFetch(`/api/asterisk/ari/call/3way`, {
+    const { data, error, pending } = await useFetch(`/api/asterisk/ari/call/3way`, {
         method: 'POST',
         baseURL: config.public.apiBaseUrl,
         headers: {
@@ -1085,13 +1085,11 @@ const handle3WayDial = async (threeWayId) => {
             campaign: queue.value?.campaign?.code
         }
     })
-    onError((fetchError) => {
-        message.error("Error during 3-way transfer:", fetchError);
-        return
-    });
     if (!error.value) {
         threeWayStatus.value = data
         console.log('3__Way__Response', data)
+    } else {
+        message.error('An error has occured during dialing 3rd party')
     }
 }
 

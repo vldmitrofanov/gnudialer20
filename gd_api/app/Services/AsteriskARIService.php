@@ -265,7 +265,52 @@ class AsteriskARIService
 
         // Close cURL session
         curl_close($ch);
+        $this->muteChannelInBridge($channelId);
 
+        // Return the response
+        return $response;
+    }
+
+    function muteChannelInBridge($channelId) {
+        $url = "{$this->proto}://{$this->host}/ari/channels/$channelId/mute?api_key={$this->username}:{$this->secret}&app={$this->app}";
+        $ch = curl_init($url);
+    
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response
+        curl_setopt($ch, CURLOPT_POST, true);           // Use POST method
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    
+        $response = curl_exec($ch);
+    
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return 'Curl error: ' . $error;
+        }
+    
+        curl_close($ch);
+        return $response;
+    }
+
+    function unmuteChannelInBridge($channelId) {
+        $url = "{$this->proto}://{$this->host}/ari/channels/$channelId/unmute?api_key={$this->username}:{$this->secret}&app={$this->app}";
+        $ch = curl_init($url);
+    
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response
+        curl_setopt($ch, CURLOPT_POST, true);           // Use POST method
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    
+        $response = curl_exec($ch);
+    
+        // Check for errors
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return 'Curl error: ' . $error;
+        }
+    
+        // Close cURL session
+        curl_close($ch);
+    
         // Return the response
         return $response;
     }
@@ -291,6 +336,7 @@ class AsteriskARIService
 
         // Close cURL session
         curl_close($ch);
+        $this->unmuteChannelInBridge($channelId);
 
         // Return the response
         return $response;
