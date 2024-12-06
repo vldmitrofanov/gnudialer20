@@ -15,7 +15,17 @@
                 <NuxtLink to="/admin/campaigns">Campaign List</NuxtLink>
             </a-menu-item>
             <a-menu-item key="13">
-                <NuxtLink to="/admin/campaigns/create">CreateCampaign</NuxtLink>
+                <NuxtLink to="/admin/campaigns/create">Create Campaign</NuxtLink>
+            </a-menu-item>
+        </a-sub-menu>
+
+         <!-- Campaigns Menu -->
+         <a-sub-menu key="sub6" :title="collapsed ? '' : 'Inbound'" :icon="h(AppstoreOutlined)">
+            <a-menu-item key="14">
+                <NuxtLink to="/admin/inbounds">DID List</NuxtLink>
+            </a-menu-item>
+            <a-menu-item key="15">
+                <NuxtLink to="/admin/inbounds/create">Add DID</NuxtLink>
             </a-menu-item>
         </a-sub-menu>
 
