@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('did_number');
             $table->foreignId('server_id')->nullable()->constrained()->onDelete('cascade');
+            $table->morphs('routable'); // Adds routable_id and routable_type columns
             $table->timestamps();
         });
     }
